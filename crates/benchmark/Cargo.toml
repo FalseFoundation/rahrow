@@ -1,0 +1,9 @@
+[package]
+name = "rahrow-benchmark"
+version = "0.0.0"
+edition = "2024"
+description = "RahRow benchmark crate"
+license = "MIT"
+publish = false
+
+[dependencies]

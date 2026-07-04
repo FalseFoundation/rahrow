@@ -1,0 +1,47 @@
+{
+	"name": "@rahrow/ui",
+	"type": "module",
+	"private": true,
+	"version": "0.1.0",
+	"sideEffects": false,
+	"exports": {
+		"./*": "./src/components/ui/*.tsx",
+		"./globals.css": "./src/globals.css",
+		"./styled-system/*": "./styled-system/*",
+		"./styled-system/styles.css": "./styled-system/styles.css",
+		"./create-icon": "./src/create-icon.tsx",
+		"./preset": "./src/preset/index.ts",
+		"./postcss.config": "./postcss.config.cjs",
+		"./panda.config": "./panda.config.ts",
+		"./components/*": "./src/components/*.tsx",
+		"./components/styled/*": "./src/components/styled/*.tsx",
+		"./providers/*": "./src/providers/*.tsx"
+	},
+	"scripts": {
+		"prepare": "panda codegen --clean",
+		"generate:colors": "pnpx ts-node src/preset/theme/generate-colors.ts"
+	},
+	"dependencies": {
+		"@ark-ui/react": "^5.37.2",
+		"@pandacss/dev": "1.11.3",
+		"@pandacss/preset-base": "1.11.3",
+		"@pandacss/preset-panda": "1.11.3",
+		"@pandacss/types": "^1.11.3",
+		"@radix-ui/colors": "3.0.0",
+		"@types/react": "^19.2.17",
+		"@types/react-dom": "^19.2.3",
+		"@zag-js/toast": "^1.41.2",
+		"@zag-js/types": "^1.41.2",
+		"lucide-react": "^1.21.0",
+		"maplibre-gl": "^5.24.0",
+		"next-themes": "^0.4.6",
+		"postcss": "^8.5.15",
+		"react": "19.2.7",
+		"react-dom": "19.2.7"
+	},
+	"devDependencies": {
+		"@rahrow/tooling": "workspace:*",
+		"@rahrow/lib": "workspace:*",
+		"@types/node": "^26.0.1"
+	}
+}

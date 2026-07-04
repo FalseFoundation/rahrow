@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/types",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow types package",
+	"type": "module",
+	"scripts": {}
+}

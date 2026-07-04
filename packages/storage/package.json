@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/storage",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow storage package",
+	"type": "module",
+	"scripts": {}
+}

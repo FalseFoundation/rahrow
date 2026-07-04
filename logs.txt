@@ -1,0 +1,913 @@
+.
+├── AGENTS.md
+├── CLAUDE.md
+├── CODE_OF_CONDUCT.md
+├── CONTRIBUTING.md
+├── GEMINI.md
+├── LICENSE
+├── README.md
+├── SECURITY.md
+├── apps
+│   ├── dashboard
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── desktop
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   ├── components
+│   │   │   ├── features
+│   │   │   └── lib
+│   │   └── src-tauri
+│   │       ├── capabilities
+│   │       └── src
+│   ├── mobile
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   ├── android
+│   │   ├── app
+│   │   ├── assets
+│   │   ├── ios
+│   │   ├── package.json
+│   │   └── src
+│   │       ├── components
+│   │       ├── features
+│   │       └── lib
+│   ├── server
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── web
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   └── www
+│       ├── CHANGELOG.md
+│       ├── README.md
+│       ├── content -> ../../docs
+│       ├── mdx-components.tsx
+│       ├── next-env.d.ts
+│       ├── next.config.mjs
+│       ├── package.json
+│       ├── posts
+│       │   └── rayrouter-v2ray-platform-update.md
+│       ├── src
+│       │   ├── app
+│       │   │   ├── (blog)
+│       │   │   │   └── posts
+│       │   │   │       ├── [slug]
+│       │   │   │       │   └── page.tsx
+│       │   │   │       ├── layout.tsx
+│       │   │   │       └── page.tsx
+│       │   │   ├── (docs)
+│       │   │   │   ├── [[...mdxPath]]
+│       │   │   │   │   ├── layout.tsx
+│       │   │   │   │   └── page.tsx
+│       │   │   │   └── maintainers
+│       │   │   │       ├── [[...mdxPath]]
+│       │   │   │       │   └── page.tsx
+│       │   │   │       └── layout.tsx
+│       │   │   └── layout.tsx
+│       │   ├── blog
+│       │   │   └── posts.ts
+│       │   ├── docs
+│       │   │   ├── DocsThemeLayout.tsx
+│       │   │   └── pageMap.ts
+│       │   ├── markdown.d.ts
+│       │   └── shared
+│       │       └── FooterContent.tsx
+│       └── tsconfig.json
+├── biome.json
+├── core
+│   ├── README.md
+│   ├── package.json
+│   ├── src
+│   │   ├── errors.ts
+│   │   ├── index.ts
+│   │   ├── protocols.ts
+│   │   ├── runtime.ts
+│   │   └── schemas.ts
+│   └── tsconfig.json
+├── crates
+│   ├── Cargo.toml
+│   ├── benchmark
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── Cargo.toml
+│   │   └── README.md
+│   ├── core
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── Cargo.toml
+│   │   └── README.md
+│   ├── ffi
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── Cargo.toml
+│   │   └── README.md
+│   ├── network
+│   │   ├── connection
+│   │   │   ├── AGENTS.md
+│   │   │   ├── CHANGELOG.md
+│   │   │   ├── Cargo.toml
+│   │   │   └── README.md
+│   │   ├── dns
+│   │   │   ├── AGENTS.md
+│   │   │   ├── CHANGELOG.md
+│   │   │   ├── Cargo.toml
+│   │   │   └── README.md
+│   │   ├── routing
+│   │   │   ├── AGENTS.md
+│   │   │   ├── CHANGELOG.md
+│   │   │   ├── Cargo.toml
+│   │   │   └── README.md
+│   │   └── tun
+│   │       ├── AGENTS.md
+│   │       ├── CHANGELOG.md
+│   │       ├── Cargo.toml
+│   │       └── README.md
+│   ├── observability
+│   │   ├── diagnostics
+│   │   │   ├── AGENTS.md
+│   │   │   ├── CHANGELOG.md
+│   │   │   ├── Cargo.toml
+│   │   │   └── README.md
+│   │   └── health
+│   │       ├── AGENTS.md
+│   │       ├── CHANGELOG.md
+│   │       ├── Cargo.toml
+│   │       └── README.md
+│   └── security
+│       └── crypto
+│           ├── AGENTS.md
+│           ├── CHANGELOG.md
+│           ├── Cargo.toml
+│           └── README.md
+├── docs
+│   ├── _meta.ts
+│   ├── cli-reference.md
+│   ├── configuration.md
+│   ├── getting-started.md
+│   ├── index.md
+│   ├── maintainers
+│   │   ├── _meta.ts
+│   │   ├── architecture
+│   │   │   ├── _meta.ts
+│   │   │   ├── decisions
+│   │   │   │   ├── 0001-documentation-platform.md
+│   │   │   │   ├── 0002-code-architecture.md
+│   │   │   │   ├── 0003-snapshot-policy.md
+│   │   │   │   └── _meta.ts
+│   │   │   ├── overview.md
+│   │   │   └── synchronization.md
+│   │   ├── development
+│   │   │   ├── _meta.ts
+│   │   │   ├── contributing.md
+│   │   │   ├── documentation.md
+│   │   │   ├── engineering.md
+│   │   │   └── testing.md
+│   │   ├── index.md
+│   │   ├── product
+│   │   │   ├── _meta.ts
+│   │   │   └── vision.md
+│   │   └── technology.md
+│   └── runtime-files.md
+├── logs.txt
+├── package.json
+├── packages
+│   ├── analytics
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── auth
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── benchmark
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── billing
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── clipboard
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── connection
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── database
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── diagnostics
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── dns
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── feature-flags
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── geo
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── health
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── lib
+│   │   ├── CHANGELOG.md
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   ├── cn.ts
+│   │   │   ├── encryption.ts
+│   │   │   ├── fetcher.ts
+│   │   │   ├── index.ts
+│   │   │   ├── locales
+│   │   │   │   ├── client.ts
+│   │   │   │   ├── en.ts
+│   │   │   │   ├── server.ts
+│   │   │   │   └── types.ts
+│   │   │   ├── math.ts
+│   │   │   ├── regex.ts
+│   │   │   ├── slugify.ts
+│   │   │   ├── socket
+│   │   │   │   ├── client.ts
+│   │   │   │   └── context.tsx
+│   │   │   ├── socket-resource
+│   │   │   │   ├── createSocketResource.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── types.ts
+│   │   │   └── yn.ts
+│   │   └── tsconfig.json
+│   ├── logger
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── marketplace
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── notifications
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── parser
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── permissions
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── protocol
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── proxy
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── qr
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── routing
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── sdk
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   └── src
+│   │       └── index.ts
+│   ├── sharing
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── speedtest
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── static
+│   │   ├── package.json
+│   │   └── src
+│   │       └── fonts
+│   │           ├── Baloo_Bhaijaan_2
+│   │           │   ├── BalooBhaijaan2-VariableFont_wght.ttf
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   └── static
+│   │           │       ├── BalooBhaijaan2-Bold.ttf
+│   │           │       ├── BalooBhaijaan2-ExtraBold.ttf
+│   │           │       ├── BalooBhaijaan2-Medium.ttf
+│   │           │       ├── BalooBhaijaan2-Regular.ttf
+│   │           │       └── BalooBhaijaan2-SemiBold.ttf
+│   │           ├── Beiruti
+│   │           │   ├── Beiruti-VariableFont_wght.ttf
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   └── static
+│   │           │       ├── Beiruti-Black.ttf
+│   │           │       ├── Beiruti-Bold.ttf
+│   │           │       ├── Beiruti-ExtraBold.ttf
+│   │           │       ├── Beiruti-ExtraLight.ttf
+│   │           │       ├── Beiruti-Light.ttf
+│   │           │       ├── Beiruti-Medium.ttf
+│   │           │       ├── Beiruti-Regular.ttf
+│   │           │       └── Beiruti-SemiBold.ttf
+│   │           ├── Cabin
+│   │           │   ├── Cabin-Italic-VariableFont_wdth,wght.ttf
+│   │           │   ├── Cabin-VariableFont_wdth,wght.ttf
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   └── static
+│   │           │       ├── Cabin-Bold.ttf
+│   │           │       ├── Cabin-BoldItalic.ttf
+│   │           │       ├── Cabin-Italic.ttf
+│   │           │       ├── Cabin-Medium.ttf
+│   │           │       ├── Cabin-MediumItalic.ttf
+│   │           │       ├── Cabin-Regular.ttf
+│   │           │       ├── Cabin-SemiBold.ttf
+│   │           │       ├── Cabin-SemiBoldItalic.ttf
+│   │           │       ├── Cabin_Condensed-Bold.ttf
+│   │           │       ├── Cabin_Condensed-BoldItalic.ttf
+│   │           │       ├── Cabin_Condensed-Italic.ttf
+│   │           │       ├── Cabin_Condensed-Medium.ttf
+│   │           │       ├── Cabin_Condensed-MediumItalic.ttf
+│   │           │       ├── Cabin_Condensed-Regular.ttf
+│   │           │       ├── Cabin_Condensed-SemiBold.ttf
+│   │           │       ├── Cabin_Condensed-SemiBoldItalic.ttf
+│   │           │       ├── Cabin_SemiCondensed-Bold.ttf
+│   │           │       ├── Cabin_SemiCondensed-BoldItalic.ttf
+│   │           │       ├── Cabin_SemiCondensed-Italic.ttf
+│   │           │       ├── Cabin_SemiCondensed-Medium.ttf
+│   │           │       ├── Cabin_SemiCondensed-MediumItalic.ttf
+│   │           │       ├── Cabin_SemiCondensed-Regular.ttf
+│   │           │       ├── Cabin_SemiCondensed-SemiBold.ttf
+│   │           │       └── Cabin_SemiCondensed-SemiBoldItalic.ttf
+│   │           ├── Changa_One
+│   │           │   ├── ChangaOne-Italic.ttf
+│   │           │   ├── ChangaOne-Regular.ttf
+│   │           │   └── OFL.txt
+│   │           ├── Google_Sans
+│   │           │   ├── GoogleSans-Italic-VariableFont_GRAD,opsz,wght.ttf
+│   │           │   ├── GoogleSans-VariableFont_GRAD,opsz,wght.ttf
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   └── static
+│   │           │       ├── GoogleSans-Bold.ttf
+│   │           │       ├── GoogleSans-BoldItalic.ttf
+│   │           │       ├── GoogleSans-Italic.ttf
+│   │           │       ├── GoogleSans-Medium.ttf
+│   │           │       ├── GoogleSans-MediumItalic.ttf
+│   │           │       ├── GoogleSans-Regular.ttf
+│   │           │       ├── GoogleSans-SemiBold.ttf
+│   │           │       ├── GoogleSans-SemiBoldItalic.ttf
+│   │           │       ├── GoogleSans_17pt-Bold.ttf
+│   │           │       ├── GoogleSans_17pt-BoldItalic.ttf
+│   │           │       ├── GoogleSans_17pt-Italic.ttf
+│   │           │       ├── GoogleSans_17pt-Medium.ttf
+│   │           │       ├── GoogleSans_17pt-MediumItalic.ttf
+│   │           │       ├── GoogleSans_17pt-Regular.ttf
+│   │           │       ├── GoogleSans_17pt-SemiBold.ttf
+│   │           │       └── GoogleSans_17pt-SemiBoldItalic.ttf
+│   │           ├── Manrope
+│   │           │   ├── Manrope-VariableFont_wght.ttf
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   └── static
+│   │           │       ├── Manrope-Bold.ttf
+│   │           │       ├── Manrope-ExtraBold.ttf
+│   │           │       ├── Manrope-ExtraLight.ttf
+│   │           │       ├── Manrope-Light.ttf
+│   │           │       ├── Manrope-Medium.ttf
+│   │           │       ├── Manrope-Regular.ttf
+│   │           │       └── Manrope-SemiBold.ttf
+│   │           ├── Outfit
+│   │           │   ├── OFL.txt
+│   │           │   ├── Outfit-VariableFont_wght.ttf
+│   │           │   ├── README.txt
+│   │           │   └── static
+│   │           │       ├── Outfit-Black.ttf
+│   │           │       ├── Outfit-Bold.ttf
+│   │           │       ├── Outfit-ExtraBold.ttf
+│   │           │       ├── Outfit-ExtraLight.ttf
+│   │           │       ├── Outfit-Light.ttf
+│   │           │       ├── Outfit-Medium.ttf
+│   │           │       ├── Outfit-Regular.ttf
+│   │           │       ├── Outfit-SemiBold.ttf
+│   │           │       └── Outfit-Thin.ttf
+│   │           ├── Quicksand
+│   │           │   ├── OFL.txt
+│   │           │   ├── Quicksand-VariableFont_wght.ttf
+│   │           │   ├── README.txt
+│   │           │   └── static
+│   │           │       ├── Quicksand-Bold.ttf
+│   │           │       ├── Quicksand-Light.ttf
+│   │           │       ├── Quicksand-Medium.ttf
+│   │           │       ├── Quicksand-Regular.ttf
+│   │           │       └── Quicksand-SemiBold.ttf
+│   │           ├── Raleway
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   ├── Raleway-Italic-VariableFont_wght.ttf
+│   │           │   ├── Raleway-VariableFont_wght.ttf
+│   │           │   └── static
+│   │           │       ├── Raleway-Black.ttf
+│   │           │       ├── Raleway-BlackItalic.ttf
+│   │           │       ├── Raleway-Bold.ttf
+│   │           │       ├── Raleway-BoldItalic.ttf
+│   │           │       ├── Raleway-ExtraBold.ttf
+│   │           │       ├── Raleway-ExtraBoldItalic.ttf
+│   │           │       ├── Raleway-ExtraLight.ttf
+│   │           │       ├── Raleway-ExtraLightItalic.ttf
+│   │           │       ├── Raleway-Italic.ttf
+│   │           │       ├── Raleway-Light.ttf
+│   │           │       ├── Raleway-LightItalic.ttf
+│   │           │       ├── Raleway-Medium.ttf
+│   │           │       ├── Raleway-MediumItalic.ttf
+│   │           │       ├── Raleway-Regular.ttf
+│   │           │       ├── Raleway-SemiBold.ttf
+│   │           │       ├── Raleway-SemiBoldItalic.ttf
+│   │           │       ├── Raleway-Thin.ttf
+│   │           │       └── Raleway-ThinItalic.ttf
+│   │           ├── Roboto_Mono
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   ├── RobotoMono-Italic-VariableFont_wght.ttf
+│   │           │   ├── RobotoMono-VariableFont_wght.ttf
+│   │           │   └── static
+│   │           │       ├── RobotoMono-Bold.ttf
+│   │           │       ├── RobotoMono-BoldItalic.ttf
+│   │           │       ├── RobotoMono-ExtraLight.ttf
+│   │           │       ├── RobotoMono-ExtraLightItalic.ttf
+│   │           │       ├── RobotoMono-Italic.ttf
+│   │           │       ├── RobotoMono-Light.ttf
+│   │           │       ├── RobotoMono-LightItalic.ttf
+│   │           │       ├── RobotoMono-Medium.ttf
+│   │           │       ├── RobotoMono-MediumItalic.ttf
+│   │           │       ├── RobotoMono-Regular.ttf
+│   │           │       ├── RobotoMono-SemiBold.ttf
+│   │           │       ├── RobotoMono-SemiBoldItalic.ttf
+│   │           │       ├── RobotoMono-Thin.ttf
+│   │           │       └── RobotoMono-ThinItalic.ttf
+│   │           ├── Vazirmatn
+│   │           │   ├── OFL.txt
+│   │           │   ├── README.txt
+│   │           │   ├── Vazirmatn-VariableFont_wght.ttf
+│   │           │   └── static
+│   │           │       ├── Vazirmatn-Black.ttf
+│   │           │       ├── Vazirmatn-Bold.ttf
+│   │           │       ├── Vazirmatn-ExtraBold.ttf
+│   │           │       ├── Vazirmatn-ExtraLight.ttf
+│   │           │       ├── Vazirmatn-Light.ttf
+│   │           │       ├── Vazirmatn-Medium.ttf
+│   │           │       ├── Vazirmatn-Regular.ttf
+│   │           │       ├── Vazirmatn-SemiBold.ttf
+│   │           │       └── Vazirmatn-Thin.ttf
+│   │           └── Wix_Madefor_Text
+│   │               ├── OFL.txt
+│   │               ├── README.txt
+│   │               ├── WixMadeforText-Italic-VariableFont_wght.ttf
+│   │               ├── WixMadeforText-VariableFont_wght.ttf
+│   │               └── static
+│   │                   ├── WixMadeforText-Bold.ttf
+│   │                   ├── WixMadeforText-BoldItalic.ttf
+│   │                   ├── WixMadeforText-ExtraBold.ttf
+│   │                   ├── WixMadeforText-ExtraBoldItalic.ttf
+│   │                   ├── WixMadeforText-Italic.ttf
+│   │                   ├── WixMadeforText-Medium.ttf
+│   │                   ├── WixMadeforText-MediumItalic.ttf
+│   │                   ├── WixMadeforText-Regular.ttf
+│   │                   ├── WixMadeforText-SemiBold.ttf
+│   │                   └── WixMadeforText-SemiBoldItalic.ttf
+│   ├── storage
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── subscription
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── telemetry
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── tooling
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   ├── nextjs
+│   │   │   └── next.config.ts
+│   │   ├── package.json
+│   │   ├── panda.ts
+│   │   ├── postcss
+│   │   │   └── panda.cjs
+│   │   ├── tsconfig
+│   │   │   ├── base.json
+│   │   │   ├── nestjs.json
+│   │   │   ├── nextjs.json
+│   │   │   └── react.json
+│   │   ├── tsconfig.json
+│   │   └── vite.ts
+│   ├── types
+│   │   ├── AGENTS.md
+│   │   ├── CHANGELOG.md
+│   │   ├── README.md
+│   │   └── package.json
+│   ├── ui
+│   │   ├── CHANGELOG.md
+│   │   ├── package.json
+│   │   ├── panda.config.ts
+│   │   ├── postcss.config.cjs
+│   │   ├── src
+│   │   │   ├── components
+│   │   │   │   ├── accordion.tsx
+│   │   │   │   ├── alert.tsx
+│   │   │   │   ├── angle-slider.tsx
+│   │   │   │   ├── avatar.tsx
+│   │   │   │   ├── badge.tsx
+│   │   │   │   ├── button.tsx
+│   │   │   │   ├── card.tsx
+│   │   │   │   ├── carousel.tsx
+│   │   │   │   ├── checkbox.tsx
+│   │   │   │   ├── clipboard.tsx
+│   │   │   │   ├── code.tsx
+│   │   │   │   ├── collapsible.tsx
+│   │   │   │   ├── color-mode.tsx
+│   │   │   │   ├── color-picker.tsx
+│   │   │   │   ├── combobox.tsx
+│   │   │   │   ├── date-picker.tsx
+│   │   │   │   ├── dialog.tsx
+│   │   │   │   ├── drawer.tsx
+│   │   │   │   ├── editable.tsx
+│   │   │   │   ├── field.tsx
+│   │   │   │   ├── fieldset.tsx
+│   │   │   │   ├── file-upload.tsx
+│   │   │   │   ├── form-label.tsx
+│   │   │   │   ├── heading.tsx
+│   │   │   │   ├── hover-card.tsx
+│   │   │   │   ├── icon-button.tsx
+│   │   │   │   ├── icon.tsx
+│   │   │   │   ├── input.tsx
+│   │   │   │   ├── kbd.tsx
+│   │   │   │   ├── link.tsx
+│   │   │   │   ├── listbox.tsx
+│   │   │   │   ├── map.tsx
+│   │   │   │   ├── menu.tsx
+│   │   │   │   ├── number-input.tsx
+│   │   │   │   ├── pagination.tsx
+│   │   │   │   ├── pin-input.tsx
+│   │   │   │   ├── popover.tsx
+│   │   │   │   ├── progress.tsx
+│   │   │   │   ├── prose.tsx
+│   │   │   │   ├── qr-code.tsx
+│   │   │   │   ├── radio-group.tsx
+│   │   │   │   ├── rating-group.tsx
+│   │   │   │   ├── scroll-area.tsx
+│   │   │   │   ├── segment-group.tsx
+│   │   │   │   ├── select.tsx
+│   │   │   │   ├── signature-pad.tsx
+│   │   │   │   ├── skeleton.tsx
+│   │   │   │   ├── slider.tsx
+│   │   │   │   ├── spinner.tsx
+│   │   │   │   ├── splitter.tsx
+│   │   │   │   ├── styled
+│   │   │   │   │   ├── absolute-center.tsx
+│   │   │   │   │   ├── accordion.tsx
+│   │   │   │   │   ├── alert.tsx
+│   │   │   │   │   ├── angle-slider.tsx
+│   │   │   │   │   ├── avatar.tsx
+│   │   │   │   │   ├── badge.tsx
+│   │   │   │   │   ├── breadcrumb.tsx
+│   │   │   │   │   ├── button.tsx
+│   │   │   │   │   ├── card.tsx
+│   │   │   │   │   ├── carousel.tsx
+│   │   │   │   │   ├── checkbox.tsx
+│   │   │   │   │   ├── clipboard.tsx
+│   │   │   │   │   ├── close-button.tsx
+│   │   │   │   │   ├── code.tsx
+│   │   │   │   │   ├── collapsible.tsx
+│   │   │   │   │   ├── color-picker.tsx
+│   │   │   │   │   ├── combobox.tsx
+│   │   │   │   │   ├── date-picker.tsx
+│   │   │   │   │   ├── dialog.tsx
+│   │   │   │   │   ├── drawer.tsx
+│   │   │   │   │   ├── editable.tsx
+│   │   │   │   │   ├── field.tsx
+│   │   │   │   │   ├── fieldset.tsx
+│   │   │   │   │   ├── file-upload.tsx
+│   │   │   │   │   ├── form-label.tsx
+│   │   │   │   │   ├── group.tsx
+│   │   │   │   │   ├── heading.tsx
+│   │   │   │   │   ├── hover-card.tsx
+│   │   │   │   │   ├── icon-button.tsx
+│   │   │   │   │   ├── icon.tsx
+│   │   │   │   │   ├── image.tsx
+│   │   │   │   │   ├── input-addon.tsx
+│   │   │   │   │   ├── input-group.tsx
+│   │   │   │   │   ├── input.tsx
+│   │   │   │   │   ├── kbd.tsx
+│   │   │   │   │   ├── link.tsx
+│   │   │   │   │   ├── listbox.tsx
+│   │   │   │   │   ├── loader.tsx
+│   │   │   │   │   ├── menu.tsx
+│   │   │   │   │   ├── number-input.tsx
+│   │   │   │   │   ├── pagination.tsx
+│   │   │   │   │   ├── pin-input.tsx
+│   │   │   │   │   ├── popover.tsx
+│   │   │   │   │   ├── progress.tsx
+│   │   │   │   │   ├── qr-code.tsx
+│   │   │   │   │   ├── radio-group.tsx
+│   │   │   │   │   ├── rating-group.tsx
+│   │   │   │   │   ├── scroll-area.tsx
+│   │   │   │   │   ├── segment-group.tsx
+│   │   │   │   │   ├── select.tsx
+│   │   │   │   │   ├── signature-pad.tsx
+│   │   │   │   │   ├── skeleton.tsx
+│   │   │   │   │   ├── slider.tsx
+│   │   │   │   │   ├── span.tsx
+│   │   │   │   │   ├── spinner.tsx
+│   │   │   │   │   ├── splitter.tsx
+│   │   │   │   │   ├── switch.tsx
+│   │   │   │   │   ├── table.tsx
+│   │   │   │   │   ├── tabs.tsx
+│   │   │   │   │   ├── tags-input.tsx
+│   │   │   │   │   ├── text.tsx
+│   │   │   │   │   ├── textarea.tsx
+│   │   │   │   │   ├── toast.tsx
+│   │   │   │   │   ├── toggle-group.tsx
+│   │   │   │   │   └── tooltip.tsx
+│   │   │   │   ├── switch.tsx
+│   │   │   │   ├── table.tsx
+│   │   │   │   ├── tabs.tsx
+│   │   │   │   ├── tags-input.tsx
+│   │   │   │   ├── text.tsx
+│   │   │   │   ├── textarea.tsx
+│   │   │   │   ├── toast.tsx
+│   │   │   │   ├── toggle-group.tsx
+│   │   │   │   └── tooltip.tsx
+│   │   │   ├── create-icon.tsx
+│   │   │   ├── globals.css
+│   │   │   ├── preset
+│   │   │   │   ├── index.ts
+│   │   │   │   └── theme
+│   │   │   │       ├── animation-styles.ts
+│   │   │   │       ├── breakpoints.ts
+│   │   │   │       ├── colors
+│   │   │   │       │   ├── amber.ts
+│   │   │   │       │   ├── blue.ts
+│   │   │   │       │   ├── bronze.ts
+│   │   │   │       │   ├── brown.ts
+│   │   │   │       │   ├── crimson.ts
+│   │   │   │       │   ├── cyan.ts
+│   │   │   │       │   ├── gold.ts
+│   │   │   │       │   ├── grass.ts
+│   │   │   │       │   ├── gray.ts
+│   │   │   │       │   ├── green.ts
+│   │   │   │       │   ├── index.ts
+│   │   │   │       │   ├── indigo.ts
+│   │   │   │       │   ├── iris.ts
+│   │   │   │       │   ├── jade.ts
+│   │   │   │       │   ├── lime.ts
+│   │   │   │       │   ├── mauve.ts
+│   │   │   │       │   ├── mint.ts
+│   │   │   │       │   ├── olive.ts
+│   │   │   │       │   ├── orange.ts
+│   │   │   │       │   ├── pink.ts
+│   │   │   │       │   ├── plum.ts
+│   │   │   │       │   ├── purple.ts
+│   │   │   │       │   ├── red.ts
+│   │   │   │       │   ├── ruby.ts
+│   │   │   │       │   ├── sage.ts
+│   │   │   │       │   ├── sand.ts
+│   │   │   │       │   ├── sky.ts
+│   │   │   │       │   ├── slate.ts
+│   │   │   │       │   ├── teal.ts
+│   │   │   │       │   ├── tomato.ts
+│   │   │   │       │   ├── violet.ts
+│   │   │   │       │   └── yellow.ts
+│   │   │   │       ├── conditions.ts
+│   │   │   │       ├── generate-colors.ts
+│   │   │   │       ├── global-css.ts
+│   │   │   │       ├── keyframes.ts
+│   │   │   │       ├── layer-styles.ts
+│   │   │   │       ├── recipes
+│   │   │   │       │   ├── absolute-center.ts
+│   │   │   │       │   ├── accordion.ts
+│   │   │   │       │   ├── alert.ts
+│   │   │   │       │   ├── angle-slider.ts
+│   │   │   │       │   ├── avatar.ts
+│   │   │   │       │   ├── badge.ts
+│   │   │   │       │   ├── breadcrumb.ts
+│   │   │   │       │   ├── button.ts
+│   │   │   │       │   ├── card.ts
+│   │   │   │       │   ├── carousel.ts
+│   │   │   │       │   ├── checkbox.ts
+│   │   │   │       │   ├── checkmark.ts
+│   │   │   │       │   ├── clipboard.ts
+│   │   │   │       │   ├── code.ts
+│   │   │   │       │   ├── collapsible.ts
+│   │   │   │       │   ├── color-picker.ts
+│   │   │   │       │   ├── color-swatch.ts
+│   │   │   │       │   ├── combobox.ts
+│   │   │   │       │   ├── container.ts
+│   │   │   │       │   ├── date-picker.ts
+│   │   │   │       │   ├── dialog.ts
+│   │   │   │       │   ├── divider.ts
+│   │   │   │       │   ├── drawer.ts
+│   │   │   │       │   ├── editable.ts
+│   │   │   │       │   ├── field.ts
+│   │   │   │       │   ├── fieldset.ts
+│   │   │   │       │   ├── file-upload.ts
+│   │   │   │       │   ├── floating-panel.ts
+│   │   │   │       │   ├── form-label.ts
+│   │   │   │       │   ├── group.ts
+│   │   │   │       │   ├── heading.ts
+│   │   │   │       │   ├── hover-card.ts
+│   │   │   │       │   ├── icon.ts
+│   │   │   │       │   ├── index.ts
+│   │   │   │       │   ├── input-addon.ts
+│   │   │   │       │   ├── input-group.ts
+│   │   │   │       │   ├── input.ts
+│   │   │   │       │   ├── kbd.ts
+│   │   │   │       │   ├── link.ts
+│   │   │   │       │   ├── listbox.ts
+│   │   │   │       │   ├── marquee.ts
+│   │   │   │       │   ├── menu.ts
+│   │   │   │       │   ├── number-input.ts
+│   │   │   │       │   ├── pagination.ts
+│   │   │   │       │   ├── password-input.ts
+│   │   │   │       │   ├── pin-input.ts
+│   │   │   │       │   ├── popover.ts
+│   │   │   │       │   ├── progress-circle.ts
+│   │   │   │       │   ├── progress.ts
+│   │   │   │       │   ├── qr-code.ts
+│   │   │   │       │   ├── radio-group.ts
+│   │   │   │       │   ├── radiomark.ts
+│   │   │   │       │   ├── rating-group.ts
+│   │   │   │       │   ├── scroll-area.ts
+│   │   │   │       │   ├── segment-group.ts
+│   │   │   │       │   ├── select.ts
+│   │   │   │       │   ├── signature-pad.ts
+│   │   │   │       │   ├── skeleton.ts
+│   │   │   │       │   ├── slider.ts
+│   │   │   │       │   ├── spinner.ts
+│   │   │   │       │   ├── splitter.ts
+│   │   │   │       │   ├── steps.ts
+│   │   │   │       │   ├── switch.ts
+│   │   │   │       │   ├── table.ts
+│   │   │   │       │   ├── tabs.ts
+│   │   │   │       │   ├── tags-input.ts
+│   │   │   │       │   ├── text.ts
+│   │   │   │       │   ├── textarea.ts
+│   │   │   │       │   ├── timer.ts
+│   │   │   │       │   ├── toast.ts
+│   │   │   │       │   ├── toggle-group.ts
+│   │   │   │       │   ├── toggle.ts
+│   │   │   │       │   ├── tooltip.ts
+│   │   │   │       │   ├── tour.ts
+│   │   │   │       │   └── tree-view.ts
+│   │   │   │       ├── recipes.ts
+│   │   │   │       ├── semantic-tokens
+│   │   │   │       │   ├── colors.ts
+│   │   │   │       │   ├── radii.ts
+│   │   │   │       │   └── shadows.ts
+│   │   │   │       ├── slot-recipes.ts
+│   │   │   │       ├── text-styles.ts
+│   │   │   │       └── tokens
+│   │   │   │           ├── animations.ts
+│   │   │   │           ├── aspect-ratios.ts
+│   │   │   │           ├── blurs.ts
+│   │   │   │           ├── borders.ts
+│   │   │   │           ├── colors.ts
+│   │   │   │           ├── cursor.ts
+│   │   │   │           ├── durations.ts
+│   │   │   │           ├── easings.ts
+│   │   │   │           ├── font-sizes.ts
+│   │   │   │           ├── font-weights.ts
+│   │   │   │           ├── fonts.ts
+│   │   │   │           ├── keyframes.ts
+│   │   │   │           ├── letter-spacing.ts
+│   │   │   │           ├── line-heights.ts
+│   │   │   │           ├── radius.ts
+│   │   │   │           ├── sizes.ts
+│   │   │   │           ├── spacing.ts
+│   │   │   │           └── z-indices.ts
+│   │   │   └── providers
+│   │   │       └── ui.tsx
+│   │   └── tsconfig.json
+│   └── updates
+│       ├── AGENTS.md
+│       ├── CHANGELOG.md
+│       ├── README.md
+│       └── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── runtime
+│   ├── adapters
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   └── index.ts
+│   │   └── tsconfig.json
+│   ├── core
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   └── index.ts
+│   │   └── tsconfig.json
+│   ├── manager
+│   │   ├── README.md
+│   │   ├── package.json
+│   │   ├── src
+│   │   │   └── index.ts
+│   │   └── tsconfig.json
+│   └── registry
+│       ├── README.md
+│       ├── package.json
+│       ├── src
+│       │   └── index.ts
+│       └── tsconfig.json
+├── scripts
+│   └── README.md
+├── skills
+│   └── standards
+│       ├── SKILL.md
+│       ├── agents
+│       │   └── openai.yaml
+│       └── references
+│           ├── architecture
+│           │   ├── client-and-server.md
+│           │   ├── documentation-and-generated.md
+│           │   ├── ownership-and-dependencies.md
+│           │   ├── product-and-source.md
+│           │   └── storage-and-snapshots.md
+│           ├── architecture.md
+│           ├── conventions
+│           │   ├── backend-and-tooling.md
+│           │   ├── design.md
+│           │   ├── interfaces-and-ui.md
+│           │   ├── naming-and-packages.md
+│           │   ├── task-files.md
+│           │   ├── tests-and-docs.md
+│           │   └── typescript-and-exports.md
+│           ├── conventions.md
+│           ├── release.md
+│           ├── workflows
+│           │   ├── dependencies-and-docs-site.md
+│           │   ├── environment-and-pnpm.md
+│           │   ├── persisted-data-and-git.md
+│           │   ├── validation.md
+│           │   └── vitest-and-test-strategy.md
+│           └── workflows.md
+├── tests
+│   └── repository.test.ts
+├── tsconfig.json
+├── turbo.json
+└── vitest.config.ts
+
+154 directories, 757 files

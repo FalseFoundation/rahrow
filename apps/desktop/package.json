@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/app-desktop",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow desktop application",
+	"type": "module",
+	"scripts": {}
+}

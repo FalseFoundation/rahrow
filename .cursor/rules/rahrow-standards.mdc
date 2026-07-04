@@ -1,0 +1,11 @@
+---
+description: Apply RahRow repository architecture, storage, testing, documentation, and release standards
+alwaysApply: true
+---
+
+Follow `AGENTS.md` as the canonical repository entrypoint.
+
+Read `skills/standards/SKILL.md` and load its task-relevant references before
+changing the repository. Update the standards skill whenever architecture,
+commands, package identities, persisted formats, documentation workflows, or
+completion rules change.

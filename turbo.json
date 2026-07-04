@@ -1,0 +1,24 @@
+{
+	"$schema": "./node_modules/turbo/schema.json",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"outputs": [".next/**", "dist/**", ".velite/**", "!.next/cache/**", "styled-system/**"]
+		},
+		"clean": {},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"start": {
+			"persistent": true
+		},
+		"test": {
+			"outputs": []
+		},
+		"test:watch": {
+			"cache": false,
+			"persistent": true
+		}
+	}
+}

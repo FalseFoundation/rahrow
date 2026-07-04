@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/benchmark",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow benchmark package",
+	"type": "module",
+	"scripts": {}
+}

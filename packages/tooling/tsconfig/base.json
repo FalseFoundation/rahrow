@@ -1,0 +1,23 @@
+{
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"display": "Default",
+	"compilerOptions": {
+		"allowImportingTsExtensions": true,
+		"declaration": true,
+		"declarationMap": true,
+		"isolatedModules": true,
+		"lib": ["es2022"],
+		"types": ["node"],
+		"moduleDetection": "force",
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"noImplicitOverride": true,
+		"noUncheckedIndexedAccess": true,
+		"resolveJsonModule": true,
+		"rewriteRelativeImportExtensions": true,
+		"skipLibCheck": true,
+		"strict": true,
+		"target": "es2022",
+		"verbatimModuleSyntax": false
+	}
+}

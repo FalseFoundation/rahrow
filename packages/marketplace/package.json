@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/marketplace",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow marketplace package",
+	"type": "module",
+	"scripts": {}
+}

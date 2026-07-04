@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/telemetry",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow telemetry package",
+	"type": "module",
+	"scripts": {}
+}

@@ -1,0 +1,9 @@
+[package]
+name = "rahrow-dns"
+version = "0.0.0"
+edition = "2024"
+description = "RahRow dns crate"
+license = "MIT"
+publish = false
+
+[dependencies]

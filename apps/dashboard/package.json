@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/app-dashboard",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow dashboard application",
+	"type": "module",
+	"scripts": {}
+}

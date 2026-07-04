@@ -1,0 +1,10 @@
+{
+	"name": "@rahrow/static",
+	"type": "module",
+	"private": true,
+	"version": "0.1.0",
+	"sideEffects": false,
+	"exports": {
+		"./*": "./src/fonts/*.*"
+	}
+}

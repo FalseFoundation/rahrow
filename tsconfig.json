@@ -1,0 +1,11 @@
+{
+	"extends": "@rahrow/tooling/tsconfig/base.json",
+	"exclude": [
+		"**/*.test.ts",
+		"**/*.test.tsx",
+		"**/dist",
+		"**/node_modules",
+		"**/.next",
+		"**/.turbo"
+	]
+}

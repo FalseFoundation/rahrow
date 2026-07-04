@@ -1,0 +1,8 @@
+{
+	"name": "@rahrow/notifications",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow notifications package",
+	"type": "module",
+	"scripts": {}
+}
