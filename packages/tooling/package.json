@@ -1,15 +1,23 @@
 {
 	"name": "@rahrow/tooling",
+	"type": "module",
 	"private": true,
 	"version": "0.1.0",
 	"sideEffects": false,
 	"exports": {
-		"./tsconfig/*": "./tsconfig/*",
-		"./nestjs/*": "./nestjs/*",
-		"./nextjs/*": "./nextjs/*",
-		"./panda": "./panda.ts",
-		"./postcss/panda": "./postcss/panda.cjs",
-		"./vite": "./vite.ts"
+		"./*": "./src/*",
+		"./tsconfig/*": "./src/tsconfig/*",
+		"./nestjs/*": "./src/nestjs/*",
+		"./nextjs/*": "./src/nextjs/*",
+		"./panda": "./src/panda.ts",
+		"./postcss/panda": "./src/postcss/panda.cjs",
+		"./vite": "./src/vite.ts",
+		"./tauri": "./src/tauri.ts",
+		"./expo": "./src/expo.ts",
+		"./ark": "./src/ark.ts",
+		"./react": "./src/react.ts",
+		"./react-native": "./src/react-native.ts",
+		"./biome": "./src/biome.json"
 	},
 	"dependencies": {
 		"@pandacss/dev": "1.11.3",

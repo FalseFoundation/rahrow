@@ -4,5 +4,33 @@
 	"version": "0.0.0",
 	"description": "RahRow desktop application",
 	"type": "module",
-	"scripts": {}
+	"scripts": {
+		"dev": "tauri dev",
+		"dev:web": "vite --host 0.0.0.0 --port 1420",
+		"predev:web": "panda codegen",
+		"build": "tsc -b && vite build",
+		"build:web": "tsc -b && vite build",
+		"prebuild": "panda codegen",
+		"prebuild:web": "panda codegen",
+		"typecheck": "tsc --noEmit",
+		"panda:codegen": "panda codegen --clean"
+	},
+	"dependencies": {
+		"@rahrow/tooling": "workspace:*",
+		"@rahrow/ui": "workspace:*",
+		"@tauri-apps/api": "^2.0.0",
+		"react": "^19.2.7",
+		"react-dom": "^19.2.7"
+	},
+	"devDependencies": {
+		"@ark-ui/react": "^5.37.2",
+		"@pandacss/dev": "1.11.3",
+		"@tauri-apps/cli": "^2.0.0",
+		"@types/react": "^19.2.17",
+		"@types/react-dom": "^19.2.3",
+		"@vitejs/plugin-react": "^6.0.0",
+		"postcss": "^8.5.15",
+		"typescript": "^6.0.3",
+		"vite": "^8.1.0"
+	}
 }

@@ -25,7 +25,8 @@ pnpm-debug.log*
 /out/
 
 # production
-/build
+**/build
+**/target
 
 # misc
 **/.DS_Store

@@ -1,38 +1,4 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"vcs": {
-		"enabled": true,
-		"clientKind": "git",
-		"useIgnoreFile": true
-	},
-	"files": {
-		"maxSize": 10485760
-	},
-	"formatter": {
-		"enabled": true,
-		"indentStyle": "tab",
-		"indentWidth": 2,
-		"lineWidth": 100
-	},
-	"linter": {
-		"enabled": true
-	},
-	"javascript": {
-		"formatter": {
-			"bracketSpacing": true,
-			"bracketSameLine": false,
-			"semicolons": "asNeeded",
-			"quoteStyle": "single",
-			"jsxQuoteStyle": "single",
-			"trailingCommas": "all",
-			"indentWidth": 2,
-			"indentStyle": "tab"
-		}
-	},
-	"json": {
-		"formatter": {
-			"indentWidth": 2,
-			"indentStyle": "tab"
-		}
-	}
+	"extends": ["./packages/tooling/biome.json"]
 }

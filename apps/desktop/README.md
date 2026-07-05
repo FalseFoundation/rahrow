@@ -1,7 +1,7 @@
 # desktop
 
 ## Purpose
-RahRow desktop app workspace scaffold (Tauri + React).
+RahRow desktop app workspace scaffold (Tauri v2 + Vite + React).
 
 ## Responsibilities
 - Host platform-specific code for the desktop surface.
@@ -31,4 +31,4 @@ src-tauri/icons/         Desktop icon assets
 - RahRow users of the desktop application.
 
 ## Future Plans
-- Add Tauri configuration and runtime bridge contracts.
+- Add application features and runtime bridge contracts.

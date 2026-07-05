@@ -1,6 +1,6 @@
 # RahRow
 
-RahRow is an open-source, cross-platform, privacy-first proxy client platform monorepo scaffold.
+RahRow is an open-source, cross-platform, privacy-first proxy client platform.
 
 ## Purpose
 This repository provides long-term architecture foundations for apps, packages, runtime layers, and platform tooling.
