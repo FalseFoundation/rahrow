@@ -1,8 +1,0 @@
-{
-	"name": "@rahrow/geo",
-	"private": true,
-	"version": "0.0.0",
-	"description": "RahRow geo package",
-	"type": "module",
-	"scripts": {}
-}

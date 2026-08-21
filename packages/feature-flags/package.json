@@ -1,8 +1,0 @@
-{
-	"name": "@rahrow/feature-flags",
-	"private": true,
-	"version": "0.0.0",
-	"description": "RahRow feature-flags package",
-	"type": "module",
-	"scripts": {}
-}

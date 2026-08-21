@@ -1,8 +1,0 @@
-{
-	"name": "@rahrow/logger",
-	"private": true,
-	"version": "0.0.0",
-	"description": "RahRow logger package",
-	"type": "module",
-	"scripts": {}
-}

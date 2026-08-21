@@ -1,9 +1,0 @@
-[package]
-name = "rahrow-core"
-version = "0.0.0"
-edition = "2024"
-description = "RahRow Rust core utilities crate"
-license = "MIT"
-publish = false
-
-[dependencies]

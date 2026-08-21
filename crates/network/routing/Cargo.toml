@@ -1,9 +1,0 @@
-[package]
-name = "rahrow-routing"
-version = "0.0.0"
-edition = "2024"
-description = "RahRow routing crate"
-license = "MIT"
-publish = false
-
-[dependencies]

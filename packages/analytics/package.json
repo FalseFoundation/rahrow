@@ -1,8 +1,0 @@
-{
-	"name": "@rahrow/analytics",
-	"private": true,
-	"version": "0.0.0",
-	"description": "RahRow analytics package",
-	"type": "module",
-	"scripts": {}
-}

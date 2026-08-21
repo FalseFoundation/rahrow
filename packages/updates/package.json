@@ -1,8 +1,0 @@
-{
-	"name": "@rahrow/updates",
-	"private": true,
-	"version": "0.0.0",
-	"description": "RahRow updates package",
-	"type": "module",
-	"scripts": {}
-}

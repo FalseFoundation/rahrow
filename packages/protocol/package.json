@@ -1,8 +1,0 @@
-{
-	"name": "@rahrow/protocol",
-	"private": true,
-	"version": "0.0.0",
-	"description": "RahRow protocol package",
-	"type": "module",
-	"scripts": {}
-}

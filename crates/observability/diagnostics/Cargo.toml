@@ -1,9 +1,0 @@
-[package]
-name = "rahrow-diagnostics"
-version = "0.0.0"
-edition = "2024"
-description = "RahRow diagnostics crate"
-license = "MIT"
-publish = false
-
-[dependencies]

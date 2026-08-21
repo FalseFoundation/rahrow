@@ -1,8 +1,0 @@
-{
-	"name": "@rahrow/dns",
-	"private": true,
-	"version": "0.0.0",
-	"description": "RahRow dns package",
-	"type": "module",
-	"scripts": {}
-}

@@ -1,9 +1,0 @@
-[package]
-name = "rahrow-tun"
-version = "0.0.0"
-edition = "2024"
-description = "RahRow tun crate"
-license = "MIT"
-publish = false
-
-[dependencies]
