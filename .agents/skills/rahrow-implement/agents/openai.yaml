@@ -1,4 +1,0 @@
-interface:
-  display_name: "RahRow Standards"
-  short_description: "Apply RahRow architecture and workflow rules"
-  default_prompt: "Use $standards to apply RahRow storage, modular architecture, naming, testing, documentation, and release conventions to this change."
