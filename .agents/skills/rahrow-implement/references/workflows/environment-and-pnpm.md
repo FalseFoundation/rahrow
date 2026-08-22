@@ -31,6 +31,7 @@ apps/www
 packages/core
 packages/engine
 packages/tooling
+packages/ui
 ```
 
 Current root commands:
@@ -58,9 +59,9 @@ Current behavior:
 - `format` runs `biome format --write .`.
 - `clean` runs the Turbo clean task.
 
-`@rahrow/core` and `@rahrow/engine` currently define `build` and `test`.
-Their builds run strict TypeScript checks, and their tests run owning source
-tests through Vitest. Other active workspaces should be inspected before
+`@rahrow/core`, `@rahrow/engine`, and `@rahrow/ui` currently define `build` and
+`test`. Their builds run strict TypeScript checks, and their tests run owning
+source tests through Vitest. Other active workspaces should be inspected before
 assuming they define `build`, `test`, `typecheck`, or `dev`.
 
 Use exact package names:

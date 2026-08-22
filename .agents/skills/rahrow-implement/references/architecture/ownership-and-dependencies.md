@@ -12,6 +12,7 @@ Repository ownership, package identity, dependency flow, and core runtime owners
 | `packages/core` | Shared TypeScript domain contracts, schemas, and ports |
 | `packages/engine` | Proxy engine implementations behind core contracts |
 | `packages/tooling` | Shared TypeScript, Vite, Tauri, React, docs, and formatting presets |
+| `packages/ui` | Shared React UI primitives and global interface styles |
 | `docs/` | First-party repository and product documentation |
 | `skills/` | Agent-facing repository standards and workflows |
 
@@ -47,6 +48,8 @@ Rules:
 
 - Shared contracts should not depend on higher-level app surfaces.
 - Engine adapters may depend on shared contracts but should not depend on app presentation layers.
+- Shared UI may depend on tooling and UI-specific utilities but must not own
+  RahRow domain behavior.
 - A client package must not become the domain API for another client.
 - Apps may consume packages; shared packages must not depend on apps.
 - Keep framework-specific DTOs and view models in the owning interface unless

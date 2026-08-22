@@ -31,11 +31,12 @@ Canonical workspace identities:
 @rahrow/app-desktop
 @rahrow/app-mobile
 @rahrow/www
+@rahrow/ui
 ```
 
-`@rahrow/core` is the public domain contract package. `@rahrow/engine` and apps
-remain private until their release and runtime contracts are deliberately
-defined.
+`@rahrow/core` is the public domain contract package. `@rahrow/engine`,
+`@rahrow/ui`, and apps remain private until their release and runtime contracts
+are deliberately defined.
 
 Use the exact current manifest name in dependencies, filters, and Changesets.
 Package directories and names must agree. Fix duplicate or misplaced identities
