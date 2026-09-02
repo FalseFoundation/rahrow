@@ -1,0 +1,12 @@
+{
+	"extends": "@rahrow/tooling/tsconfig/base.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"]
+		},
+		"rootDir": "./src",
+		"outDir": "./dist"
+	},
+	"include": ["./src"],
+	"exclude": ["node_modules", "src/**/*.test.ts"]
+}

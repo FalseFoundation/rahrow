@@ -1,0 +1,19 @@
+{
+	"id": "trojan:example.net:8443",
+	"protocol": "trojan",
+	"endpoint": {
+		"host": "example.net",
+		"port": 8443
+	},
+	"security": {
+		"type": "tls",
+		"serverName": "tls.example.net"
+	},
+	"authentication": {
+		"password": "secret"
+	},
+	"metadata": {
+		"name": "Trojan",
+		"source": "url"
+	}
+}

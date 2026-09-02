@@ -1,0 +1,24 @@
+{
+	"id": "vmess:vmess.example.com:443",
+	"protocol": "vmess",
+	"endpoint": {
+		"host": "vmess.example.com",
+		"port": 443
+	},
+	"transport": {
+		"type": "ws",
+		"host": "cdn.example.com",
+		"path": "/ray"
+	},
+	"security": {
+		"type": "tls",
+		"serverName": "vmess.example.com"
+	},
+	"authentication": {
+		"id": "22222222-2222-4222-8222-222222222222"
+	},
+	"metadata": {
+		"name": "VMess",
+		"source": "url"
+	}
+}

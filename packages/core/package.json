@@ -1,0 +1,30 @@
+{
+	"name": "@rahrow/core",
+	"version": "0.0.0",
+	"description": "RahRow domain contracts and application capabilities.",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		"./*": "./src/*"
+	},
+	"scripts": {
+		"watch": "tsc --watch --preserveWatchOutput",
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"cleanup": "rm -rf dist .turbo node_modules"
+	},
+	"dependencies": {
+		"@tanstack/pacer": "^0.22.0",
+		"pino": "^10.3.1",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@rahrow/tooling": "workspace:*",
+		"vitest": "^4.1.11"
+	},
+	"files": [
+		"src",
+		"README.md"
+	]
+}
