@@ -1,13 +1,23 @@
-import { defineConfig } from 'vitest/config'
+import { createVitestConfig } from '@rahrow/tooling/vitest.ts'
 
-export default defineConfig({
+export default createVitestConfig({
 	test: {
-		name: 'rahrow',
-		environment: 'node',
-		include: ['apps/**/*.test.{ts,tsx}', 'packages/**/*.test.{ts,tsx}', 'tests/**/*.test.{ts,tsx}'],
-		clearMocks: true,
-		restoreMocks: true,
-		unstubEnvs: true,
-		unstubGlobals: true,
+		projects: [
+			'apps/cli',
+			'apps/desktop',
+			'apps/mobile',
+			'packages/ads',
+			'packages/core',
+			'packages/engine',
+			'packages/features',
+			'packages/ui',
+			{
+				extends: true,
+				test: {
+					name: 'repo',
+					include: ['tests/**/*.test.{ts,tsx}'],
+				},
+			},
+		],
 	},
 })

@@ -17,36 +17,38 @@
 	"description": "RahRow monorepo root",
 	"type": "module",
 	"scripts": {
-		"dev": "turbo dev",
-		"build": "turbo build",
-		"test": "turbo test && vitest run --passWithNoTests",
+		"dev": "turbo run dev",
+		"build": "turbo run build",
+		"test": "vitest run --passWithNoTests",
+		"watch": "turbo run watch",
 		"lint": "biome check .",
 		"format": "biome format --write .",
-		"check": "pnpm lint && pnpm test && pnpm build",
-		"clean": "turbo clean",
+		"check": "biome check .",
+		"bundle:desktop": "turbo run bundle --filter=@rahrow/desktop",
+		"bundle:android": "turbo run bundle:android --filter=@rahrow/mobile",
+		"bundle:ios": "turbo run bundle:ios --filter=@rahrow/mobile",
+		"native:build:android": "turbo run native:build:android --filter=@rahrow/mobile",
+		"native:build:apple": "turbo run native:build:apple --filter=@rahrow/mobile",
+		"native:verify": "turbo run native:verify --filter=@rahrow/mobile",
+		"cleanup": "turbo run cleanup && rm -rf .turbo && pnpm clean --lockfile",
 		"update-deps": "pnpm up --latest --recursive && pnpm dedupe && pnpm audit --fix update"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.5.0",
-		"@changesets/cli": "^2.31.0",
+		"@biomejs/biome": "2.5.9",
+		"@changesets/cli": "^3.0.1",
 		"@rahrow/tooling": "workspace:*",
-		"@types/node": "^25.9.3",
-		"@types/react": "^19.2.17",
-		"husky": "^9.1.7",
-		"lint-staged": "^17.0.7",
-		"turbo": "2.9.18",
-		"typescript": "^6.0.3",
-		"vitest": "^4.1.8"
+		"@types/node": "^26.2.0",
+		"@types/react": "^19.2.18",
+		"turbo": "2.10.11",
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.11"
 	},
 	"packageManager": "pnpm@11.5.2",
 	"engines": {
 		"node": ">=24.16.0",
 		"pnpm": ">=11.2.2"
 	},
-	"lint-staged": {
-		"*.{ts,tsx,js,jsx,json,jsonc,css,mdx}": [
-			"biome check --write --no-errors-on-unmatched",
-			"biome format --write --no-errors-on-unmatched"
-		]
+	"dependencies": {
+		"@taskset/cli": "^2.0.0"
 	}
 }

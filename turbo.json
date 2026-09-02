@@ -3,10 +3,48 @@
 	"tasks": {
 		"build": {
 			"dependsOn": ["^build"],
-			"outputs": [".next/**", "dist/**", ".velite/**", "!.next/cache/**", "styled-system/**"]
+			"outputs": [".next/**", "dist/**", ".velite/**", "!.next/cache/**"]
 		},
-		"clean": {},
+		"bundle": {
+			"dependsOn": ["build"],
+			"cache": false,
+			"outputs": ["src-tauri/target/release/bundle/**"]
+		},
+		"bundle:verify": {
+			"cache": false,
+			"outputs": []
+		},
+		"bundle:android": {
+			"dependsOn": ["build"],
+			"cache": false,
+			"outputs": ["android/app/build/outputs/**"]
+		},
+		"bundle:ios": {
+			"dependsOn": ["build"],
+			"cache": false,
+			"outputs": []
+		},
+		"native:build:android": {
+			"cache": false,
+			"outputs": ["native-runtimes/**", "native-runtime-lock.json"]
+		},
+		"native:build:apple": {
+			"cache": false,
+			"outputs": ["native-runtimes/**", "native-runtime-lock.json"]
+		},
+		"native:verify": {
+			"cache": false,
+			"outputs": []
+		},
+		"cleanup": {
+			"cache": false,
+			"persistent": false
+		},
 		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"watch": {
 			"cache": false,
 			"persistent": true
 		},
@@ -14,11 +52,12 @@
 			"persistent": true
 		},
 		"test": {
+			"dependsOn": ["^test", "@rahrow/tooling#build"],
 			"outputs": []
 		},
-		"test:watch": {
-			"cache": false,
-			"persistent": true
+		"typecheck": {
+			"dependsOn": ["^typecheck"],
+			"outputs": []
 		}
 	}
 }

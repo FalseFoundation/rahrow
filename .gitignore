@@ -1,6 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
+/.pnpm-store
 /node_modules
 /.pnp
 **/.pnp.*
@@ -19,6 +20,7 @@ pnpm-debug.log*
 
 # testing
 /coverage
+/.artifacts
 
 # next.js
 /.next/
@@ -59,6 +61,8 @@ yarn-error.log*
 **/out
 **/dist
 **/logs
+!packages/features/src/logs/
+!packages/features/src/logs/**
 **/certificates
 **/build
 **/.turbo
@@ -66,3 +70,11 @@ yarn-error.log*
 **/exports
 
 .codebase-memory
+.impeccable
+
+#tauri
+**/src-tauri/target
+**/src-tauri/gen
+**/src-tauri/binaries/xray-*
+# **/src-tauri/icons
+# **/src-tauri/capabilities

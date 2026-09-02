@@ -18,6 +18,5 @@ jobs:
           node-version: 24.16.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm test
-      - run: pnpm build
+      - run: pnpm --filter @rahrow/mobile native:verify-pins
+      - run: pnpm check

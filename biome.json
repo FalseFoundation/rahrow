@@ -1,4 +1,52 @@
 {
 	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-	"extends": ["./packages/tooling/src/biome.json"]
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": ["**", "!**/.agents"],
+		"maxSize": 10485760
+	},
+	"formatter": {
+		"bracketSpacing": true,
+		"bracketSameLine": false,
+		"indentWidth": 1,
+		"indentStyle": "tab"
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"security": {
+				"noDangerouslySetInnerHtml": "off",
+				"noDangerouslySetInnerHtmlWithChildren": "off"
+			}
+		}
+	},
+	"javascript": {
+		"formatter": {
+			"bracketSpacing": true,
+			"bracketSameLine": false,
+			"semicolons": "asNeeded",
+			"quoteStyle": "single",
+			"jsxQuoteStyle": "single",
+			"trailingCommas": "all",
+			"indentWidth": 1,
+			"indentStyle": "tab"
+		}
+	},
+	"css": {
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
+	"json": {
+		"formatter": {
+			"bracketSpacing": true,
+			"trailingCommas": "none",
+			"indentWidth": 1,
+			"indentStyle": "tab"
+		}
+	}
 }

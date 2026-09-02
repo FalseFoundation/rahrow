@@ -2,10 +2,72 @@ name: Release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: Release version or candidate label
+        required: true
+        type: string
 
 jobs:
-  prepare:
-    runs-on: ubuntu-latest
+  validate:
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - run: echo 'Release workflow scaffold for RahRow'
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.16.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rahrow/mobile native:verify-pins
+      - run: pnpm check
+      - name: Validate unsigned VPN release evidence
+        run: pnpm --filter @rahrow/desktop validate:vpn-release -- --channel unsigned
+
+  desktop-installers:
+    needs: validate
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            artifact: macos-arm64
+          - runner: macos-15-intel
+            artifact: macos-x64
+          - runner: ubuntu-24.04
+            artifact: linux-x64
+          - runner: windows-2025
+            artifact: windows-x64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.16.0
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install Linux desktop dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec turbo run bundle --filter=@rahrow/desktop
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rahrow-desktop-unsigned-${{ matrix.artifact }}-${{ inputs.version }}
+          path: |
+            apps/desktop/src-tauri/target/release/bundle/**
+            apps/desktop/src-tauri/vpn-release-evidence.json
+          if-no-files-found: error
+
+  unsigned-release-gate:
+    needs: [desktop-installers]
+    runs-on: ubuntu-24.04
+    steps:
+      - run: echo "Unsigned development artifacts passed repository checks. Production publishing remains disabled."
