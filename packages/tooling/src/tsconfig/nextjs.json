@@ -7,10 +7,10 @@
 		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"allowJs": true,
+		"incremental": true,
 		"jsx": "preserve",
-		"lib": ["es2022", "DOM"],
 		"noEmit": true,
-		"declaration": false,
+		"declaration": true,
 		"declarationMap": false
 	}
 }

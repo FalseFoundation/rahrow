@@ -10,7 +10,8 @@ export function createTauriViteConfig(config: UserConfig = {}): UserConfig {
 				strictPort: true,
 			},
 			build: {
-				target: process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
+				target:
+					process.env.TAURI_ENV_PLATFORM === 'windows' ? 'chrome105' : 'safari13',
 				sourcemap: Boolean(process.env.TAURI_ENV_DEBUG),
 				minify: process.env.TAURI_ENV_DEBUG ? false : 'esbuild',
 			},

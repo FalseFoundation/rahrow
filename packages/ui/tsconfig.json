@@ -2,9 +2,12 @@
 	"extends": "@rahrow/tooling/tsconfig/react.json",
 	"compilerOptions": {
 		"paths": {
-			"styled-system/*": ["./styled-system/*"]
-		}
+			"@rahrow/ui/*": ["./src/*"]
+		},
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"noEmit": false
 	},
-	"include": ["."],
-	"exclude": ["node_modules", "dist"]
+	"include": ["./src"],
+	"exclude": ["node_modules"]
 }
