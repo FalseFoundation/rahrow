@@ -1,13 +1,25 @@
-import react from '@vitejs/plugin-react'
-import { createReactAlias } from '@rahrow/tooling/react'
-import { createTauriViteConfig } from '@rahrow/tooling/tauri'
-import { createViteConfig } from '@rahrow/tooling/vite'
+import {
+	createReactAlias,
+	createReactViteConfig,
+} from '@rahrow/tooling/react.ts'
+import { createTauriViteConfig } from '@rahrow/tooling/tauri.ts'
+
+import { webBundleBudgetPlugin, webManualChunks } from '../bundle-policy.ts'
 
 export default createTauriViteConfig(
-	createViteConfig({
-		plugins: [react()],
+	createReactViteConfig({
+		build: {
+			target: 'es2022',
+			rollupOptions: {
+				output: { manualChunks: webManualChunks },
+			},
+		},
+		plugins: [webBundleBudgetPlugin()],
 		resolve: {
-			alias: createReactAlias(process.cwd()),
+			alias: {
+				...createReactAlias(process.cwd()),
+				pino: 'pino/browser.js',
+			},
 		},
 	}),
 )

@@ -1,0 +1,13 @@
+{
+	"bundle": {
+		"active": true,
+		"externalBin": ["binaries/xray", "binaries/sing-box"],
+		"resources": {
+			"binaries/geoip.dat": "geoip.dat",
+			"binaries/geosite.dat": "geosite.dat",
+			"binaries/LICENSE-xray": "LICENSE-xray",
+			"binaries/LICENSE-sing-box": "LICENSE-sing-box",
+			"../../../THIRD_PARTY_NOTICES.md": "THIRD_PARTY_NOTICES.md"
+		}
+	}
+}

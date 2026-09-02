@@ -1,0 +1,8 @@
+{
+	"bundle": {
+		"resources": {
+			"binaries/wintun.dll": "wintun.dll",
+			"binaries/LICENSE-Wintun": "LICENSE-Wintun"
+		}
+	}
+}

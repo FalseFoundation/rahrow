@@ -1,18 +1,15 @@
 {
-  "extends": "@rahrow/tooling/tsconfig/react-native.json",
-  "compilerOptions": {
-    "paths": {
-      "@/*": [
-        "./src/*"
-      ]
-    }
-  },
-  "include": [
-    "app/**/*.ts",
-    "app/**/*.tsx",
-    "src/**/*.ts",
-    "src/**/*.tsx",
-    "expo-env.d.ts",
-    ".expo/types/**/*.ts"
-  ]
+	"extends": "@rahrow/tooling/tsconfig/react.json",
+	"compilerOptions": {
+		"paths": {
+			"@/*": ["./src/*"]
+		}
+	},
+	"include": [
+		"src/**/*.ts",
+		"src/**/*.tsx",
+		"vite.config.ts",
+		"capacitor.config.ts",
+		"../bundle-policy.ts"
+	]
 }

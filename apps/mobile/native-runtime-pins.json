@@ -1,0 +1,80 @@
+{
+	"schemaVersion": 2,
+	"buildToolchains": {
+		"go": {
+			"version": "1.26.7",
+			"downloadPolicy": "local-only"
+		},
+		"androidNdk": {
+			"version": "28.0.13004108",
+			"downloadPolicy": "local-only"
+		}
+	},
+	"targets": {
+		"android": ["arm64-v8a", "armeabi-v7a", "x86", "x86_64"],
+		"apple": ["ios-arm64", "ios-simulator-arm64", "ios-simulator-x86_64"]
+	},
+	"tunnelProviders": {
+		"hev-socks5-tunnel": {
+			"version": "2.17.1",
+			"ref": "2.17.1",
+			"revision": "9a06bc6e7989da54e3d32ff701ef7a7ce4995d3a",
+			"repository": "https://github.com/heiher/hev-socks5-tunnel.git",
+			"license": "MIT",
+			"sourceArchiveSha256": "3c2635be2f73528c2d90db745e47761e78c27dd2f97b342c8edbdecff278f2b4",
+			"submodules": {
+				"src/core": "162dd996299fc2d2bff2dd63728f8a2cd71ed31a",
+				"third-part/hev-task-system": "328f35d903221b51811b3d02b277d665dfbdc75f",
+				"third-part/lwip": "2a11c14c7a32887af25a034e82ef18b0b12076ac",
+				"third-part/yaml": "efa36117a8646d26d12b58e05bac472d7854a70d"
+			},
+			"defaults": ["android", "linux"],
+			"conditional": ["windows"],
+			"experimental": ["ios", "macos"],
+			"requiredArtifacts": ["android"],
+			"androidArtifact": "hev-socks5-tunnel.aar",
+			"appleArtifact": "HevSocks5Tunnel.xcframework.zip",
+			"build": {
+				"android": ["ndk-build"],
+				"apple": ["./build-apple.sh"]
+			}
+		}
+	},
+	"engines": {
+		"xray": {
+			"version": "26.7.28",
+			"ref": "v26.7.28",
+			"revision": "80263da83e96b2972455b0a94b13ee1a10e51391",
+			"repository": "https://github.com/XTLS/libXray.git",
+			"license": "MPL-2.0",
+			"androidProcess": ":vpn_xray",
+			"androidArtifact": "libXray.aar",
+			"appleArtifact": "LibXray.xcframework.zip",
+			"build": {
+				"android": ["python3", "build/main.py", "android"],
+				"apple": ["python3", "build/main.py", "apple", "go"]
+			}
+		},
+		"sing-box": {
+			"version": "1.13.19",
+			"ref": "v1.13.19",
+			"revision": "b5ebaa1fc0f2b94256180b95468e73ef53caa27d",
+			"repository": "https://github.com/SagerNet/sing-box.git",
+			"license": "GPL-3.0-or-later",
+			"androidProcess": ":vpn_sing_box",
+			"androidArtifact": "libbox.aar",
+			"appleArtifact": "Libbox.xcframework.zip",
+			"buildTagsSource": "cmd/internal/build_shared/tags.go",
+			"build": {
+				"android": [
+					"go",
+					"run",
+					"./cmd/internal/build_libbox",
+					"-target",
+					"android"
+				],
+				"apple": ["go", "run", "./cmd/internal/build_libbox", "-target", "apple"]
+			}
+		}
+	}
+}

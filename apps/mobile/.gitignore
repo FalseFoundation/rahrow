@@ -4,3 +4,6 @@
 
 expo-env.d.ts
 # @end expo-cli
+
+native-runtimes/
+native-runtime-lock.json

@@ -1,0 +1,30 @@
+{
+	"schemaVersion": 1,
+	"application": {
+		"scheme": "App",
+		"product": "App.app",
+		"artifact": "RahRow.app",
+		"bundleIdentifier": "foundation.false.rahrow"
+	},
+	"extensions": [
+		{
+			"engineId": "xray",
+			"target": "XrayPacketTunnel",
+			"product": "XrayPacketTunnel.appex",
+			"bundleIdentifier": "foundation.false.rahrow.PacketTunnel.Xray",
+			"framework": "LibXray.xcframework"
+		},
+		{
+			"engineId": "sing-box",
+			"target": "SingBoxPacketTunnel",
+			"product": "SingBoxPacketTunnel.appex",
+			"bundleIdentifier": "foundation.false.rahrow.PacketTunnel.SingBox",
+			"framework": "Libbox.xcframework"
+		}
+	],
+	"simulator": {
+		"vpnAvailable": false,
+		"detail": "iOS Simulator cannot exercise Network Extension packet tunnels. The preview embeds the extension wiring but all VPN starts fail closed."
+	},
+	"metadata": ["native-runtime-pins.json", "THIRD_PARTY_NOTICES.md"]
+}

@@ -1,0 +1,30 @@
+{
+	"name": "@rahrow/cli",
+	"private": true,
+	"version": "0.0.0",
+	"description": "RahRow command line interface.",
+	"type": "module",
+	"bin": {
+		"rahrow": "./src/bin.ts"
+	},
+	"scripts": {
+		"watch": "tsc --watch --preserveWatchOutput",
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"cleanup": "rm -rf dist .turbo node_modules"
+	},
+	"dependencies": {
+		"@rahrow/core": "workspace:*",
+		"@rahrow/engine": "workspace:*"
+	},
+	"devDependencies": {
+		"@rahrow/tooling": "workspace:*",
+		"@types/node": "^26.2.0",
+		"vitest": "^4.1.11"
+	},
+	"files": [
+		"src",
+		"README.md"
+	]
+}

@@ -1,0 +1,4 @@
+/build/*
+!/build/.npmkeep
+/libs/*.aar
+/src/main/assets/rahrow/native-runtime-manifest.json

@@ -1,11 +1,11 @@
 {
 	"$schema": "https://schema.tauri.app/config/2",
-	"productName": "RahRow Desktop",
+	"productName": "RahRow",
 	"version": "0.0.0",
 	"identifier": "foundation.false.rahrow.desktop",
 	"build": {
 		"beforeDevCommand": "pnpm dev:web",
-		"beforeBuildCommand": "pnpm build:web",
+		"beforeBuildCommand": "pnpm build:web && pnpm stage:engine-sidecars && pnpm validate:engine-configs",
 		"devUrl": "http://localhost:1420",
 		"frontendDist": "../dist"
 	},
@@ -13,9 +13,14 @@
 		"windows": [
 			{
 				"label": "main",
-				"title": "RahRow Desktop",
-				"width": 1200,
+				"title": "RahRow",
+				"width": 393,
 				"height": 800,
+				"minWidth": 393,
+				"maxWidth": 393,
+				"minHeight": 640,
+				"backgroundColor": "#171717",
+				"theme": "Dark",
 				"resizable": true
 			}
 		],
@@ -24,6 +29,6 @@
 		}
 	},
 	"bundle": {
-		"active": false
-		}
+		"active": true
+	}
 }
