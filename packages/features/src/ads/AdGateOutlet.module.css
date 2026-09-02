@@ -1,0 +1,56 @@
+.drawer {
+	width: 100%;
+	height: 100dvh;
+	min-height: 100dvh;
+	max-height: 100dvh;
+	border: 0;
+	border-radius: 0;
+}
+
+.visuallyHidden {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+.closeButton {
+	position: absolute;
+	z-index: 1;
+	top: 1rem;
+	inset-inline-end: 1rem;
+}
+
+.body {
+	display: flex;
+	flex: 1;
+	align-items: center;
+	justify-content: center;
+	padding: 1rem 1.5rem;
+}
+
+.mediaPlaceholder {
+	width: min(100%, 11.25rem);
+	aspect-ratio: 9 / 16;
+	border-radius: var(--radius);
+}
+
+.footer {
+	align-items: stretch;
+	gap: 1rem;
+}
+
+.progress {
+	width: 100%;
+}
+
+.footerActions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 0.5rem;
+}

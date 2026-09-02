@@ -1,0 +1,56 @@
+@reference "@rahrow/ui/global.css";
+
+.root {
+	@apply flex min-h-0 flex-auto flex-col overflow-hidden;
+}
+.tabs {
+	@apply mx-4.5 w-fit shrink-0;
+}
+.tabs [data-slot="tabs-trigger"] {
+	@apply flex-none;
+}
+.panel {
+	@apply flex min-h-0 flex-auto flex-col overflow-hidden pt-2;
+}
+.urlForm {
+	@apply flex min-h-0 flex-auto flex-col;
+}
+.panelScroll {
+	@apply min-h-0 flex-1 scrollbar-thin scrollbar-gutter-stable;
+}
+.panelContent {
+	@apply flex flex-col gap-4 px-4.5 pt-3 pb-6;
+}
+.panelFooter {
+	@apply border-t border-border bg-surface px-4.5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))];
+}
+.camera {
+	@apply grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-border bg-muted;
+}
+.camera > * {
+	@apply size-full min-h-0;
+}
+.cameraPlaceholder {
+	@apply flex flex-col items-center justify-center gap-2 p-6 text-center text-muted-foreground;
+}
+.cameraPlaceholder svg {
+	@apply size-10;
+}
+.cameraPlaceholder p {
+	@apply font-medium text-foreground;
+}
+.cameraPlaceholder span {
+	@apply text-xs;
+}
+.primaryAction {
+	@apply min-h-13 w-full;
+}
+.errorDetails {
+	@apply mt-2 text-xs text-muted-foreground;
+}
+.errorDetails summary {
+	@apply cursor-pointer font-medium text-foreground;
+}
+.errorDetails p {
+	@apply mt-1 break-words text-start;
+}

@@ -1,0 +1,52 @@
+@reference "@rahrow/ui/global.css";
+
+.collection {
+	@apply relative
+	/* mt-7  */
+	min-w-0;
+}
+
+.virtualCanvas {
+	@apply relative m-0 w-full list-none p-0;
+	contain: layout style;
+}
+
+.virtualGroup,
+.virtualProfile,
+.virtualGap {
+	@apply top-0 start-0 w-full shrink-0;
+}
+
+.virtualGroup {
+	@apply z-10 bg-background;
+}
+
+.virtualGap {
+	@apply z-0;
+}
+
+.floatingGroupHeaderViewport {
+	@apply z-30 overflow-hidden;
+	transition: none;
+	animation: none;
+	pointer-events: none;
+}
+
+.floatingGroupHeader {
+	@apply border-b border-border/70 bg-background;
+	transition: none;
+	animation: none;
+	pointer-events: auto;
+}
+
+.virtualProfile {
+	@apply z-0;
+}
+
+.virtualProfile[data-first-profile] {
+	padding-block-start: calc(var(--spacing) * 2.25);
+}
+
+.loadingMore {
+	@apply py-4 text-center text-xs text-dim;
+}

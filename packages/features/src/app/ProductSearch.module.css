@@ -1,0 +1,5 @@
+@reference "@rahrow/ui/global.css";
+
+.search {
+	@apply mb-5.5 h-10.5 rounded-md border-transparent bg-glass;
+}

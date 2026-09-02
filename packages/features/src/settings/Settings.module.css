@@ -1,0 +1,91 @@
+@reference "@rahrow/ui/global.css";
+
+.page {
+	@apply min-w-0;
+}
+.topbar {
+	@apply sticky top-0 z-10 flex h-18 items-center justify-between border-b border-border bg-background/90 px-4 backdrop-blur-md sm:px-7;
+}
+.pageTitle {
+	@apply font-sans text-19 tracking-normal;
+}
+.content {
+	@apply flex flex-col gap-7 pt-6.75;
+}
+.search {
+	@apply mb-8.5 h-10.5 rounded-md border-transparent bg-glass;
+}
+.section {
+	@apply min-w-0;
+}
+.sectionTitle {
+	@apply mb-1 flex h-8 items-center gap-2.5 text-xs tracking-expanded text-muted-foreground uppercase;
+}
+.sectionTitle [data-slot="item-media"] {
+	@apply size-6.5 rounded-xs text-primary;
+}
+.rows {
+	@apply block;
+}
+.rows [data-slot="item"] {
+	@apply min-h-14 border-b border-border px-0.5 py-2;
+}
+.rows [data-slot="item"]:last-child {
+	@apply border-b-0;
+}
+.rows [data-slot="item-title"] {
+	@apply text-sm font-semibold;
+}
+.rows [data-slot="item-description"] {
+	@apply text-xs text-dim;
+}
+.rows [data-slot="item-actions"] {
+	@apply text-dim;
+}
+.rows [data-destructive="true"] [data-slot="item-title"] {
+	@apply text-destructive;
+}
+.drawerHeader {
+	@apply flex flex-row items-center justify-between border-b border-border px-4.5 py-4;
+}
+.drawerBody {
+	@apply min-h-0 flex-auto;
+}
+.drawerBodyContent {
+	@apply px-4.5 pt-3 pb-6;
+}
+.drawerFooter {
+	@apply border-t border-border px-4.5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))];
+}
+.choices {
+	@apply grid w-full gap-1.75;
+}
+.choice {
+	@apply flex h-13 w-full items-center gap-3 rounded-md border border-border bg-glass px-4;
+}
+.choice:has([data-checked]) {
+	@apply border-primary/45 text-primary;
+}
+.drawerBody [data-slot="field"] {
+	@apply gap-3;
+}
+.confirmationHeader {
+	@apply px-4.5 pt-3.5 pb-4 text-start;
+}
+.confirmationFooter {
+	@apply grid grid-cols-2 border-t border-border px-4.5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))];
+}
+.feedback,
+.status {
+	@apply min-w-0 whitespace-pre-wrap text-sm;
+	overflow-wrap: anywhere;
+}
+.feedback {
+	@apply flex flex-col items-start gap-3 py-5;
+}
+.feedback p {
+	@apply m-0;
+}
+.srOnly {
+	@apply sr-only;
+}

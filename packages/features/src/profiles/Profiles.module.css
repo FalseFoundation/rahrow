@@ -1,0 +1,5 @@
+@reference "@rahrow/ui/global.css";
+
+.page {
+	@apply min-w-0;
+}

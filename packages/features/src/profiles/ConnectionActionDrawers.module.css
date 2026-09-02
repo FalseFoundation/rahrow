@@ -1,0 +1,26 @@
+@reference "@rahrow/ui/global.css";
+
+.actionScroll {
+	@apply min-h-0 flex-auto;
+}
+.actionList {
+	@apply flex flex-col gap-3 px-4.5 pt-3 pb-6;
+}
+.actionFooter {
+	@apply px-4.5;
+}
+.primaryAction {
+	@apply w-full;
+}
+.iconActions {
+	@apply mx-auto w-full justify-center;
+}
+.quickAction {
+	@apply flex-1;
+}
+.choiceList {
+	@apply w-full items-stretch gap-2 px-4.5 pt-3 pb-6;
+}
+.choiceList > button {
+	@apply w-full justify-between;
+}

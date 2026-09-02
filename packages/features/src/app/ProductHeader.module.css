@@ -1,0 +1,26 @@
+@reference "@rahrow/ui/global.css";
+
+.header {
+	@apply relative z-40 flex min-h-18 w-full items-center justify-between border-b border-border bg-background/95 backdrop-blur-md;
+}
+
+.identity,
+.actions {
+	@apply flex min-w-0 items-center gap-1.5;
+}
+
+.identity {
+	@apply gap-2.25;
+}
+
+.copy {
+	@apply min-w-0;
+}
+
+.eyebrow {
+	@apply m-0 truncate text-xs font-semibold tracking-wide text-muted-foreground uppercase;
+}
+
+.title {
+	@apply truncate font-sans text-19 tracking-normal;
+}

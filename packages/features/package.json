@@ -1,0 +1,54 @@
+{
+	"name": "@rahrow/features",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Shared app-facing React feature behavior for RahRow clients.",
+	"type": "module",
+	"sideEffects": [
+		"**/*.css"
+	],
+	"exports": {
+		"./*": "./src/*"
+	},
+	"scripts": {
+		"watch": "tsc --watch --preserveWatchOutput",
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"cleanup": "rm -rf dist .turbo node_modules"
+	},
+	"dependencies": {
+		"@rahrow/ads": "workspace:*",
+		"@rahrow/core": "workspace:*",
+		"@rahrow/static": "workspace:*",
+		"@rahrow/ui": "workspace:*",
+		"@tanstack/pacer": "^0.22.0",
+		"@tanstack/react-form": "^1.33.5",
+		"@tanstack/react-pacer": "^0.23.0",
+		"@tanstack/react-query": "^5.102.0",
+		"@tanstack/react-router": "^1.170.31",
+		"@tanstack/react-store": "^0.11.1",
+		"@tanstack/react-virtual": "^3.14.10",
+		"@tanstack/store": "^0.11.1",
+		"i18next": "^26.4.0",
+		"qrcode": "^1.5.4",
+		"react": "^19.2.8",
+		"react-dom": "^19.2.8",
+		"react-i18next": "^17.0.12",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@rahrow/tooling": "workspace:*",
+		"@testing-library/react": "^16.3.2",
+		"@testing-library/user-event": "^14.6.6",
+		"@types/qrcode": "^1.5.6",
+		"@types/react": "^19.2.18",
+		"@types/react-dom": "^19.2.4",
+		"jsdom": "^30.0.1",
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.11"
+	},
+	"files": [
+		"src"
+	]
+}

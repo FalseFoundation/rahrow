@@ -1,0 +1,21 @@
+@reference "@rahrow/ui/global.css";
+
+.logo {
+	@apply relative inline-grid shrink-0 place-items-center overflow-hidden;
+}
+
+.logo img {
+	@apply col-start-1 row-start-1 size-full object-contain;
+}
+
+.darkLogo {
+	@apply hidden;
+}
+
+[class~="dark"] .lightLogo {
+	@apply hidden;
+}
+
+[class~="dark"] .darkLogo {
+	@apply block;
+}

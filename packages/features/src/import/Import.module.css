@@ -1,0 +1,20 @@
+@reference "@rahrow/ui/global.css";
+
+.page {
+	@apply flex min-w-0 flex-col gap-4;
+}
+.panel {
+	@apply flex flex-col gap-4 rounded-md border border-border bg-card p-4;
+}
+.content {
+	@apply flex flex-col gap-4;
+}
+.actions {
+	@apply flex flex-wrap gap-2;
+}
+.status {
+	@apply m-0 text-sm text-muted-foreground;
+}
+.qr {
+	@apply size-48 rounded-md border border-border bg-surface-static;
+}

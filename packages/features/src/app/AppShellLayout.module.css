@@ -1,0 +1,63 @@
+@reference "@rahrow/ui/global.css";
+
+.shell {
+	--app-width: 24.5625rem;
+	--app-gutter: calc(var(--spacing) * 4);
+	--safe-inline-start: var(--safe-area-inset-left, env(safe-area-inset-left));
+	--safe-inline-end: var(--safe-area-inset-right, env(safe-area-inset-right));
+	@apply relative mx-auto flex h-svh min-h-0 w-full max-w-[24.5625rem] flex-col overflow-hidden bg-background text-foreground;
+}
+
+[dir="rtl"] .shell {
+	--safe-inline-start: var(--safe-area-inset-right, env(safe-area-inset-right));
+	--safe-inline-end: var(--safe-area-inset-left, env(safe-area-inset-left));
+}
+
+.appScroll {
+	@apply min-h-0 flex-1 w-full;
+}
+
+.headerSlot {
+	@apply min-h-18 w-full shrink-0 bg-background;
+	padding-block-start: var(--safe-area-inset-top, env(safe-area-inset-top));
+	padding-inline-start: calc(var(--app-gutter) + var(--safe-inline-start));
+	padding-inline-end: calc(var(--app-gutter) + var(--safe-inline-end));
+}
+
+.main {
+	@apply mx-auto min-h-full w-full max-w-[24.5625rem] pb-6;
+	padding-inline-start: calc(var(--app-gutter) + var(--safe-inline-start));
+	padding-inline-end: calc(var(--app-gutter) + var(--safe-inline-end));
+}
+
+.nav {
+	@apply relative z-40 mx-auto flex h-18 shrink-0 gap-1.25 rounded-xl border border-border bg-surface-floating p-1.75 backdrop-blur-md;
+	margin-block-start: calc(var(--spacing) * 3);
+	margin-block-end: calc(
+		var(--spacing) *
+		3 +
+		var(--safe-area-inset-bottom, env(safe-area-inset-bottom))
+	);
+	margin-inline: auto;
+	width: min(
+		calc(var(--app-width) - var(--app-gutter) * 2),
+		calc(
+			100% -
+			var(--app-gutter) *
+			2 -
+			var(--safe-inline-start) -
+			var(--safe-inline-end)
+		)
+	);
+}
+
+.nav[data-nested="true"] {
+	@apply w-18;
+	align-self: flex-start;
+	margin-inline-start: calc(var(--app-gutter) + var(--safe-inline-start));
+	margin-inline-end: 0;
+}
+
+.backButton {
+	@apply w-full;
+}

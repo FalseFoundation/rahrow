@@ -1,0 +1,48 @@
+@reference "@rahrow/ui/global.css";
+
+.form {
+	@apply flex min-h-0 flex-auto flex-col;
+}
+
+.editorBody {
+	@apply min-h-0 flex-auto;
+}
+
+.editorBodyContent {
+	@apply px-4.5 pt-3 pb-6;
+}
+
+.editorFooter {
+	@apply border-t border-border bg-surface px-4.5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))];
+}
+
+.tabs {
+	@apply w-fit;
+}
+
+.tabs [data-slot="tabs-trigger"] {
+	@apply flex-none;
+}
+
+.tabContent {
+	@apply pt-2;
+}
+
+.endpointRow {
+	@apply grid grid-cols-[minmax(0,1fr)_7rem] gap-3;
+}
+
+.editorUtilities {
+	@apply grid min-w-0 grid-cols-2 gap-2;
+}
+
+.jsonEditor {
+	@apply min-h-80 resize-y text-xs leading-relaxed;
+	font-family: var(--font-mono);
+}
+
+@media (max-width: 28rem) {
+	.endpointRow {
+		@apply grid-cols-1;
+	}
+}

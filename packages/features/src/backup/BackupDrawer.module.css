@@ -1,0 +1,94 @@
+@reference "@rahrow/ui/global.css";
+
+.header {
+	@apply flex flex-row items-center gap-2 border-b border-border px-4.5 py-4;
+}
+.headerCopy {
+	@apply min-w-0 flex-1;
+}
+.headerCopy p {
+	@apply mt-1 text-xs text-dim;
+}
+.body {
+	@apply min-h-0 flex-auto;
+}
+.bodyContent {
+	@apply flex flex-col gap-5 px-4.5 pt-4 pb-6;
+}
+.menu {
+	@apply flex flex-col;
+}
+.menu [data-slot="item"] {
+	@apply min-h-18 border-b border-border px-0.5;
+}
+.hint {
+	@apply pt-4 text-xs text-dim;
+}
+.form {
+	@apply flex flex-col gap-5;
+}
+.radioChoices {
+	@apply grid grid-cols-1 gap-2 sm:grid-cols-3;
+}
+.radioChoice {
+	@apply flex min-h-11 items-center gap-2 rounded-md border border-border bg-glass px-3 text-sm;
+}
+.radioChoice:has([data-checked]) {
+	@apply border-primary/45 text-primary;
+}
+.connectionSelection {
+	@apply flex flex-col gap-1 rounded-lg border border-border p-3;
+}
+.connectionSelection legend {
+	@apply px-1 text-sm font-semibold;
+}
+.checkboxRow {
+	@apply flex min-h-10 items-center gap-3 rounded-md px-2 text-sm hover:bg-muted/50;
+}
+.passwordFields {
+	@apply grid gap-4;
+}
+.warning {
+	@apply rounded-lg border border-destructive/30 bg-destructive/8 p-3 text-sm text-destructive;
+}
+.review {
+	@apply flex flex-col gap-5;
+}
+.summary {
+	@apply grid gap-2 rounded-lg border border-border p-3;
+}
+.summary div {
+	@apply flex justify-between gap-4 text-sm;
+}
+.summary dt {
+	@apply text-dim;
+}
+.summary dd {
+	@apply text-end font-semibold;
+}
+.previewList,
+.conflicts ul {
+	@apply m-0 list-none divide-y divide-border rounded-lg border border-border p-0;
+}
+.previewList li,
+.conflicts li {
+	@apply px-3 py-2 text-sm;
+}
+.conflicts {
+	@apply flex flex-col gap-3;
+}
+.done {
+	@apply flex min-h-48 flex-col items-center justify-center gap-3 text-center;
+}
+.done svg {
+	@apply size-8 text-primary;
+}
+.pending {
+	@apply flex items-center gap-2 text-sm text-dim;
+}
+.error {
+	@apply rounded-lg border border-destructive/30 p-3 text-sm text-destructive;
+}
+.footer {
+	@apply border-t border-border px-4.5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))];
+}

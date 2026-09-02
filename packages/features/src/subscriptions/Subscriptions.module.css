@@ -1,0 +1,57 @@
+@reference "@rahrow/ui/global.css";
+
+.page {
+	@apply flex min-w-0 flex-col gap-4;
+}
+.header {
+	@apply flex flex-col gap-1;
+}
+.eyebrow {
+	@apply m-0 text-xs font-semibold tracking-wide text-muted-foreground uppercase;
+}
+.title {
+	@apply m-0 font-heading text-3xl font-semibold;
+}
+.panel {
+	@apply flex flex-col gap-4 rounded-md border border-border bg-card p-4;
+}
+.grid {
+	@apply grid gap-4;
+}
+.cardTitle {
+	@apply font-heading text-base font-medium;
+}
+.actions {
+	@apply flex flex-wrap justify-end gap-2;
+}
+.truncate {
+	@apply min-w-0 truncate;
+}
+.subscriptionDetail {
+	@apply flex min-w-0 flex-col gap-1;
+	overflow-wrap: anywhere;
+}
+.subscriptionContent {
+	@apply min-w-0;
+}
+.subscriptionDetail > span:first-child {
+	@apply min-w-0 truncate whitespace-nowrap;
+}
+.updatedAt {
+	@apply text-muted-foreground;
+}
+.loadingList {
+	@apply flex flex-col gap-3;
+}
+.loadingList > * {
+	@apply h-16 w-full rounded-md;
+}
+.list {
+	@apply flex flex-col gap-2;
+}
+.row {
+	@apply flex flex-wrap items-center justify-between gap-3 rounded-md border border-border bg-background p-3;
+}
+.status {
+	@apply m-0 text-sm text-muted-foreground;
+}

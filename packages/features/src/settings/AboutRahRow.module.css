@@ -1,0 +1,51 @@
+@reference "@rahrow/ui/global.css";
+
+.about {
+	@apply px-0.5 py-2 text-muted-foreground;
+}
+.aboutIdentity {
+	@apply px-2 py-4 text-center;
+}
+.aboutLogo {
+	@apply mx-auto mb-3.5 size-18;
+}
+.aboutTitle {
+	@apply text-19 text-foreground;
+}
+.aboutDescription {
+	@apply mx-auto mt-2 max-w-80;
+}
+.aboutOwnership {
+	@apply mx-auto mt-2 max-w-80 text-xs text-dim;
+}
+.aboutFacts {
+	@apply mt-3 divide-y divide-border rounded-md border border-border bg-glass px-3;
+}
+.aboutFacts > div {
+	@apply flex min-w-0 flex-col gap-1 py-3 text-start;
+}
+.aboutFacts span,
+.aboutFacts small {
+	@apply text-xs text-dim;
+}
+.aboutFacts strong {
+	@apply text-sm font-semibold text-foreground;
+}
+.aboutGroups {
+	@apply mt-5 flex flex-col gap-5;
+}
+.aboutGroups h3 {
+	@apply mb-2 text-start text-xs tracking-expanded text-muted-foreground uppercase;
+}
+.aboutActions {
+	@apply grid grid-cols-1 gap-2 sm:grid-cols-2;
+}
+.aboutActions button {
+	@apply h-auto min-h-11 justify-start whitespace-normal px-3 py-2 text-start;
+}
+.aboutUnavailable {
+	@apply mt-5 rounded-md border border-border px-3 py-3 text-start text-xs text-dim;
+}
+.aboutFailure {
+	@apply mt-3 text-start text-sm text-destructive;
+}

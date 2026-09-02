@@ -1,0 +1,23 @@
+@reference "@rahrow/ui/global.css";
+
+.form {
+	@apply flex flex-col gap-3 border-t border-border pt-4;
+}
+
+.heading {
+	@apply text-sm font-semibold;
+}
+
+.row {
+	@apply grid grid-cols-[1fr_7rem] gap-3;
+}
+
+.error {
+	@apply text-sm text-destructive;
+}
+
+@media (max-width: 28rem) {
+	.row {
+		@apply grid-cols-1;
+	}
+}

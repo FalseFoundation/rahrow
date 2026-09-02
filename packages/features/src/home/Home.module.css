@@ -1,0 +1,179 @@
+@reference "@rahrow/ui/global.css";
+
+.page {
+	@apply min-w-0;
+}
+.topbar {
+	@apply flex h-18 items-center justify-between border-b border-border;
+}
+.brand {
+	@apply flex items-center gap-2.25 text-13 font-extrabold tracking-expanded;
+}
+.brandMark {
+	@apply size-7;
+}
+.brandSub {
+	@apply hidden text-xs tracking-wide text-dim sm:inline;
+}
+.homeView {
+	@apply pt-6.75;
+}
+.homeEmpty {
+	@apply min-h-[calc(100svh-var(--spacing)*42)];
+}
+.homeLoading {
+	@apply flex flex-col gap-3;
+}
+.loadingIntro {
+	@apply h-5 w-full rounded-md;
+}
+.loadingHero {
+	@apply h-96 w-full rounded-2xl;
+}
+.loadingConnection {
+	@apply h-18 w-full rounded-2xl;
+}
+.intro {
+	@apply mb-4.5 flex items-center justify-between;
+}
+.eyebrow {
+	@apply flex items-center gap-2 text-xs font-bold;
+}
+.statusDot {
+	@apply size-1.75 rounded-full bg-primary;
+}
+.statusDot[data-live="true"] {
+	@apply bg-success shadow-success-ring;
+}
+.version {
+	@apply text-xs text-dim;
+}
+.hero {
+	@apply relative;
+}
+.heroContent {
+	@apply relative flex flex-col px-5 pt-10.5 pb-5.5;
+}
+.pointField {
+	@apply absolute inset-4 overflow-hidden text-center text-xs tracking-scattered text-primary opacity-45;
+}
+.hero[data-connected="true"] .pointField {
+	@apply text-success;
+}
+.powerHalo {
+	@apply relative z-1 grid size-36.5 place-items-center overflow-hidden rounded-full border border-primary/25 bg-primary/3;
+}
+.powerHalo[data-active="true"] {
+	@apply border-primary shadow-lg;
+}
+.powerHalo[data-connected="true"] {
+	border-color: var(--connection-primary);
+	box-shadow: 0 0 2rem
+		color-mix(in oklch, var(--connection-primary) 22%, transparent);
+}
+.powerBacklight {
+	@apply mx-auto grid size-36.5 place-items-center;
+}
+.powerBacklight > div {
+	@apply grid size-full place-items-center;
+}
+.powerRipple {
+	@apply text-primary;
+}
+.powerHalo[data-connected="true"] .powerRipple {
+	color: var(--connection-primary);
+}
+.powerHalo [data-slot="button"] {
+	@apply relative z-1;
+}
+.connectionCopy {
+	@apply my-5.5 text-center;
+}
+.connectionTitle {
+	@apply m-0 font-sans text-26 font-extrabold tracking-normal;
+}
+.connectionMorph {
+	@apply max-w-full tracking-normal;
+}
+.connectionDescription {
+	@apply mt-1.75 mb-0 text-13 leading-6 text-muted-foreground;
+	overflow-wrap: anywhere;
+}
+.telemetry {
+	@apply flex border-t border-border pt-4;
+}
+.telemetry div {
+	@apply flex min-w-0 flex-1 flex-col gap-1.25 text-center;
+}
+.telemetry span,
+.identityContent > div > span {
+	@apply text-xs tracking-expanded text-dim;
+}
+.telemetry strong {
+	@apply truncate text-xs;
+}
+.telemetry strong[data-latency-kind="timeout"] {
+	@apply text-destructive;
+}
+.failure {
+	@apply mt-3;
+}
+.failureContent {
+	@apply flex flex-col gap-3 p-4;
+}
+.failureCopy {
+	@apply flex flex-col gap-1;
+}
+.failureCopy h2 {
+	@apply text-sm font-semibold;
+}
+.failureCopy p {
+	@apply m-0 text-xs leading-5 text-muted-foreground;
+	overflow-wrap: anywhere;
+}
+.failureActions {
+	@apply grid grid-cols-2 gap-2;
+}
+.activeConnection {
+	@apply mt-3 flex min-h-18 w-full justify-start gap-3 rounded-2xl p-3.5 text-start;
+}
+.serverIcon {
+	@apply grid size-9.5 shrink-0 place-items-center rounded-lg bg-secondary text-primary;
+}
+.activeCopy {
+	@apply block min-w-0 flex-1;
+}
+.activeCopy > span {
+	@apply block text-xs tracking-expanded text-dim;
+}
+.activeCopy strong {
+	@apply mt-1.25 flex min-w-0 items-center gap-1.75 text-13;
+}
+.identityRoute {
+	@apply mt-4;
+}
+.identityContent {
+	@apply p-3.75;
+}
+.identityContent strong,
+.identityContent small {
+	@apply block;
+}
+.identityContent strong {
+	@apply mt-1 text-xs;
+}
+.identityContent small {
+	@apply mt-1 text-xs text-dim;
+}
+.activeCopy strong,
+.identityContent strong,
+.identityContent small {
+	white-space: normal;
+	overflow-wrap: anywhere;
+}
+.identityEgress {
+	@apply min-w-0 text-start;
+}
+.identityContent .networkQuality {
+	@apply mt-1.5 text-primary;
+}

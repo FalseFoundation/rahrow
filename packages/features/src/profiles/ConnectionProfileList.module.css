@@ -1,0 +1,64 @@
+@reference "@rahrow/ui/global.css";
+
+.rows {
+	@apply mt-2.25 gap-0;
+}
+.profileRow {
+	@apply relative isolate transition-colors;
+}
+.profileRow::before {
+	@apply pointer-events-none absolute inset-y-1.5 start-0 w-0.75 scale-y-50 rounded-full bg-foreground opacity-0 transition-[opacity,transform];
+	content: "";
+}
+.profileRow:not([data-selected="true"]):hover {
+	@apply bg-accent/60;
+}
+.profileRow[data-selected="true"] {
+	@apply bg-muted/80 text-foreground;
+}
+.profileRow[data-selected="true"]::before {
+	@apply scale-y-100 opacity-100;
+}
+.profileRow[data-selected="true"]:focus-within {
+	@apply bg-muted;
+}
+.profileMain {
+	@apply flex min-w-0 flex-row items-center gap-2.5;
+}
+.profileActivate {
+	@apply h-auto min-w-0 flex-1 justify-between gap-3 rounded-md bg-transparent px-0 py-1 text-start hover:bg-transparent;
+}
+.profileCopy {
+	@apply flex min-w-0 flex-1 flex-col gap-1;
+}
+.profileCopy [data-slot="item-title"],
+.endpoint {
+	@apply max-w-full min-w-0 truncate;
+	overflow-wrap: anywhere;
+}
+.endpoint {
+	-webkit-touch-callout: none;
+}
+.profileRow[data-selected="true"] .profileCopy [data-slot="item-title"] {
+	@apply font-semibold;
+}
+.rowMeta {
+	@apply shrink-0 whitespace-nowrap text-xs text-muted-foreground;
+}
+.rowMeta[data-latency-kind="timeout"] {
+	@apply text-destructive;
+}
+
+@media (forced-colors: active) {
+	.profileRow[data-selected="true"] {
+		outline: 2px solid CanvasText;
+		outline-offset: -2px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.profileRow,
+	.profileRow::before {
+		transition-duration: 0.01ms;
+	}
+}

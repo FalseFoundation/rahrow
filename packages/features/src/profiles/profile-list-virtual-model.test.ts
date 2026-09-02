@@ -1,0 +1,85 @@
+import { describe, expect, it } from 'vitest'
+import {
+	connectionGroupEnd,
+	flattenConnectionGroups,
+	nextLoadedProfileCount,
+	profileIndexById,
+	shouldFloatConnectionHeader,
+} from './profile-list-virtual-model.ts'
+
+describe('profile list virtual model', () => {
+	it('flattens open groups into stable header and profile rows', () => {
+		const rows = flattenConnectionGroups([
+			{
+				key: 'subscription:alpha',
+				open: true,
+				profiles: [{ id: 'one' }, { id: 'two' }],
+			},
+			{
+				key: 'subscription:beta',
+				open: false,
+				profiles: [{ id: 'three' }],
+			},
+		])
+
+		expect(rows.map((row) => row.key)).toEqual([
+			'group:subscription:alpha',
+			'profile:subscription:alpha:one',
+			'profile:subscription:alpha:two',
+			'gap:subscription:beta',
+			'group:subscription:beta',
+		])
+		expect(
+			rows.filter((row) => row.kind === 'group').map((row) => row.index),
+		).toEqual([0, 4])
+	})
+
+	it('gives every open group its own profile page without collapsing later groups', () => {
+		const rows = flattenConnectionGroups(
+			[
+				{
+					key: 'subscription:alpha',
+					open: true,
+					profiles: Array.from({ length: 400 }, (_, index) => ({
+						id: `alpha-${index}`,
+					})),
+				},
+				{
+					key: 'subscription:beta',
+					open: true,
+					profiles: Array.from({ length: 400 }, (_, index) => ({
+						id: `beta-${index}`,
+					})),
+				},
+			],
+			250,
+		)
+
+		expect(rows).toHaveLength(503)
+		expect(rows[251]?.key).toBe('gap:subscription:beta')
+		expect(rows[252]?.key).toBe('group:subscription:beta')
+		expect(rows[253]?.key).toBe('profile:subscription:beta:beta-0')
+		expect(rows.at(-1)?.key).toBe('profile:subscription:beta:beta-249')
+		expect(nextLoadedProfileCount(250, 401)).toBe(401)
+		expect(nextLoadedProfileCount(500, 401)).toBe(401)
+	})
+
+	it('finds stable focus anchors after sorting or replacement', () => {
+		const profiles = [{ id: 'zeta' }, { id: 'alpha' }, { id: 'wire' }]
+		expect(profileIndexById(profiles, 'alpha')).toBe(1)
+		expect(profileIndexById([...profiles].reverse(), 'alpha')).toBe(1)
+		expect(profileIndexById(profiles, 'missing')).toBe(-1)
+	})
+
+	it('ends a group at its final connection instead of the next header', () => {
+		expect(connectionGroupEnd(300, 900)).toBe(272)
+		expect(connectionGroupEnd(undefined, 900)).toBe(900)
+	})
+
+	it('floats expanded groups from the app-header edge through their final item', () => {
+		expect(shouldFloatConnectionHeader(true, 179, 250, 900, 72)).toBe(true)
+		expect(shouldFloatConnectionHeader(true, 178, 250, 900, 72)).toBe(false)
+		expect(shouldFloatConnectionHeader(true, 828, 250, 900, 72)).toBe(false)
+		expect(shouldFloatConnectionHeader(false, 179, 250, 900, 72)).toBe(false)
+	})
+})
