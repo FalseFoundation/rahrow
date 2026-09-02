@@ -1,0 +1,506 @@
+{
+  "id": "rahrow-writing-guidelines",
+  "schemaVersion": "1.0.0",
+  "guidelineVersion": "1.0.0",
+  "language": "en",
+  "lastUpdated": "2026-08-29",
+  "purpose": "Define RahRow’s voice, terminology, claim boundaries, message hierarchy, and reusable product copy.",
+  "scope": {
+    "included": [
+      "Product interface copy",
+      "Marketing and platform pages",
+      "Search and social metadata",
+      "Release and availability messages",
+      "Onboarding, empty states, status messages, errors, and recovery actions",
+      "Public product documentation"
+    ],
+    "excludedByDefault": [
+      "Source-code comments",
+      "Machine logs",
+      "Test descriptions",
+      "Contributor-only architecture documents",
+      "Legal text that requires legal review"
+    ]
+  },
+  "sources": [
+    {
+      "name": "Vercel Writing Guidelines",
+      "url": "https://raw.githubusercontent.com/vercel-labs/writing-guidelines/main/command.md",
+      "retrievedOn": "2026-08-29",
+      "adoptedPrinciples": [
+        "Active voice",
+        "Direct address",
+        "Short sentences",
+        "Present tense",
+        "Sentence-case headings",
+        "Specific claims",
+        "Descriptive headings",
+        "Concise paragraphs",
+        "Explicit recovery actions",
+        "No rhetorical questions",
+        "No filler or pressure words"
+      ]
+    },
+    {
+      "name": "RahRow product contract",
+      "location": ".agents/skills/rahrow-implement/SKILL.md",
+      "role": "Defines product capabilities, distribution promises, platform boundaries, and fail-closed behavior."
+    }
+  ],
+  "brand": {
+    "name": "RahRow",
+    "capitalization": "Always write RahRow. Do not write Rahrow, rahrow, Rah Row, or RAHROW in prose.",
+    "category": "Open-source, multi-platform VPN client",
+    "canonicalCombination": {
+      "name": "RahRow",
+      "headline": "Your VPN connections, across desktop and mobile.",
+      "description": "Import and use your connections on macOS, Windows, Linux, Android, iPhone, and iPad."
+    },
+    "canonicalProductDescription": "RahRow is an open-source, multi-platform VPN client for macOS, Windows, Linux, Android, iOS, and iPadOS.",
+    "developmentStatusDescription": "RahRow is an open-source VPN client being built for macOS, Windows, Linux, Android, iPhone, and iPad.",
+    "brandPromise": "Give people one familiar client for importing, organizing, and using their VPN connections across supported desktop and mobile platforms.",
+    "positioningBoundary": "RahRow is a VPN client, not a VPN provider or subscription service.",
+    "tagline": "One VPN client across desktop and mobile.",
+    "supportingTaglines": [
+      "Your connections. Your devices. One client.",
+      "Connect with RahRow.",
+      "Open-source VPN access across your devices.",
+      "One familiar VPN client, wherever you connect."
+    ]
+  },
+  "productTruths": {
+    "serviceModel": {
+      "truth": "People bring a connection or subscription from a provider or someone they trust.",
+      "requiredClarification": "RahRow does not sell VPN access or create VPN accounts.",
+      "approvedCopy": "RahRow is a VPN client. It does not sell VPN access. Add a connection from a provider or someone you trust."
+    },
+    "targetPlatforms": [
+      { "technicalName": "macOS", "consumerName": "Mac", "deviceTypes": ["desktop", "laptop"] },
+      { "technicalName": "Windows", "consumerName": "Windows", "deviceTypes": ["desktop", "laptop"] },
+      { "technicalName": "Linux", "consumerName": "Linux", "deviceTypes": ["desktop", "laptop"] },
+      { "technicalName": "Android", "consumerName": "Android", "deviceTypes": ["phone", "tablet"] },
+      { "technicalName": "iOS", "consumerName": "iPhone", "deviceTypes": ["phone"] },
+      { "technicalName": "iPadOS", "consumerName": "iPad", "deviceTypes": ["tablet"] }
+    ],
+    "engines": {
+      "names": ["Xray", "sing-box"],
+      "claim": "RahRow lets you choose Xray or sing-box when the current build includes and supports both engines.",
+      "bundlingRule": "A release includes every engine and executable capability it advertises. The installed app does not download executable code on first launch."
+    },
+    "connectionModes": {
+      "default": "VPN/TUN",
+      "fallback": "System proxy",
+      "rule": "Never imply that RahRow silently changes VPN mode to proxy mode. People must select the fallback.",
+      "approvedCopy": "VPN mode is unavailable. You can choose proxy mode in Settings."
+    },
+    "implementedProtocols": ["VLESS", "VMess", "Trojan"],
+    "roadmapProtocols": ["Shadowsocks", "Hysteria", "Hysteria2", "SSH", "V2Ray JSON import"],
+    "protocolClaimRule": "Call a protocol supported only after its schema, import or export path, engine mapping, interface path, and tests exist.",
+    "releaseStatus": {
+      "current": "active-development",
+      "rule": "Use development language until a platform has a public artifact that passes its release gates.",
+      "approvedCopy": "RahRow is being built for macOS, Windows, Linux, Android, iPhone, and iPad."
+    }
+  },
+  "audiences": [
+    {
+      "id": "connection-holder",
+      "description": "A person with a connection link or subscription who wants to connect.",
+      "needs": ["Know what to add", "Know whether RahRow connected", "Know how to recover from failure"],
+      "language": "Use product terms. Hide implementation terms unless they explain an action."
+    },
+    {
+      "id": "multi-device-user",
+      "description": "A person who wants the same workflow on a computer, phone, and tablet.",
+      "needs": ["See supported platforms", "Find the correct download", "Recognize the interface across devices"],
+      "language": "Use consumer platform names in marketing copy."
+    },
+    {
+      "id": "technical-user",
+      "description": "A person who recognizes protocols, engines, and connection modes.",
+      "needs": ["Confirm compatibility", "Choose an engine", "Read diagnostics"],
+      "language": "Use exact engine and protocol names. Include technical detail only when it changes a decision."
+    },
+    {
+      "id": "contributor",
+      "description": "A person evaluating or contributing to the open-source project.",
+      "needs": ["Understand current status", "Separate implemented behavior from roadmap work", "Find technical evidence"],
+      "language": "Use precise implementation and release terms."
+    }
+  ],
+  "voice": {
+    "summary": "RahRow sounds calm, direct, capable, and honest.",
+    "attributes": [
+      {
+        "name": "Clear",
+        "write": "Name the subject, action, and result.",
+        "avoid": "Metaphors, unexplained implementation terms, and sentences that need a second read."
+      },
+      {
+        "name": "Calm",
+        "write": "State what happened and give the next action.",
+        "avoid": "Alarm, blame, jokes during failures, and exaggerated reassurance."
+      },
+      {
+        "name": "Direct",
+        "write": "Address people as you. Use imperative verbs for actions.",
+        "avoid": "The user, one can, you will need to, and indirect instructions."
+      },
+      {
+        "name": "Specific",
+        "write": "Name the affected platform, connection, engine, or capability.",
+        "avoid": "Something went wrong, unsupported operation, and vague qualifiers."
+      },
+      {
+        "name": "Honest",
+        "write": "Separate available, preview, in-development, and planned work.",
+        "avoid": "Coming soon without a date, implied availability, and unsupported privacy claims."
+      },
+      {
+        "name": "Human",
+        "write": "Use familiar verbs and contractions where they sound natural.",
+        "avoid": "Spec-sheet voice, corporate filler, and forced friendliness."
+      }
+    ],
+    "notOurVoice": [
+      "Fear-based privacy marketing",
+      "Anonymous hacker language",
+      "Cute failure messages",
+      "Dense networking jargon in primary flows",
+      "Absolute claims about anonymity, safety, speed, or privacy",
+      "Competitor attacks"
+    ]
+  },
+  "style": {
+    "voice": "Use active voice.",
+    "address": "Use you for the reader. Use RahRow for the product.",
+    "tense": "Use present tense unless a sentence describes future behavior.",
+    "steps": "Start instructions with an imperative verb.",
+    "sentenceLength": {
+      "targetMaximumWords": 20,
+      "rule": "Rewrite longer sentences when one reading does not reveal the action and result."
+    },
+    "paragraphs": "Keep one idea and no more than four sentences per paragraph.",
+    "headings": {
+      "pageAndSectionCase": "sentence case",
+      "navigationCase": "Title Case",
+      "rule": "Use descriptive, user-shaped headings. Avoid Overview, Notes, and Caveats."
+    },
+    "lists": {
+      "rule": "Convert three or more parallel items into a list.",
+      "introduction": "Introduce every list with a complete sentence ending in a colon.",
+      "unordered": "Use bullets when sequence does not matter.",
+      "ordered": "Use numbers for steps or lifecycle order.",
+      "punctuation": "Omit periods from fragments. Keep periods on complete sentences."
+    },
+    "punctuation": {
+      "emDash": "Do not use em dashes as punctuation. Use a colon, comma, or new sentence.",
+      "ellipsis": "Use … for loading and omitted text. Do not use three periods.",
+      "ampersand": "Use and in prose. Use & only in a space-constrained interface label.",
+      "quotes": "Use curly quotation marks in rendered prose. JSON syntax requires straight quotation marks."
+    },
+    "formatting": {
+      "bold": "Reserve bold for interface labels and critical facts.",
+      "code": "Use inline code for paths, file extensions, commands, identifiers, and literal values.",
+      "links": "Use destination-specific anchor text. Do not use here, link, or a bare URL.",
+      "sourceParagraphs": "Do not hard-wrap prose paragraphs in Markdown source."
+    },
+    "acronyms": "Spell out a specialized acronym on first use. VPN may remain abbreviated on constrained marketing and interface surfaces.",
+    "contractions": "Use contractions for warmth when they remain clear.",
+    "we": "Use we only for a deliberate project decision. Do not use we as a substitute for you.",
+    "questions": "Do not use rhetorical questions. Use questions only when RahRow requires an answer."
+  },
+  "wordChoices": {
+    "banned": [
+      { "terms": ["easy", "simple", "quick", "simply"], "reason": "These words pressure the reader and replace a concrete explanation." },
+      { "terms": ["very", "just", "really"], "reason": "These words add filler." },
+      { "terms": ["seamless", "effortless", "revolutionary", "blazing-fast", "military-grade"], "reason": "These words make vague or unverifiable claims." },
+      { "terms": ["completely anonymous", "100% secure", "untraceable", "guaranteed private"], "reason": "A client cannot guarantee these outcomes." }
+    ],
+    "avoidWhenVague": ["many", "often", "typically", "generally", "significantly", "soon"],
+    "preferredReplacements": [
+      { "avoid": "It is easy to import a connection.", "prefer": "Paste a connection link or import a subscription." },
+      { "avoid": "Something went wrong.", "prefer": "RahRow couldn’t connect. Check this connection and try again." },
+      { "avoid": "VPN support is coming soon.", "prefer": "VPN support is in development for this platform." },
+      { "avoid": "The user must grant permission.", "prefer": "Allow VPN access to connect with RahRow." },
+      { "avoid": "RahRow supports all devices.", "prefer": "RahRow targets macOS, Windows, Linux, Android, iOS, and iPadOS." }
+    ]
+  },
+  "terminology": {
+    "preferred": [
+      { "term": "connection", "useFor": "A saved VPN or proxy configuration in user-facing copy.", "avoid": ["node", "server profile", "config object"] },
+      { "term": "subscription", "useFor": "A source that contains multiple connections.", "avoid": ["feed", "provider endpoint"] },
+      { "term": "VPN mode", "useFor": "The operating system registered tunnel experience.", "avoid": ["transparent proxy", "TUN stack"] },
+      { "term": "proxy mode", "useFor": "The explicit system proxy fallback.", "avoid": ["VPN fallback", "automatic fallback"] },
+      { "term": "engine", "useFor": "Xray or sing-box when the distinction helps the reader.", "avoid": ["core", "backend"] },
+      { "term": "version of RahRow", "useFor": "Consumer-facing capability messages.", "avoid": ["build artifact", "distribution channel"] },
+      { "term": "build", "useFor": "Technical previews, contributor docs, and diagnostics.", "avoid": ["binary payload"] }
+    ],
+    "platformNaming": {
+      "consumerCopy": ["Mac", "Windows", "Linux", "Android", "iPhone", "iPad"],
+      "technicalCopy": ["macOS", "Windows", "Linux", "Android", "iOS", "iPadOS"],
+      "rules": [
+        "Use iPhone and iPad in headlines and download copy.",
+        "Use iOS and iPadOS in compatibility tables and technical references.",
+        "Do not write OSX, MacOS, IOS, or iPad OS.",
+        "Do not pluralize operating systems as OS’s. Use operating systems or OSes."
+      ]
+    }
+  },
+  "availability": {
+    "statuses": [
+      {
+        "id": "available",
+        "definition": "A public artifact passes its release gates and supports the advertised capability.",
+        "labels": ["Available", "Download"],
+        "allowedClaims": ["Download RahRow", "Available for platform_name"]
+      },
+      {
+        "id": "development-preview",
+        "definition": "A test artifact exists but does not meet the public release contract.",
+        "labels": ["Development preview", "Preview build"],
+        "allowedClaims": ["Try the development preview", "Available for contributor testing"]
+      },
+      {
+        "id": "in-development",
+        "definition": "Implementation exists or is underway, but no public artifact qualifies for preview or release.",
+        "labels": ["In development"],
+        "allowedClaims": ["RahRow is being built for platform_name", "platform_name support is in development"]
+      },
+      {
+        "id": "planned",
+        "definition": "The project has committed roadmap intent but no qualifying implementation.",
+        "labels": ["Planned"],
+        "allowedClaims": ["Planned for platform_name", "On the roadmap"]
+      },
+      {
+        "id": "unavailable",
+        "definition": "The current version or platform cannot perform the capability.",
+        "labels": ["Unavailable", "Not supported"],
+        "allowedClaims": ["VPN mode isn’t available in this version of RahRow."]
+      }
+    ],
+    "rules": [
+      "Do not turn a target platform into an availability claim.",
+      "Do not use Download until a downloadable artifact passes its release gates.",
+      "Do not use Coming soon without a public date.",
+      "Name the unavailable capability and the affected version or platform.",
+      "Offer a recovery action only when that action works and preserves user choice."
+    ]
+  },
+  "claimPolicy": {
+    "allowed": [
+      "RahRow is open source.",
+      "RahRow is a VPN client.",
+      "RahRow targets macOS, Windows, Linux, Android, iOS, and iPadOS.",
+      "RahRow imports VLESS, VMess, and Trojan connections on surfaces with the implemented import path.",
+      "RahRow supports Xray and sing-box when the current artifact includes both engines.",
+      "RahRow does not silently switch from VPN mode to proxy mode.",
+      "A qualifying release includes the engines it advertises."
+    ],
+    "conditional": [
+      { "claim": "Download RahRow for platform_name.", "condition": "A public artifact exists and passes its release gates." },
+      { "claim": "Connect with Xray or sing-box.", "condition": "The current artifact includes and supports both engines." },
+      { "claim": "Use VPN mode on platform_name.", "condition": "The artifact includes the registered native VPN provider, permissions, and release evidence." },
+      { "claim": "No separate setup.", "condition": "The artifact includes every advertised engine, provider, helper, and asset." }
+    ],
+    "prohibited": [
+      "RahRow makes you anonymous.",
+      "RahRow guarantees privacy or security.",
+      "RahRow is the fastest VPN client.",
+      "RahRow works on every device.",
+      "RahRow includes VPN access.",
+      "RahRow automatically falls back to proxy mode.",
+      "A roadmap protocol is supported.",
+      "An unreleased platform is available."
+    ]
+  },
+  "messageHierarchy": {
+    "order": [
+      "What RahRow is",
+      "What you can do",
+      "Where you can use it",
+      "What you need",
+      "What is available now",
+      "Technical detail when it helps a decision"
+    ],
+    "primaryMessage": "RahRow keeps your VPN connections in one client across supported desktop and mobile platforms.",
+    "supportingMessages": [
+      "Import a connection link or subscription.",
+      "Choose Xray or sing-box when both engines are available.",
+      "Use a familiar interface across desktop and mobile.",
+      "RahRow includes every engine advertised by a qualifying release.",
+      "RahRow does not sell VPN access."
+    ]
+  },
+  "contentTypes": {
+    "landing": {
+      "goal": "Help someone understand RahRow and choose the next action.",
+      "tone": "Confident, concise, and specific.",
+      "required": ["One-paragraph summary", "Platform scope", "Current availability", "Primary action"],
+      "avoid": ["Architecture detail above the fold", "Unsupported superlatives", "Hidden development status"]
+    },
+    "howTo": {
+      "goal": "Help someone complete one task.",
+      "tone": "Terse and direct.",
+      "required": ["Outcome", "Prerequisites", "Ordered actions", "Expected result"],
+      "avoid": ["Long product introduction", "Mixed tasks", "Vague steps"]
+    },
+    "reference": {
+      "goal": "Let someone verify a capability, field, platform, or status.",
+      "tone": "Neutral, exhaustive, and quotable.",
+      "required": ["Defined terms", "Exact states", "Limits", "Source of truth"],
+      "avoid": ["Marketing claims", "Unmarked roadmap items"]
+    },
+    "conceptual": {
+      "goal": "Help someone explain a RahRow concept accurately.",
+      "tone": "Clear and instructional.",
+      "required": ["Definition", "Why it matters", "Concrete example", "Related choice"],
+      "avoid": ["Undefined jargon", "Implementation detail without consequence"]
+    },
+    "troubleshooting": {
+      "goal": "Help someone identify a problem and recover.",
+      "tone": "Empathetic but not apologetic.",
+      "required": ["Observed problem", "Likely cause", "Next action", "Expected result"],
+      "avoid": ["Blame", "Humor", "False reassurance", "Dead-end errors"]
+    },
+    "interface": {
+      "goal": "Help someone understand state and take the next action.",
+      "tone": "Compact, literal, and calm.",
+      "required": ["Specific state", "Action label when action exists"],
+      "avoid": ["Technical codes as primary copy", "Multiple actions in one button", "Punctuation in short button labels"]
+    }
+  },
+  "copyLibrary": {
+    "homepage": {
+      "eyebrow": "Open source · Desktop · Mobile",
+      "headline": "Your VPN connections, across desktop and mobile.",
+      "description": "Import and use your connections on macOS, Windows, Linux, Android, iPhone, and iPad.",
+      "currentPrimaryAction": "Follow development",
+      "currentSecondaryAction": "View on GitHub",
+      "releasedPrimaryAction": "Download RahRow",
+      "releasedSecondaryAction": "Explore the source"
+    },
+    "metadata": {
+      "seoTitle": "RahRow: VPN client for macOS, Windows, Linux, iOS, and Android",
+      "metaDescription": "RahRow is an open-source VPN client for macOS, Windows, Linux, Android, iOS, and iPadOS. Import connections and choose Xray or sing-box.",
+      "socialTitle": "Meet RahRow, a VPN client for desktop and mobile",
+      "socialDescription": "Manage your VPN connections across macOS, Windows, Linux, Android, iPhone, and iPad.",
+      "repositoryDescription": "Open-source VPN client for macOS, Windows, Linux, Android, iOS, and iPadOS."
+    },
+    "pages": [
+      { "id": "home", "title": "RahRow: A VPN client across desktop and mobile", "slug": "/", "description": "Import and use your VPN connections on macOS, Windows, Linux, Android, iPhone, and iPad." },
+      { "id": "downloads", "title": "Download RahRow for your device", "slug": "/download", "description": "Find RahRow downloads for supported desktop and mobile platforms.", "condition": "Use only when at least one public download exists." },
+      { "id": "platforms", "title": "Use RahRow on desktop and mobile", "slug": "/platforms", "description": "See RahRow support for macOS, Windows, Linux, Android, iOS, and iPadOS." },
+      { "id": "macos", "title": "RahRow for macOS", "releasedTitle": "Download RahRow for macOS", "slug": "/platforms/macos", "releasedSlug": "/download/macos", "description": "Use your VPN connections on Mac with RahRow." },
+      { "id": "windows", "title": "RahRow for Windows", "releasedTitle": "Download RahRow for Windows", "slug": "/platforms/windows", "releasedSlug": "/download/windows", "description": "Manage and use your VPN connections on Windows." },
+      { "id": "linux", "title": "RahRow for Linux", "releasedTitle": "Download RahRow for Linux", "slug": "/platforms/linux", "releasedSlug": "/download/linux", "description": "Use RahRow on your Linux desktop." },
+      { "id": "android", "title": "RahRow for Android", "releasedTitle": "Download RahRow for Android", "slug": "/platforms/android", "releasedSlug": "/download/android", "description": "Import and use VPN connections on Android phones and tablets." },
+      { "id": "ios", "title": "RahRow for iPhone and iPad", "releasedTitle": "Download RahRow for iPhone and iPad", "slug": "/platforms/ios", "releasedSlug": "/download/ios", "description": "Use your RahRow connections on iPhone and iPad." },
+      { "id": "features", "title": "Manage your VPN connections with RahRow", "slug": "/features", "description": "Import connections, manage subscriptions, choose an engine, and check connection status." },
+      { "id": "about", "title": "Learn why RahRow exists", "slug": "/about", "description": "Learn how RahRow approaches open-source VPN access across desktop and mobile." },
+      { "id": "status", "title": "Check RahRow platform support", "slug": "/status", "description": "See which platforms and features are available, in preview, or in development." },
+      { "id": "help", "title": "Get help with RahRow", "slug": "/help", "description": "Find help with connections, subscriptions, engines, and platform support." }
+    ],
+    "platformCards": [
+      { "platform": "macOS", "title": "RahRow for macOS", "description": "Connect on your Mac with the RahRow desktop app." },
+      { "platform": "Windows", "title": "RahRow for Windows", "description": "Manage and use your VPN connections on Windows." },
+      { "platform": "Linux", "title": "RahRow for Linux", "description": "Run RahRow on your Linux desktop." },
+      { "platform": "Android", "title": "RahRow for Android", "description": "Connect on Android phones and tablets." },
+      { "platform": "iOS and iPadOS", "title": "RahRow for iPhone and iPad", "description": "Connect through Apple’s native VPN system." }
+    ],
+    "features": [
+      { "title": "Import connections", "description": "Add VLESS, VMess, and Trojan links." },
+      { "title": "Manage subscriptions", "description": "Import and refresh groups of connections." },
+      { "title": "Choose an engine", "description": "Select Xray or sing-box in Settings when both engines are available." },
+      { "title": "Check connection status", "description": "See whether RahRow connected or needs your attention." },
+      { "title": "Use one interface", "description": "Keep a familiar workflow across desktop and mobile." },
+      { "title": "Install one application", "description": "A qualifying release includes every engine it advertises." }
+    ],
+    "actions": {
+      "primary": ["Connect", "Disconnect", "Add connection", "Import subscription", "Download RahRow", "Try again"],
+      "secondary": ["View details", "Open Settings", "Copy link", "Share connection", "Check status", "View on GitHub"],
+      "development": ["Follow development", "Check platform status", "Try the development preview"]
+    },
+    "interfaceMessages": {
+      "emptyConnections": { "title": "No connections yet", "description": "Add a connection link or import a subscription." },
+      "emptySubscriptions": { "title": "No subscriptions yet", "description": "Add a subscription to manage several connections together." },
+      "connecting": "Connecting…",
+      "connected": "Connected",
+      "disconnecting": "Disconnecting…",
+      "disconnected": "Disconnected",
+      "connectionFailed": { "title": "RahRow couldn’t connect", "description": "Check this connection and try again.", "action": "Try again" },
+      "permissionRequired": { "title": "Allow VPN access", "description": "RahRow needs VPN permission before it can connect.", "action": "Continue" },
+      "vpnUnavailable": { "title": "VPN mode is unavailable", "description": "VPN mode isn’t available in this version of RahRow." },
+      "proxyFallback": { "title": "Choose another connection mode", "description": "VPN mode is unavailable. You can choose proxy mode in Settings.", "action": "Open Settings" },
+      "unsupportedPlatform": { "title": "VPN connections aren’t supported here", "description": "Use RahRow on a supported desktop or mobile platform." },
+      "missingEngine": { "title": "The selected engine is unavailable", "description": "This version of RahRow doesn’t include the selected engine.", "action": "Choose an engine" },
+      "invalidConnection": { "title": "RahRow couldn’t import this connection", "description": "Check the connection link and try again." },
+      "subscriptionRefreshFailed": { "title": "RahRow couldn’t refresh this subscription", "description": "Check the subscription address and your internet connection, then try again." }
+    }
+  },
+  "errorPattern": {
+    "formula": ["State what failed", "Name the affected scope", "Give one working next action"],
+    "titleRules": [
+      "Keep the title specific and under eight words when possible.",
+      "Do not expose an error code as the title.",
+      "Do not blame the person or provider."
+    ],
+    "descriptionRules": [
+      "Explain the consequence in plain language.",
+      "Include technical detail only when it changes the next action.",
+      "Do not promise that retrying will work."
+    ],
+    "diagnosticRules": [
+      "Put technical codes and native capability names in expandable details.",
+      "Preserve exact engine and platform names.",
+      "Make logs copyable without making them the primary message."
+    ]
+  },
+  "reviewChecklist": {
+    "brand": [
+      "RahRow uses the correct capitalization.",
+      "The copy identifies RahRow as a client, not a service.",
+      "The canonical headline and description remain unchanged when used as the brand lockup."
+    ],
+    "accuracy": [
+      "Every platform claim matches current release evidence.",
+      "Every protocol claim distinguishes implemented work from roadmap work.",
+      "Every engine claim matches the engines included in the artifact.",
+      "VPN and proxy mode remain distinct.",
+      "The copy makes no unsupported privacy, anonymity, security, or speed claim."
+    ],
+    "voice": [
+      "The copy uses active voice and direct address.",
+      "Each sentence names a clear subject and action.",
+      "The tone stays calm during errors.",
+      "The copy avoids filler, pressure words, jargon, and rhetorical questions."
+    ],
+    "structure": [
+      "The surface performs one job.",
+      "The opening paragraph explains what the surface covers.",
+      "Headings use sentence case and describe their sections.",
+      "Paragraphs contain one idea and no more than four sentences.",
+      "Lists use the correct order and punctuation."
+    ],
+    "interface": [
+      "Buttons begin with clear action verbs.",
+      "Loading states use the ellipsis character.",
+      "Errors include a working next action when one exists.",
+      "Unavailable states do not imply automatic fallback.",
+      "Technical details stay secondary to the user-facing message."
+    ],
+    "metadata": [
+      "The title names RahRow and the page purpose.",
+      "The description states a concrete action or capability.",
+      "The slug uses lowercase words separated by hyphens.",
+      "Download language appears only for released artifacts."
+    ]
+  },
+  "reviewOutput": {
+    "fileReviewFormat": "Group findings by file and use file:line - issue → correction.",
+    "newCopyFormat": "Group ready-to-use copy by product surface.",
+    "requiredDisclosure": "List factual assumptions that could not be verified.",
+    "passMessage": "✓ pass"
+  }
+}

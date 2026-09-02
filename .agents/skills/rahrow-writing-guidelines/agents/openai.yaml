@@ -1,0 +1,4 @@
+interface:
+  display_name: "RahRow Writing Guidelines"
+  short_description: "Write and review copy in the RahRow voice"
+  default_prompt: "Use $rahrow-writing-guidelines to write clear, accurate RahRow product copy."
