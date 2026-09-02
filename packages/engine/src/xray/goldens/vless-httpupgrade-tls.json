@@ -1,0 +1,81 @@
+{
+	"dns": {
+		"servers": ["1.1.1.1", "8.8.8.8"]
+	},
+	"inbounds": [
+		{
+			"listen": "127.0.0.1",
+			"port": 10808,
+			"protocol": "socks",
+			"settings": {
+				"udp": true
+			},
+			"sniffing": {
+				"destOverride": ["http", "tls", "quic"],
+				"enabled": true
+			},
+			"tag": "socks-in"
+		}
+	],
+	"log": {
+		"loglevel": "warning"
+	},
+	"outbounds": [
+		{
+			"mux": {
+				"enabled": true
+			},
+			"protocol": "vless",
+			"settings": {
+				"vnext": [
+					{
+						"address": "example.com",
+						"port": 443,
+						"users": [
+							{
+								"encryption": "none",
+								"id": "11111111-1111-4111-8111-111111111111",
+								"packetEncoding": "xudp"
+							}
+						]
+					}
+				]
+			},
+			"streamSettings": {
+				"httpupgradeSettings": {
+					"host": "cdn.example.com",
+					"path": "/upgrade"
+				},
+				"network": "httpupgrade",
+				"security": "tls",
+				"sockopt": {
+					"tcpNoDelay": true
+				},
+				"tlsSettings": {
+					"alpn": ["h2", "http/1.1"],
+					"allowInsecure": true,
+					"serverName": "edge.example.com"
+				}
+			},
+			"tag": "proxy"
+		},
+		{
+			"protocol": "freedom",
+			"tag": "direct"
+		},
+		{
+			"protocol": "blackhole",
+			"tag": "block"
+		}
+	],
+	"routing": {
+		"domainStrategy": "AsIs",
+		"rules": [
+			{
+				"ip": ["geoip:private"],
+				"outboundTag": "direct",
+				"type": "field"
+			}
+		]
+	}
+}

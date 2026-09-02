@@ -1,0 +1,63 @@
+{
+	"dns": {
+		"servers": ["1.1.1.1", "8.8.8.8"]
+	},
+	"inbounds": [
+		{
+			"listen": "127.0.0.1",
+			"port": 10808,
+			"protocol": "socks",
+			"settings": {
+				"udp": true
+			},
+			"sniffing": {
+				"destOverride": ["http", "tls", "quic"],
+				"enabled": true
+			},
+			"tag": "socks-in"
+		}
+	],
+	"log": {
+		"loglevel": "warning"
+	},
+	"outbounds": [
+		{
+			"protocol": "trojan",
+			"settings": {
+				"servers": [
+					{
+						"address": "trojan.example.com",
+						"password": "secret",
+						"port": 443
+					}
+				]
+			},
+			"streamSettings": {
+				"network": "tcp",
+				"security": "none",
+				"sockopt": {
+					"tcpNoDelay": true
+				}
+			},
+			"tag": "proxy"
+		},
+		{
+			"protocol": "freedom",
+			"tag": "direct"
+		},
+		{
+			"protocol": "blackhole",
+			"tag": "block"
+		}
+	],
+	"routing": {
+		"domainStrategy": "AsIs",
+		"rules": [
+			{
+				"ip": ["geoip:private"],
+				"outboundTag": "direct",
+				"type": "field"
+			}
+		]
+	}
+}

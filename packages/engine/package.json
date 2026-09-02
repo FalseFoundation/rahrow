@@ -1,0 +1,29 @@
+{
+	"name": "@rahrow/engine",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Proxy engine implementations and engine registry for RahRow.",
+	"type": "module",
+	"sideEffects": false,
+	"exports": {
+		"./*": "./src/*"
+	},
+	"scripts": {
+		"watch": "tsc --watch --preserveWatchOutput",
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"cleanup": "rm -rf dist .turbo node_modules"
+	},
+	"dependencies": {
+		"@rahrow/core": "workspace:*"
+	},
+	"devDependencies": {
+		"@rahrow/tooling": "workspace:*",
+		"vitest": "^4.1.11"
+	},
+	"files": [
+		"src",
+		"README.md"
+	]
+}
