@@ -944,10 +944,10 @@ export const persianMessages = {
 	},
 	latency: {
 		canceled: 'لغوشده',
-		timeout: 'مهلت تمام شد',
+		timeout: 'پینگ ناموفق',
 		failed: 'پینگ ناموفق',
-		unreachable: 'دسترسی ممکن نیست',
-		unavailable: 'در دسترس نیست',
+		unreachable: 'عدم دسترسی',
+		unavailable: 'عدم دسترسی',
 		measured: '{{value, number}} میلی‌ثانیه',
 	},
 	share: {
