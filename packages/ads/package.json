@@ -1,0 +1,28 @@
+{
+	"name": "@rahrow/ads",
+	"private": true,
+	"version": "0.0.0",
+	"description": "Optional provider-neutral advertising orchestration for RahRow clients.",
+	"type": "module",
+	"exports": {
+		"./*": "./src/*"
+	},
+	"scripts": {
+		"watch": "tsc --watch --preserveWatchOutput",
+		"build": "tsc",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"cleanup": "rm -rf dist .turbo node_modules"
+	},
+	"dependencies": {
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@rahrow/tooling": "workspace:*",
+		"typescript": "^7.0.2",
+		"vitest": "^4.1.11"
+	},
+	"files": [
+		"src"
+	]
+}
