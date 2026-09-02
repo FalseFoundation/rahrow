@@ -1,0 +1,60 @@
+{
+	"schemaVersion": 1,
+	"engine": "xray",
+	"version": "26.7.28",
+	"availability": "bundled",
+	"binaryName": "xray",
+	"environmentVariable": "RAHROW_XRAY_BINARY",
+	"artifacts": [
+		{
+			"platform": "darwin-arm64",
+			"archiveName": "Xray-macos-arm64-v8a.zip",
+			"executablePath": "xray",
+			"checksum": {
+				"algorithm": "sha256",
+				"value": "9b99a351febe31b7e0c7f22deeb1577a1da0b98aaa51aec7fd17832e68cf63d6"
+			},
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-macos-arm64-v8a.zip"
+		},
+		{
+			"platform": "darwin-x64",
+			"archiveName": "Xray-macos-64.zip",
+			"executablePath": "xray",
+			"checksum": {
+				"algorithm": "sha256",
+				"value": "812f7d9de6d3506795eabda2f6928ba301c632c3fe6fa39c52ea8e0ed9e4e244"
+			},
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-macos-64.zip"
+		},
+		{
+			"platform": "linux-arm64",
+			"archiveName": "Xray-linux-arm64-v8a.zip",
+			"executablePath": "xray",
+			"checksum": {
+				"algorithm": "sha256",
+				"value": "f5698bb218ada3b4022db26fafc39601c5f53b46b19eb76c9616325985807501"
+			},
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-linux-arm64-v8a.zip"
+		},
+		{
+			"platform": "linux-x64",
+			"archiveName": "Xray-linux-64.zip",
+			"executablePath": "xray",
+			"checksum": {
+				"algorithm": "sha256",
+				"value": "8195d909f1109b8f3d99eefe401a3c451d7bf4af71f24d3815420f77e5dd2a40"
+			},
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-linux-64.zip"
+		},
+		{
+			"platform": "windows-x64",
+			"archiveName": "Xray-windows-64.zip",
+			"executablePath": "xray.exe",
+			"checksum": {
+				"algorithm": "sha256",
+				"value": "c7172078fca4711bcd92a4774dcd1822544579c58816197575c47533317fd8d1"
+			},
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-windows-64.zip"
+		}
+	]
+}
