@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KAMY96G55ZWPNZD6ENHCWP
 title: Build app-local profile and subscription management UX
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 02:14 UTC
 labels:
   - phase-11
   - ui

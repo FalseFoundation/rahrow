@@ -1,11 +1,11 @@
 ---
 id: TS-01M0K4R5K55A58KKNEW6EE8K7A
 title: Add optional capabilities after core client works
-status: todo
+status: done
 priority: low
 risk: medium
 createdAt: 2026-08-21 21:48 UTC
-updatedAt: 2026-08-21 21:48 UTC
+updatedAt: 2026-08-22 02:24 UTC
 labels:
   - phase-12
   - optional

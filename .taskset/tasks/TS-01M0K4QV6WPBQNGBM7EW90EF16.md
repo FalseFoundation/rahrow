@@ -1,11 +1,11 @@
 ---
 id: TS-01M0K4QV6WPBQNGBM7EW90EF16
 title: Implement CLI commands over shared core capabilities
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-08-21 21:48 UTC
-updatedAt: 2026-08-21 21:48 UTC
+updatedAt: 2026-08-22 02:10 UTC
 labels:
   - phase-10
   - cli

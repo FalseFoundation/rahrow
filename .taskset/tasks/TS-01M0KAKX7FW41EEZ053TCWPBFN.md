@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KAKX7FW41EEZ053TCWPBFN
 title: Establish Xray runtime asset management
-status: todo
+status: done
 priority: high
 risk: high
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 01:34 UTC
 labels:
   - phase-6
   - engine

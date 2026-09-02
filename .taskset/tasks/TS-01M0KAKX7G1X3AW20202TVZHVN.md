@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KAKX7G1X3AW20202TVZHVN
 title: Bridge desktop Tauri commands to core connection and Xray engine
-status: todo
+status: done
 priority: high
 risk: high
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 01:41 UTC
 labels:
   - phase-8
   - desktop

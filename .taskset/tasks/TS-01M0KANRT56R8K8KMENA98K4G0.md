@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KANRT56R8K8KMENA98K4G0
 title: Add cross-interface integration validation for shared behavior
-status: todo
+status: done
 priority: medium
 risk: high
 createdAt: 2026-08-21 23:32 UTC
-updatedAt: 2026-08-21 23:32 UTC
+updatedAt: 2026-08-22 02:23 UTC
 labels:
   - validation
   - tests

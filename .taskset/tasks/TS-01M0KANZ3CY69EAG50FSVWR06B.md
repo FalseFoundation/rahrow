@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KANZ3CY69EAG50FSVWR06B
 title: Evaluate optional capabilities after product completion
-status: todo
+status: done
 priority: low
 risk: medium
 createdAt: 2026-08-21 23:32 UTC
-updatedAt: 2026-08-21 23:32 UTC
+updatedAt: 2026-08-22 02:24 UTC
 labels:
   - phase-12
   - optional

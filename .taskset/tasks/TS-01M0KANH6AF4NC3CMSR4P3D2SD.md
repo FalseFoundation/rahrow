@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KANH6AF4NC3CMSR4P3D2SD
 title: Reduce shared UI to product-needed primitives
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-08-21 23:32 UTC
-updatedAt: 2026-08-21 23:32 UTC
+updatedAt: 2026-08-22 01:24 UTC
 labels:
   - phase-11
   - ui

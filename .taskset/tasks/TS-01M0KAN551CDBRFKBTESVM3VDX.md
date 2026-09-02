@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KAN551CDBRFKBTESVM3VDX
 title: Build connection home diagnostics and settings UX
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 02:16 UTC
 labels:
   - phase-11
   - ui

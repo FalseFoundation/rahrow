@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KAMB3CDSKAVR8738K78ZGT
 title: Scaffold the RahRow CLI workspace and command framework
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 02:02 UTC
 labels:
   - phase-10
   - cli

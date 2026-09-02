@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KAKX7GMMTKXJ7SQ95F8R87
 title: Implement desktop platform capabilities
-status: todo
+status: done
 priority: medium
 risk: high
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 01:55 UTC
 labels:
   - phase-8
   - desktop

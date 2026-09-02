@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KANC17XA0XT8AZ46V25QC2
 title: Implement QR share and clipboard import export flows
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 02:18 UTC
 labels:
   - phase-11
   - platform

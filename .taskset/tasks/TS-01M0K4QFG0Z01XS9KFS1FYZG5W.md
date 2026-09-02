@@ -1,11 +1,11 @@
 ---
 id: TS-01M0K4QFG0Z01XS9KFS1FYZG5W
 title: Implement desktop platform integrations
-status: todo
+status: done
 priority: medium
 risk: high
 createdAt: 2026-08-21 21:48 UTC
-updatedAt: 2026-08-21 21:48 UTC
+updatedAt: 2026-08-22 01:57 UTC
 labels:
   - phase-8
   - desktop

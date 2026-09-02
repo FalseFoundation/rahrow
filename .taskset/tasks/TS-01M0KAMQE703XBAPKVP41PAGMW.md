@@ -1,11 +1,11 @@
 ---
 id: TS-01M0KAMQE703XBAPKVP41PAGMW
 title: Implement CLI connection status and latency commands
-status: todo
+status: done
 priority: medium
 risk: high
 createdAt: 2026-08-21 23:31 UTC
-updatedAt: 2026-08-21 23:31 UTC
+updatedAt: 2026-08-22 02:09 UTC
 labels:
   - phase-10
   - cli
