@@ -63,6 +63,27 @@ export const profileMetadataSchema = z.strictObject({
 		.optional(),
 	tags: z.array(textSchema).readonly().optional(),
 	subscriptionId: textSchema.optional(),
+	extensions: z
+		.strictObject({
+			uriQuery: z
+				.record(
+					z.string().regex(/^[A-Za-z0-9._~-]{1,100}$/u),
+					z.array(z.string().max(2048)).max(20).readonly(),
+				)
+				.refine((entries) => Object.keys(entries).length <= 50, {
+					message: 'At most 50 URI extension parameters may be preserved',
+				})
+				.readonly()
+				.optional(),
+			vmessJson: z
+				.record(z.string().regex(/^[A-Za-z0-9._~-]{1,100}$/u), z.string().max(2048))
+				.refine((entries) => Object.keys(entries).length <= 50, {
+					message: 'At most 50 VMess extension fields may be preserved',
+				})
+				.readonly()
+				.optional(),
+		})
+		.optional(),
 })
 
 export const connectionProfileSchema = z
@@ -85,6 +106,30 @@ export const connectionProfileSchema = z
 		metadata: profileMetadataSchema.optional(),
 	})
 	.superRefine((profile, context) => {
+		const supportsPortableTransport =
+			profile.protocol === 'vless' ||
+			profile.protocol === 'vmess' ||
+			profile.protocol === 'trojan'
+		if (profile.transport && !supportsPortableTransport) {
+			context.addIssue({
+				code: 'custom',
+				path: ['transport'],
+				message: `${profile.protocol} profiles do not support V2Ray transport fields`,
+			})
+		}
+
+		const supportsSecurity =
+			supportsPortableTransport ||
+			profile.protocol === 'hysteria' ||
+			profile.protocol === 'hysteria2'
+		if (profile.security && !supportsSecurity) {
+			context.addIssue({
+				code: 'custom',
+				path: ['security'],
+				message: `${profile.protocol} profiles do not support TLS or REALITY fields`,
+			})
+		}
+
 		if (profile.protocol === 'shadowsocks') {
 			if (!profile.authentication?.method) {
 				context.addIssue({

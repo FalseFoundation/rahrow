@@ -105,10 +105,12 @@ export function ConnectionActionsDrawer({
 							<QuickAction
 								icon={<EditIcon />}
 								title={t('profiles.actions.edit')}
+								disabled={target.locked}
 								onClick={onEdit}
 							/>
 							<QuickAction
 								destructive
+								disabled={target.locked}
 								icon={<DeleteIcon />}
 								title={t('profiles.actions.remove')}
 								onClick={onDelete}
@@ -129,6 +131,7 @@ export function ConnectionActionsDrawer({
 							<QuickAction
 								icon={<EditIcon />}
 								title={t('profiles.actions.edit')}
+								disabled={target.subscription.locked}
 								onClick={onEdit}
 							/>
 							<QuickAction

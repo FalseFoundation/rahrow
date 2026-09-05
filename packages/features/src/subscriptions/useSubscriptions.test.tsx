@@ -74,6 +74,73 @@ function renderSubscriptions(runtime: AppRuntime) {
 }
 
 describe('useSubscriptions', () => {
+	it('publishes imported profiles before URL import resolves', async () => {
+		const store = createSubscriptionStore()
+		let releaseFetch: ((value: string) => void) | undefined
+		const fetch = vi.fn(
+			() =>
+				new Promise<string>((resolve) => {
+					releaseFetch = resolve
+				}),
+		)
+		const profileStore = new JsonProfileStore(new MemoryDocumentStore())
+		const runtime = {
+			...createRuntime(store, profileStore),
+			subscriptionFetcher: { fetch },
+		}
+		const { result } = renderSubscriptions(runtime)
+		await waitFor(() => expect(result.current.state.isInitialized).toBe(true))
+
+		let addPromise!: Promise<void>
+		act(() => {
+			addPromise = result.current.actions.addFromUrl(
+				'https://example.com/imported.txt',
+			)
+		})
+		await waitFor(() => expect(fetch).toHaveBeenCalledOnce())
+		await expect(profileStore.list()).resolves.toEqual([])
+
+		releaseFetch?.('trojan://secret@imported.example:443?security=tls#Imported')
+		await act(async () => addPromise)
+
+		await expect(profileStore.list()).resolves.toMatchObject([
+			{
+				protocol: 'trojan',
+				endpoint: { host: 'imported.example', port: 443 },
+				metadata: {
+					name: 'Imported',
+					source: 'subscription',
+					subscriptionId: 'example-com',
+				},
+			},
+		])
+	})
+
+	it('rejects URL import when refresh fails so the caller can preserve input', async () => {
+		const store = createSubscriptionStore()
+		const profileStore = new JsonProfileStore(new MemoryDocumentStore())
+		const runtime = {
+			...createRuntime(store, profileStore),
+			subscriptionFetcher: {
+				fetch: vi.fn(async () => {
+					throw new Error('source unavailable')
+				}),
+			},
+		}
+		const { result } = renderSubscriptions(runtime)
+		await waitFor(() => expect(result.current.state.isInitialized).toBe(true))
+
+		await act(async () => {
+			await expect(
+				result.current.actions.addFromUrl('https://example.com/unavailable.txt'),
+			).rejects.toThrow('source unavailable')
+		})
+
+		expect(await store.list()).toEqual([])
+		await expect(profileStore.list()).resolves.toEqual([])
+		expect(result.current.state.failure).toMatchObject({ operation: 'refresh' })
+	})
+
 	it('paces refresh-all and publishes the subscription cache once at the end', async () => {
 		const subscriptions: Subscription[] = Array.from(
 			{ length: 5 },
@@ -97,6 +164,55 @@ describe('useSubscriptions', () => {
 		// Each source is re-read before fetching and immediately before replacement so
 		// a lock or ownership change cannot race the destructive refresh commit.
 		expect(store.list).toHaveBeenCalledTimes(12)
+	})
+
+	it('exposes refresh-all pending progress and cancels queued sources', async () => {
+		const subscriptions: Subscription[] = Array.from(
+			{ length: 5 },
+			(_, index) => ({
+				id: `source-${index}`,
+				url: `https://example.com/${index}.txt`,
+			}),
+		)
+		const store = createSubscriptionStore(subscriptions)
+		const started: string[] = []
+		let release: (() => void) | undefined
+		const gate = new Promise<void>((resolve) => {
+			release = resolve
+		})
+		const runtime = {
+			...createRuntime(store),
+			subscriptionFetcher: {
+				fetch: vi.fn(async (subscription: Subscription) => {
+					started.push(subscription.id)
+					await gate
+					return ''
+				}),
+			},
+		}
+		const { result } = renderSubscriptions(runtime)
+		await waitFor(() =>
+			expect(result.current.state.subscriptions).toHaveLength(5),
+		)
+
+		let refreshPromise!: Promise<void>
+		act(() => {
+			refreshPromise = result.current.actions.refreshAll(subscriptions)
+		})
+		await waitFor(() => expect(started).toHaveLength(2))
+		expect(result.current.state.subscriptions).toEqual(subscriptions)
+		expect(result.current.state.refreshQueueProgress).toMatchObject({
+			completed: 0,
+			pending: 5,
+			status: 'pending',
+		})
+
+		act(() => result.current.actions.cancelRefreshAll())
+		release?.()
+		await act(async () => refreshPromise)
+
+		expect(started).toEqual(['source-0', 'source-1'])
+		expect(result.current.state.refreshQueueProgress?.status).toBe('canceled')
 	})
 
 	it('reports a safe initial failure, blocks writes, and recovers on retry', async () => {

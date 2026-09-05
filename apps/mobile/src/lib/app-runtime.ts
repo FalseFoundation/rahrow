@@ -35,11 +35,19 @@ import type {
 	ProxyEngine,
 } from '@rahrow/core/runtime/proxy-engine.ts'
 import {
+	createStringDocumentReset,
+	ResetOrchestrator,
+} from '@rahrow/core/settings/reset-orchestrator.ts'
+import {
 	JsonProfileStore,
 	JsonSettingsStore,
 	type StringDocumentStore,
 } from '@rahrow/core/storage/json-store.ts'
 import { JsonSubscriptionStore } from '@rahrow/core/storage/subscription-store.ts'
+import {
+	SingBoxRawDocumentAdapter,
+	XrayRawDocumentAdapter,
+} from '@rahrow/engine/import/raw-engine-document.ts'
 import { createEngineRegistry } from '@rahrow/engine/registry/engine-registry.ts'
 import { SelectedEngine } from '@rahrow/engine/registry/selected-engine.ts'
 import {
@@ -60,6 +68,8 @@ import { QrCameraPreview } from '@rahrow/features/import/QrCameraPreview.tsx'
 import { createQrTextPayload } from '@rahrow/features/share/qr-text-payload.ts'
 import { createSmartConnectRuntime } from '@rahrow/features/smart-connect/smart-connect-runtime.ts'
 import { createElement } from 'react'
+import singBoxRuntime from '../../../../engines/sing-box/runtime.json'
+import xrayRuntime from '../../../../engines/xray/runtime.json'
 import { AdMobAdProvider } from './admob-ad-provider.ts'
 import {
 	CapacitorEngineLatencyProbe,
@@ -80,6 +90,8 @@ import { createMobileRoutedHttpRequester } from './routed-http.ts'
 export interface CreateMobileRuntimeOptions {
 	readonly advertising?: AppRuntime['advertising'] | null
 	readonly advertisingDocument?: StringDocumentStore
+	readonly buildMetadata?: AppRuntime['buildMetadata']
+	readonly clearSecureCredentials?: () => Promise<void>
 	readonly platform?: MobileVpnPlatform
 	readonly vpn?: CapacitorMobileVpn
 	readonly qrDecoder?: QrDecoder
@@ -97,6 +109,9 @@ export interface CreateMobileRuntimeOptions {
 	readonly resolveSubscriptionCredential?: (
 		credentialId: string,
 	) => Promise<string>
+	readonly rawEngineDocumentStore?: (
+		engineId: 'xray' | 'sing-box',
+	) => StringDocumentStore
 }
 
 export interface MobileHelperCapabilitiesInput {
@@ -120,12 +135,16 @@ export function createMobileRuntime(
 		destination: logs,
 		level: 'debug',
 	})
-	const settingsStore = new JsonSettingsStore(
-		options.settingsDocument ?? createMobileDocumentStore('settings.json'),
-	)
-	const profileStore = new JsonProfileStore(
-		options.profileDocument ?? createMobileDocumentStore('profiles.json'),
-	)
+	const settingsDocument =
+		options.settingsDocument ?? createMobileDocumentStore('settings.json')
+	const profileDocument =
+		options.profileDocument ?? createMobileDocumentStore('profiles.json')
+	const subscriptionDocument =
+		options.subscriptionDocument ??
+		createMobileDocumentStore('subscriptions.json')
+	const settingsStore = new JsonSettingsStore(settingsDocument)
+	const profileStore = new JsonProfileStore(profileDocument)
+	const subscriptionStore = new JsonSubscriptionStore(subscriptionDocument)
 	const xrayProcess = new CapacitorEngineProcess('xray', vpn)
 	const singBoxProcess = new CapacitorEngineProcess('sing-box', vpn)
 	const latencyProbe = new CapacitorEngineLatencyProbe(vpn)
@@ -189,22 +208,49 @@ export function createMobileRuntime(
 					),
 		},
 	})
-
+	const buildMetadata = options.buildMetadata ?? createBuildMetadata()
+	const rawEngineDocuments = createRawEngineDocuments(
+		buildMetadata,
+		options.rawEngineDocumentStore,
+	)
+	const reset = new ResetOrchestrator({
+		settings: settingsStore,
+		profiles: profileStore,
+		subscriptions: subscriptionStore,
+		additionalAppData: rawEngineDocuments.adapters.map((adapter) => ({
+			snapshot: () =>
+				createStringDocumentReset(
+					rawEngineDocuments.storeFor(adapter.engineId),
+				).snapshot(),
+			clear: () =>
+				createStringDocumentReset(
+					rawEngineDocuments.storeFor(adapter.engineId),
+				).clear(),
+			restore: (snapshot) =>
+				createStringDocumentReset(
+					rawEngineDocuments.storeFor(adapter.engineId),
+				).restore(snapshot),
+		})),
+		disconnectAndCleanup: () => connection.disconnect(),
+		...(options.clearSecureCredentials
+			? { credentials: { clear: options.clearSecureCredentials } }
+			: {}),
+		clearTransientState: () => logs.clear(),
+	})
 	return {
-		buildMetadata: createBuildMetadata(),
+		buildMetadata,
 		...(advertising ? { advertising } : {}),
 		profileStore,
 		settingsStore,
-		subscriptionStore: new JsonSubscriptionStore(
-			options.subscriptionDocument ??
-				createMobileDocumentStore('subscriptions.json'),
-		),
+		subscriptionStore,
 		registry: defaultProtocolRegistry,
 		engine,
 		availableEngines: engineRegistry
 			.list()
 			.map((candidate) => candidate.manifest),
 		connection,
+		reset,
+		rawEngineDocuments,
 		smartConnect,
 		egressIdentity:
 			options.egressIdentity ??
@@ -223,6 +269,11 @@ export function createMobileRuntime(
 			qrEncoder: new MobileQrEncoder(),
 			qrDecoder,
 			vpn,
+			lanProxySharing: {
+				supported: false,
+				detail:
+					'LAN proxy sharing is not provided by the Android or iOS VPN adapter.',
+			},
 			networkIdentity: options.networkIdentity ?? vpn,
 		},
 		diagnostics: createMobileDiagnosticsPort(vpn),
@@ -241,10 +292,29 @@ export function createMobileRuntime(
 }
 
 function createBuildMetadata(): NonNullable<AppRuntime['buildMetadata']> {
+	const xrayVersion =
+		import.meta.env.VITE_RAHROW_XRAY_VERSION?.trim() || xrayRuntime.version
+	const singBoxVersion =
+		import.meta.env.VITE_RAHROW_SING_BOX_VERSION?.trim() || singBoxRuntime.version
 	return {
 		...(import.meta.env.VITE_RAHROW_VERSION?.trim()
 			? { version: import.meta.env.VITE_RAHROW_VERSION.trim() }
 			: {}),
+		...(import.meta.env.VITE_RAHROW_BUILD?.trim()
+			? { build: import.meta.env.VITE_RAHROW_BUILD.trim() }
+			: {}),
+		engines: [
+			{
+				id: 'xray',
+				...(xrayVersion ? { version: xrayVersion } : {}),
+				license: 'MPL-2.0',
+			},
+			{
+				id: 'sing-box',
+				...(singBoxVersion ? { version: singBoxVersion } : {}),
+				license: 'GPL-3.0-or-later',
+			},
+		],
 		about: {
 			...(import.meta.env.VITE_RAHROW_TELEGRAM_URL?.trim()
 				? { telegramUrl: import.meta.env.VITE_RAHROW_TELEGRAM_URL.trim() }
@@ -252,6 +322,40 @@ function createBuildMetadata(): NonNullable<AppRuntime['buildMetadata']> {
 			...(import.meta.env.VITE_RAHROW_DONATION_URL?.trim()
 				? { donationUrl: import.meta.env.VITE_RAHROW_DONATION_URL.trim() }
 				: {}),
+		},
+	}
+}
+
+function createRawEngineDocuments(
+	buildMetadata: NonNullable<AppRuntime['buildMetadata']>,
+	createStore: (engineId: 'xray' | 'sing-box') => StringDocumentStore = (
+		engineId,
+	) => createMobileDocumentStore(`raw-engine.${engineId}.json`),
+): NonNullable<AppRuntime['rawEngineDocuments']> {
+	const versionFor = (engineId: 'xray' | 'sing-box') =>
+		buildMetadata.engines?.find((engine) => engine.id === engineId)?.version
+	const adapters = [
+		...(versionFor('xray')
+			? [new XrayRawDocumentAdapter(versionFor('xray') as string)]
+			: []),
+		...(versionFor('sing-box')
+			? [new SingBoxRawDocumentAdapter(versionFor('sing-box') as string)]
+			: []),
+	]
+	const stores = new Map<'xray' | 'sing-box', StringDocumentStore>()
+	return {
+		adapters,
+		storeFor(engineId) {
+			if (engineId !== 'xray' && engineId !== 'sing-box') {
+				throw new Error(`Raw ${engineId} documents are unavailable in this build.`)
+			}
+			const supportedEngineId = engineId as 'xray' | 'sing-box'
+			if (!adapters.some((adapter) => adapter.engineId === supportedEngineId)) {
+				throw new Error(`Raw ${engineId} documents are unavailable in this build.`)
+			}
+			const store = stores.get(supportedEngineId) ?? createStore(supportedEngineId)
+			stores.set(supportedEngineId, store)
+			return store
 		},
 	}
 }

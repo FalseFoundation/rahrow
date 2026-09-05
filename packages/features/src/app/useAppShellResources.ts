@@ -18,7 +18,10 @@ export function useAppShellResources(runtime: AppRuntime) {
 	const [localeReady, setLocaleReady] = useState(false)
 	const [connectionState, setConnectionState] =
 		useState<ConnectionThemeState>('disconnected')
-	const queryClient = useMemo(() => new QueryClient(), [runtime])
+	const queryClient = useMemo(
+		() => new QueryClient(),
+		[runtime.connection, runtime.settingsStore],
+	)
 	const publishSnapshot = useCallback((snapshot: ConnectionSnapshot) => {
 		setConnectionState(connectionThemeState(snapshot.state))
 	}, [])
@@ -80,7 +83,13 @@ export function useAppShellResources(runtime: AppRuntime) {
 					}
 				: {}),
 		}
-	}, [publishSnapshot, readConnectionState, runtime])
+	}, [
+		publishSnapshot,
+		readConnectionState,
+		runtime.advertising,
+		runtime.connection,
+		runtime.logger,
+	])
 	const settingsStore = useMemo(
 		() => ({
 			read: () => runtime.settingsStore.read(),
@@ -93,7 +102,26 @@ export function useAppShellResources(runtime: AppRuntime) {
 	)
 	const shellRuntime = useMemo(
 		() => ({ ...runtime, connection, settingsStore }),
-		[runtime, connection, settingsStore],
+		[
+			connection,
+			settingsStore,
+			runtime.advertising,
+			runtime.availableEngines,
+			runtime.buildMetadata,
+			runtime.capabilities,
+			runtime.diagnostics,
+			runtime.egressIdentity,
+			runtime.engine,
+			runtime.logger,
+			runtime.logs,
+			runtime.networkQuality,
+			runtime.profileStore,
+			runtime.registry,
+			runtime.renderQrCameraPreview,
+			runtime.smartConnect,
+			runtime.subscriptionFetcher,
+			runtime.subscriptionStore,
+		],
 	)
 
 	useEffect(() => {

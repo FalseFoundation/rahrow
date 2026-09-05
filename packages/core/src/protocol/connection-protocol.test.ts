@@ -125,6 +125,36 @@ describe('protocol URL parsing', () => {
 		)
 	})
 
+	it('preserves safe unknown URI parameters in the namespaced extension bag', () => {
+		const fixtures = [
+			'vless://11111111-1111-4111-8111-111111111111@example.com:443?x-provider=one&x-provider=two',
+			'trojan://secret@example.com:443?x-provider=trojan',
+			'ss://YWVzLTI1Ni1nY206c2VjcmV0@example.com:8388?x-provider=ss',
+			'hysteria://hy.example.com:443?auth=secret&upmbps=50&downmbps=100&x-provider=hy',
+			'hy2://secret@hy2.example.com:443?x-provider=hy2',
+			'ssh://alice:secret@ssh.example.com:22?hostKey=ssh-ed25519%20AAAA-test&x-provider=ssh',
+			vmessUrl({
+				add: 'vmess.example.com',
+				id: '22222222-2222-4222-8222-222222222222',
+				port: '443',
+				v: '2',
+				'x-provider': 'vmess',
+			}),
+		]
+
+		for (const value of fixtures) {
+			const [profile] = parseConnectionUrl(value)
+			if (!profile) throw new Error('Expected a profile')
+			const extensions = profile.metadata?.extensions
+			expect(extensions).toBeTruthy()
+
+			const [roundTripped] = parseConnectionUrl(
+				serializeConnectionProfile(profile),
+			)
+			expect(roundTripped?.metadata?.extensions).toEqual(extensions)
+		}
+	})
+
 	it('parses and serializes AEAD-2022 credentials as plain percent-encoded userinfo', () => {
 		const [profile] = parseConnectionUrl(
 			'ss://2022-blake3-aes-256-gcm:YctPZ6U7xPPcU%2Bgp3u%2B0tx%2FtRizJN9K8y%2BuKlW2qjlI%3D@example.com:8388#AEAD%202022',

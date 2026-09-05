@@ -169,9 +169,7 @@ export class DesktopConnectionCommands {
 				)
 			}
 
-			await this.controller.disconnect()
-
-			return this.controller.connect({
+			return this.controller.reconfigure({
 				...input,
 				profile,
 			})

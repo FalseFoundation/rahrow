@@ -62,7 +62,7 @@ class TestConnection implements SmartConnectConnection {
 }
 
 describe('SmartConnectOrchestrator', () => {
-	it('bounds probes and deterministically connects the fastest reachable profile', async () => {
+	it('bounds probes and selects the fastest reachable profile without powering on', async () => {
 		const candidates = ['slow', 'fast-b', 'fast-a', 'offline'].map(profile)
 		const { profileStore, settingsStore } = await stores(candidates)
 		const connection = new TestConnection()
@@ -95,12 +95,16 @@ describe('SmartConnectOrchestrator', () => {
 		})
 
 		await expect(orchestrator.run()).resolves.toMatchObject({
-			outcome: 'connected',
+			outcome: 'selected',
 			winner: { profileId: 'fast-a', latencyMs: 20 },
 			probed: 4,
 		})
 		expect(maxActive).toBe(2)
-		expect(connection.connected).toEqual(['fast-a'])
+		expect(connection.connected).toEqual([])
+		expect(connection.disconnects).toBe(0)
+		await expect(settingsStore.read()).resolves.toMatchObject({
+			activeProfileId: 'fast-a',
+		})
 	})
 
 	it('reports domain-neutral progress while testing and safely switching', async () => {
@@ -198,7 +202,7 @@ describe('SmartConnectOrchestrator', () => {
 
 		await orchestrator.start()
 		await expect(orchestrator.runIfDue()).resolves.toMatchObject({
-			outcome: 'connected',
+			outcome: 'selected',
 		})
 		expect((await orchestrator.status()).nextRunAt).toBe(
 			new Date(Date.parse(now) + SMART_CONNECT_INTERVAL_MS).toISOString(),
@@ -210,13 +214,33 @@ describe('SmartConnectOrchestrator', () => {
 
 		now = '2026-09-02T00:05:00.000Z'
 		await expect(orchestrator.runIfDue()).resolves.toMatchObject({
-			outcome: 'unchanged',
+			outcome: 'selected',
 		})
 		expect(probes).toBe(2)
 		await orchestrator.stop()
 		await expect(orchestrator.runIfDue()).resolves.toMatchObject({
 			outcome: 'disabled',
 		})
+	})
+
+	it('serializes rapid policy actions and preserves the final user intent', async () => {
+		const { profileStore, settingsStore } = await stores([])
+		const orchestrator = new SmartConnectOrchestrator({
+			profileStore,
+			settingsStore,
+			connection: new TestConnection(),
+			probe: vi.fn(),
+		})
+
+		await expect(
+			Promise.all([
+				orchestrator.start(),
+				orchestrator.stop(),
+				orchestrator.start(),
+			]),
+		).resolves.toHaveLength(3)
+
+		await expect(orchestrator.status()).resolves.toMatchObject({ enabled: true })
 	})
 
 	it('retains the current connection when no candidate succeeds', async () => {
@@ -242,6 +266,34 @@ describe('SmartConnectOrchestrator', () => {
 			outcome: 'no-reachable-profile',
 		})
 		expect(connection.disconnects).toBe(0)
+	})
+
+	it('discards a winner deleted while its probe was running', async () => {
+		const fastest = profile('fastest')
+		const { profileStore, settingsStore } = await stores([fastest])
+		const connection = new TestConnection()
+		const orchestrator = new SmartConnectOrchestrator({
+			profileStore,
+			settingsStore,
+			connection,
+			probe: async (candidate) => {
+				await profileStore.remove(candidate.id)
+				return {
+					profileId: candidate.id,
+					reachable: true,
+					checkedAt: '2026-09-02T00:00:00.000Z',
+					latencyMs: 10,
+				}
+			},
+		})
+
+		await expect(orchestrator.run()).resolves.toMatchObject({
+			outcome: 'stale-winner',
+		})
+		expect(connection.connected).toEqual([])
+		await expect(settingsStore.read()).resolves.not.toHaveProperty(
+			'activeProfileId',
+		)
 	})
 
 	it('restores the previous healthy connection when switching fails', async () => {
@@ -277,6 +329,10 @@ describe('SmartConnectOrchestrator', () => {
 			smartConnect: { enabled: true },
 		})
 		const connection = new TestConnection()
+		connection.current = {
+			profile: profile('current'),
+			state: 'connected',
+		}
 		let releaseConnect: (() => void) | undefined
 		connection.connectGate = new Promise((resolve) => {
 			releaseConnect = resolve
@@ -300,13 +356,17 @@ describe('SmartConnectOrchestrator', () => {
 
 		await expect(Promise.all([manual, scheduled])).resolves.toHaveLength(2)
 		expect(connection.connected).toEqual(['fastest'])
-		expect(connection.disconnects).toBe(0)
+		expect(connection.disconnects).toBe(1)
 	})
 
 	it('isolates concurrent progress subscribers on the shared run', async () => {
 		const fastest = profile('fastest')
 		const { profileStore, settingsStore } = await stores([fastest])
 		const connection = new TestConnection()
+		connection.current = {
+			profile: profile('current'),
+			state: 'connected',
+		}
 		let releaseProbe: (() => void) | undefined
 		const orchestrator = new SmartConnectOrchestrator({
 			profileStore,
@@ -464,6 +524,47 @@ describe('SmartConnectOrchestrator', () => {
 		})
 	})
 
+	it('applies engine and mode changes made while candidates are being tested', async () => {
+		const current = profile('current')
+		const fastest = profile('fastest')
+		const { profileStore, settingsStore } = await stores([current, fastest])
+		await settingsStore.write({ connectionMode: 'vpn', engineId: 'sing-box' })
+		const connection = new TestConnection()
+		connection.current = { profile: current, state: 'connected' }
+		let settingsChanged = false
+		const orchestrator = new SmartConnectOrchestrator({
+			profileStore,
+			settingsStore,
+			connection,
+			probe: async (candidate) => {
+				if (!settingsChanged) {
+					settingsChanged = true
+					await settingsStore.write({
+						connectionMode: 'proxy',
+						engineId: 'xray',
+						localPort: 12080,
+					})
+				}
+				return {
+					profileId: candidate.id,
+					reachable: true,
+					checkedAt: '2026-09-02T00:00:00.000Z',
+					latencyMs: candidate.id === fastest.id ? 10 : 20,
+				}
+			},
+		})
+
+		await expect(orchestrator.run()).resolves.toMatchObject({
+			outcome: 'connected',
+		})
+		expect(connection.inputs[0]).toMatchObject({
+			profile: { id: fastest.id },
+			mode: 'proxy',
+			engineId: 'xray',
+			localPort: 12080,
+		})
+	})
+
 	it('restores the exact previous runtime configuration after a failed switch', async () => {
 		const current = profile('current')
 		const fastest = profile('fastest')
@@ -528,5 +629,32 @@ describe('SmartConnectOrchestrator', () => {
 		await expect(orchestrator.run()).rejects.toThrow('proxy mode is unsupported')
 		expect(connection.disconnects).toBe(0)
 		expect(connection.connected).toEqual([])
+	})
+
+	it('cleans the paced action queue after a failed winner application', async () => {
+		const current = profile('current')
+		const fastest = profile('fastest')
+		const { profileStore, settingsStore } = await stores([current, fastest])
+		const connection = new TestConnection()
+		connection.current = { profile: current, state: 'connected' }
+		connection.validateError = new Error('temporarily unavailable')
+		const orchestrator = new SmartConnectOrchestrator({
+			profileStore,
+			settingsStore,
+			connection,
+			probe: async (candidate) => ({
+				profileId: candidate.id,
+				reachable: true,
+				checkedAt: '2026-09-02T00:00:00.000Z',
+				latencyMs: candidate.id === fastest.id ? 10 : 20,
+			}),
+		})
+
+		await expect(orchestrator.run()).rejects.toThrow('temporarily unavailable')
+		connection.validateError = undefined
+		await expect(orchestrator.run()).resolves.toMatchObject({
+			outcome: 'connected',
+		})
+		expect(connection.connected).toEqual(['fastest'])
 	})
 })

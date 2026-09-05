@@ -38,7 +38,7 @@ async function stores() {
 }
 
 describe('BackupDrawer', () => {
-	it('exports selected connections as a clearly warned plaintext backup', async () => {
+	it('exports every connection through the category-first plaintext flow', async () => {
 		const { profileStore, settingsStore } = await stores()
 		const save = vi.fn<FileSave['save']>(async () => 'saved' as const)
 		const user = userEvent.setup()
@@ -59,10 +59,16 @@ describe('BackupDrawer', () => {
 
 		await user.click(screen.getByRole('button', { name: 'Export backup' }))
 		await user.click(screen.getByRole('radio', { name: 'Connections only' }))
-		await user.click(screen.getByRole('checkbox', { name: /Beta/ }))
+		expect(screen.queryByRole('checkbox')).toBeNull()
+		expect(screen.queryByLabelText('Backup password')).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Continue' }))
 		await user.click(screen.getByRole('radio', { name: 'Plaintext' }))
 
 		expect(screen.getByRole('alert').textContent).toContain('sensitive')
+		await user.click(screen.getByRole('button', { name: 'Continue' }))
+		expect(save).not.toHaveBeenCalled()
+		expect(screen.getByText('Connections only')).toBeTruthy()
+		expect(screen.getByText('Plaintext')).toBeTruthy()
 		await user.click(screen.getByRole('button', { name: 'Save backup' }))
 
 		await waitFor(() => expect(save).toHaveBeenCalledOnce())
@@ -70,7 +76,8 @@ describe('BackupDrawer', () => {
 		expect(input?.filename).toBe('rahrow-backup.json')
 		const text = decodeURIComponent(input?.dataUrl.split(',')[1] ?? '')
 		expect(text).toContain('alpha-secret')
-		expect(text).not.toContain('beta-secret')
+		expect(text).toContain('beta-secret')
+		expect(text).not.toContain('"settings"')
 		expect(recordActionEvent).toHaveBeenCalledWith({
 			id: expect.any(String),
 			action: 'backup-export',
@@ -93,11 +100,22 @@ describe('BackupDrawer', () => {
 		)
 
 		await user.click(screen.getByRole('button', { name: 'Export backup' }))
+		await user.click(screen.getByRole('button', { name: 'Continue' }))
+		expect(screen.queryByLabelText('Backup password')).toBeNull()
+		await user.click(screen.getByRole('button', { name: 'Continue' }))
 		await user.type(screen.getByLabelText('Backup password'), 'correct horse')
+		await user.type(screen.getByLabelText('Confirm backup password'), 'wrong')
+		expect(screen.getByText('Passwords do not match.')).toBeTruthy()
+		expect(
+			(screen.getByRole('button', { name: 'Continue' }) as HTMLButtonElement)
+				.disabled,
+		).toBe(true)
+		await user.clear(screen.getByLabelText('Confirm backup password'))
 		await user.type(
 			screen.getByLabelText('Confirm backup password'),
 			'correct horse',
 		)
+		await user.click(screen.getByRole('button', { name: 'Continue' }))
 		await user.click(screen.getByRole('button', { name: 'Save backup' }))
 
 		await waitFor(() => expect(save).toHaveBeenCalledOnce())
@@ -106,6 +124,41 @@ describe('BackupDrawer', () => {
 		)
 		expect(text).toContain('AES-GCM')
 		expect(text).not.toContain('correct horse')
+		expect(text).not.toContain('alpha-secret')
+	})
+
+	it('exports settings without connection data when that category is chosen', async () => {
+		const { profileStore, settingsStore } = await stores()
+		const save = vi.fn<FileSave['save']>(async () => 'saved' as const)
+		const user = userEvent.setup()
+		render(
+			<BackupDrawer
+				open
+				onOpenChange={vi.fn()}
+				profileStore={profileStore}
+				settingsStore={settingsStore}
+				fileSave={{ save }}
+			/>,
+		)
+
+		await user.click(screen.getByRole('button', { name: 'Export backup' }))
+		expect(
+			screen.getByRole('radio', { name: 'Connections and settings' }),
+		).toBeTruthy()
+		expect(screen.getByRole('radio', { name: 'Connections only' })).toBeTruthy()
+		await user.click(screen.getByRole('radio', { name: 'Settings only' }))
+		await user.click(screen.getByRole('button', { name: 'Continue' }))
+		await user.click(screen.getByRole('radio', { name: 'Plaintext' }))
+		await user.click(screen.getByRole('button', { name: 'Continue' }))
+		await user.click(screen.getByRole('button', { name: 'Save backup' }))
+
+		await waitFor(() => expect(save).toHaveBeenCalledOnce())
+		const text = decodeURIComponent(
+			save.mock.calls[0]?.[0].dataUrl.split(',')[1] ?? '',
+		)
+		expect(text).toContain('"theme": "dark"')
+		expect(text).toContain('"engineId": "xray"')
+		expect(text).not.toContain('"connections"')
 		expect(text).not.toContain('alpha-secret')
 	})
 

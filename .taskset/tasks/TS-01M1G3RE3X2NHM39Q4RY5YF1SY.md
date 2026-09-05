@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RE3X2NHM39Q4RY5YF1SY
 title: Make Smart Connect select the best profile without owning power-on
-status: todo
+status: done
 priority: urgent
 risk: high
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - smart-connect
   - profile-selection

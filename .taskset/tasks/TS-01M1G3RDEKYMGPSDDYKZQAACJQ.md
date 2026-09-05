@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RDEKYMGPSDDYKZQAACJQ
 title: Turn Backup export into a category-first multistep flow
-status: todo
+status: done
 priority: high
 risk: high
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - backup-restore
   - drawer

@@ -23,6 +23,12 @@ const profile = {
 	},
 }
 
+class AtomicMemoryDocumentStore extends MemoryDocumentStore {
+	async writeAtomic(value: string) {
+		await this.write(value)
+	}
+}
+
 class FakeNativeCommands implements DesktopNativeCommands {
 	readonly startedConfigs: XrayConfig[] = []
 	readonly startedSingBoxConfigs: SingBoxConfig[] = []
@@ -122,8 +128,60 @@ describe('createDesktopRuntime', () => {
 		expect(runtime.capabilities.autostart).toBeDefined()
 		expect(runtime.capabilities.systemProxy).toBeDefined()
 		expect(runtime.capabilities.vpn).toBeDefined()
+		expect(runtime.capabilities.lanProxySharing).toMatchObject({
+			supported: false,
+		})
 		expect(runtime.networkQuality).toBeDefined()
 		expect(runtime.advertising?.provider.id).toBe('house-development')
+	})
+
+	it('exposes host build metadata and clears app stores through the reset capability', async () => {
+		const settingsDocument = new MemoryDocumentStore()
+		const profileDocument = new MemoryDocumentStore()
+		const subscriptionDocument = new MemoryDocumentStore()
+		let credentialsCleared = 0
+		const rawDocument = new AtomicMemoryDocumentStore()
+		const runtime = createDesktopRuntime({
+			buildMetadata: {
+				version: '2.0.0',
+				build: 'desktop-42',
+				engines: [{ id: 'xray', version: '26.7.28', license: 'MPL-2.0' }],
+			},
+			clearSecureCredentials: async () => {
+				credentialsCleared += 1
+			},
+			native: new FakeNativeCommands(),
+			platformNative: fakePlatformNative,
+			settingsDocument,
+			profileDocument,
+			subscriptionDocument,
+			rawEngineDocumentStore: () => rawDocument,
+		})
+		await runtime.profileStore.save(profile)
+		await runtime.subscriptionStore.save({
+			id: 'main',
+			url: 'https://example.com/subscription',
+		})
+		await runtime.settingsStore.write({ theme: 'dark', engineId: 'xray' })
+		await rawDocument.writeAtomic('{"outbounds":[]}')
+
+		await expect(runtime.reset?.reset('app-data')).resolves.toMatchObject({
+			status: 'completed',
+		})
+		expect(runtime.buildMetadata?.build).toBe('desktop-42')
+		expect(runtime.buildMetadata?.engines?.[0]?.version).toBe('26.7.28')
+		expect(runtime.rawEngineDocuments?.adapters).toMatchObject([
+			{ engineId: 'xray', engineVersion: '26.7.28' },
+		])
+		expect(runtime.rawEngineDocuments?.storeFor('xray')).toBe(rawDocument)
+		await expect(rawDocument.read()).resolves.toBe('')
+		await expect(runtime.profileStore.list()).resolves.toEqual([])
+		await expect(runtime.subscriptionStore.list()).resolves.toEqual([])
+		await expect(runtime.settingsStore.read()).resolves.toMatchObject({
+			connectionMode: 'vpn',
+		})
+		expect((await runtime.settingsStore.read()).theme).toBeUndefined()
+		expect(credentialsCleared).toBe(1)
 	})
 
 	it('captures only validated metadata returned by the native fetch command', async () => {

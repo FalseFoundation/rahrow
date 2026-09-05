@@ -71,16 +71,19 @@
 	box-shadow: 0 0 2rem
 		color-mix(in oklch, var(--connection-primary) 22%, transparent);
 }
+.powerControl {
+	@apply relative mx-auto grid size-36.5 place-items-center;
+}
 .powerBacklight {
-	@apply mx-auto grid size-36.5 place-items-center;
+	@apply relative z-1 grid size-36.5 place-items-center;
 }
 .powerBacklight > div {
 	@apply grid size-full place-items-center;
 }
 .powerRipple {
-	@apply text-primary;
+	@apply z-0 overflow-visible text-primary;
 }
-.powerHalo[data-connected="true"] .powerRipple {
+.powerControl[data-connected="true"] .powerRipple {
 	color: var(--connection-primary);
 }
 .powerHalo [data-slot="button"] {

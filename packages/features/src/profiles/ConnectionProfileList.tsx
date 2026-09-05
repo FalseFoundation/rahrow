@@ -1,7 +1,17 @@
 import type { ConnectionProfile } from '@rahrow/core/profile/connection-profile.ts'
-import { ChevronIcon, MoreIcon } from '@rahrow/ui/components/rahrow-icons.tsx'
+import {
+	ChevronIcon,
+	LockIcon,
+	MoreIcon,
+} from '@rahrow/ui/components/rahrow-icons.tsx'
 import { Badge } from '@rahrow/ui/components/ui/badge.tsx'
 import { Button } from '@rahrow/ui/components/ui/button.tsx'
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuTrigger,
+} from '@rahrow/ui/components/ui/context-menu.tsx'
 import { IconAction } from '@rahrow/ui/components/ui/icon-action.tsx'
 import {
 	Item,
@@ -13,6 +23,12 @@ import {
 } from '@rahrow/ui/components/ui/item.tsx'
 import { NumberTicker } from '@rahrow/ui/components/ui/number-ticker.tsx'
 import { Spinner } from '@rahrow/ui/components/ui/spinner.tsx'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@rahrow/ui/components/ui/tooltip.tsx'
 import { useAppTranslation } from '../app/app-i18n.tsx'
 import {
 	type LatencyProbeResult,
@@ -25,6 +41,7 @@ export interface ConnectionProfileListProps {
 	readonly listKey?: string
 	readonly profiles: readonly ConnectionProfile[]
 	readonly selectedId: string
+	readonly isLocked?: (profile: ConnectionProfile) => boolean
 	readonly onActivate: (profile: ConnectionProfile) => Promise<void>
 	readonly onActions: (profile: ConnectionProfile) => void
 	readonly speedTests: Readonly<Record<string, LatencyProbeResult | undefined>>
@@ -39,6 +56,7 @@ export function ConnectionProfileList(props: ConnectionProfileListProps) {
 					key={profile.id}
 					profile={profile}
 					selected={profile.id === props.selectedId}
+					locked={props.isLocked?.(profile) ?? false}
 					latency={props.speedTests[profile.id]}
 					testing={props.testingIds?.has(profile.id) ?? false}
 					onActivate={props.onActivate}
@@ -54,6 +72,7 @@ export function ConnectionProfileList(props: ConnectionProfileListProps) {
 export function ConnectionProfileRow({
 	profile,
 	selected,
+	locked = false,
 	latency,
 	testing,
 	onActivate,
@@ -65,6 +84,7 @@ export function ConnectionProfileRow({
 }: {
 	readonly profile: ConnectionProfile
 	readonly selected: boolean
+	readonly locked?: boolean
 	readonly latency: LatencyProbeResult | undefined
 	readonly testing: boolean
 	readonly onActivate: (profile: ConnectionProfile) => Promise<void>
@@ -76,77 +96,102 @@ export function ConnectionProfileRow({
 }) {
 	const { t } = useAppTranslation()
 	const latencyPresentation = latency ? presentLatency(latency) : null
+	const openActions = () => onActions(profile)
 
 	return (
-		<Item
-			variant='flush'
-			size='xs'
-			className={styles.profileRow}
-			data-selected={selected}
-			role={role}
-			aria-posinset={position}
-			aria-setsize={setSize}
-		>
-			<Button
-				variant='ghost'
-				className={styles.profileActivate}
-				data-profile-activate
-				data-profile-id={profile.id}
-				aria-current={selected ? 'true' : undefined}
-				onFocus={onFocus}
-				onClick={() => void onActivate(profile)}
-			>
-				<ItemContent className={styles.profileMain}>
-					<Badge variant='flag'>{protocolBadgeLabel(profile.protocol)}</Badge>
-					<span className={styles.profileCopy}>
-						<ItemTitle>{profileName(profile)}</ItemTitle>
-						<ItemDescription className={styles.endpoint}>
-							{profile.endpoint.host}:{profile.endpoint.port}
-						</ItemDescription>
-					</span>
-				</ItemContent>
-				{testing ? (
-					<Spinner aria-label={`Testing ${profileName(profile)}`} />
-				) : latencyPresentation ? (
-					<span
-						role='status'
-						className={styles.rowMeta}
-						data-latency-kind={latencyPresentation.kind}
-						aria-label={latencyPresentation.label}
+		<ContextMenu>
+			<ContextMenuTrigger className={styles.profileContext} role='presentation'>
+				<Item
+					variant='flush'
+					size='xs'
+					className={styles.profileRow}
+					data-selected={selected}
+					role={role}
+					aria-posinset={position}
+					aria-setsize={setSize}
+				>
+					<Button
+						variant='ghost'
+						className={styles.profileActivate}
+						data-profile-activate
+						data-profile-id={profile.id}
+						aria-current={selected ? 'true' : undefined}
+						onFocus={onFocus}
+						onClick={() => void onActivate(profile)}
 					>
-						{latencyPresentation.kind === 'measured' ? (
-							<span aria-hidden='true' dir='ltr'>
-								<NumberTicker value={latencyPresentation.value} /> ms
+						<ItemContent className={styles.profileMain}>
+							<Badge variant='flag'>{protocolBadgeLabel(profile.protocol)}</Badge>
+							<span className={styles.profileCopy}>
+								<ItemTitle>{profileName(profile)}</ItemTitle>
+								<ItemDescription className={styles.endpoint}>
+									{profile.endpoint.host}:{profile.endpoint.port}
+								</ItemDescription>
 							</span>
-						) : (
-							latencyPresentation.label
-						)}
-					</span>
-				) : null}
-			</Button>
-			<ItemActions className={styles.rowMeta}>
-				<IconAction
-					variant='ghost'
-					size='square'
-					label={t('profiles.actions.more')}
-					onClick={(event) => {
-						event.stopPropagation()
-						onActions(profile)
-					}}
-				>
-					<MoreIcon />
-				</IconAction>
-				<IconAction
-					variant='ghost'
-					size='icon-xs'
-					aria-current={selected ? 'true' : undefined}
-					label={t('profiles.actions.use')}
-					onClick={() => void onActivate(profile)}
-				>
-					<ChevronIcon />
-				</IconAction>
-			</ItemActions>
-		</Item>
+						</ItemContent>
+						{testing ? (
+							<Spinner aria-label={`Testing ${profileName(profile)}`} />
+						) : latencyPresentation ? (
+							<span
+								role='status'
+								className={styles.rowMeta}
+								data-latency-kind={latencyPresentation.kind}
+								aria-label={latencyPresentation.label}
+							>
+								{latencyPresentation.kind === 'measured' ? (
+									<span aria-hidden='true' dir='ltr'>
+										<NumberTicker value={latencyPresentation.value} /> ms
+									</span>
+								) : (
+									latencyPresentation.label
+								)}
+							</span>
+						) : null}
+					</Button>
+					<ItemActions className={styles.rowMeta}>
+						{locked ? <LockedBadge label={t('profiles.locked')} /> : null}
+						<IconAction
+							variant='ghost'
+							size='square'
+							label={t('profiles.actions.more')}
+							onClick={(event) => {
+								event.stopPropagation()
+								openActions()
+							}}
+						>
+							<MoreIcon />
+						</IconAction>
+						<IconAction
+							variant='ghost'
+							size='icon-xs'
+							aria-current={selected ? 'true' : undefined}
+							label={t('profiles.actions.use')}
+							onClick={() => void onActivate(profile)}
+						>
+							<ChevronIcon />
+						</IconAction>
+					</ItemActions>
+				</Item>
+			</ContextMenuTrigger>
+			<ContextMenuContent>
+				<ContextMenuItem onClick={openActions}>
+					{t('profiles.actions.more')}
+				</ContextMenuItem>
+			</ContextMenuContent>
+		</ContextMenu>
+	)
+}
+
+function LockedBadge({ label }: { readonly label: string }) {
+	return (
+		<TooltipProvider>
+			<Tooltip>
+				<TooltipTrigger render={<Badge variant='outline' tabIndex={0} />}>
+					<LockIcon data-icon='inline-start' />
+					{label}
+				</TooltipTrigger>
+				<TooltipContent>{label}</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	)
 }
 

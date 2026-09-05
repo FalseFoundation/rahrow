@@ -1,11 +1,11 @@
 ---
 id: TS-01M1AP3ZNC7S2AHF01DV1EQF89
 title: Restore a distinct neutral selected state in Connections
-status: todo
+status: done
 priority: high
 risk: medium
 createdAt: 2026-08-31 01:14 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - connections
   - selection

@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RD401K7F0XGM5FMPGJH4
 title: Pace and serialize every Smart Connect action with TanStack Pacer
-status: todo
+status: done
 priority: high
 risk: high
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - smart-connect
   - tanstack-pacer

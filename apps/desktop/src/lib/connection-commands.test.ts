@@ -25,6 +25,7 @@ class FakeNativeCommands implements DesktopNativeCommands {
 	readonly startedConfigs: XrayConfig[] = []
 	readonly startedSingBoxConfigs: SingBoxConfig[] = []
 	running = false
+	failNextStart = false
 	probeResult: {
 		readonly reachable: boolean
 		readonly latencyMs?: number
@@ -32,6 +33,10 @@ class FakeNativeCommands implements DesktopNativeCommands {
 	} = { reachable: true, latencyMs: 12 }
 
 	async startXray(config: XrayConfig): Promise<void> {
+		if (this.failNextStart) {
+			this.failNextStart = false
+			throw new Error('replacement failed')
+		}
 		this.startedConfigs.push(config)
 		this.running = true
 	}
@@ -135,7 +140,7 @@ describe('desktop connection commands', () => {
 		})
 	})
 
-	it('restarts the active connection by stopping and starting Xray again', async () => {
+	it('treats an unchanged active reconfiguration as a no-op', async () => {
 		const native = new FakeNativeCommands()
 		const commands = createDesktopConnectionCommands(native)
 
@@ -144,7 +149,30 @@ describe('desktop connection commands', () => {
 
 		expect(result.ok).toBe(true)
 		expect(result.ok && result.data.state).toBe('connected')
-		expect(native.startedConfigs).toHaveLength(2)
+		expect(native.startedConfigs).toHaveLength(1)
+	})
+
+	it('uses atomic reconfiguration so a failed restart restores the active profile', async () => {
+		const native = new FakeNativeCommands()
+		const commands = createDesktopConnectionCommands(native)
+		await commands.connect({ profile })
+		native.failNextStart = true
+
+		const result = await commands.restart({
+			profile: {
+				...profile,
+				id: 'replacement',
+				endpoint: { host: 'replacement.example.com', port: 443 },
+			},
+		})
+		const status = await commands.status()
+
+		expect(result).toMatchObject({ ok: false })
+		expect(status.ok && status.data.connection).toMatchObject({
+			state: 'connected',
+			profile: { id: 'test-profile' },
+		})
+		expect(status.ok && status.data.engine.status).toBe('running')
 	})
 
 	it('returns status and latency using the shared core and engine contracts', async () => {

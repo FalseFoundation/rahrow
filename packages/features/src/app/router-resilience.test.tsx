@@ -20,11 +20,23 @@ describe('route resilience', () => {
 		const status = screen.getByRole('status')
 		const headerSlot = document.querySelector('[data-app-header-slot]')
 		expect(status.textContent).toContain('Loading screen')
+		expect(document.querySelectorAll('[data-slot="skeleton"]')).not.toHaveLength(
+			0,
+		)
 		expect(status.getAttribute('aria-atomic')).toBe('true')
 		expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
 		expect(headerSlot?.contains(screen.getByRole('heading', { level: 1 }))).toBe(
 			true,
 		)
+	})
+
+	it('uses a stable shape for the route being loaded', () => {
+		render(<RouteLoadingFallback variant='connections' />)
+
+		expect(
+			document.querySelector('[data-loading-variant="connections"]'),
+		).toBeTruthy()
+		expect(document.querySelectorAll('[data-slot="skeleton"]')).toHaveLength(7)
 	})
 
 	it('offers both immediate retry and a diagnostics escape hatch', async () => {

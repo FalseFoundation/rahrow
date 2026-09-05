@@ -106,7 +106,7 @@ export class VlessParser implements ConnectionParser {
 				encryption: optionalParam(url.searchParams, 'encryption'),
 				flow: optionalParam(url.searchParams, 'flow'),
 			}),
-			metadata: metadataFromUrl(url),
+			metadata: metadataFromUrl(url, VLESS_QUERY_KEYS),
 		})
 
 		return [profile]
@@ -135,7 +135,7 @@ export class TrojanParser implements ConnectionParser {
 			authentication: {
 				password,
 			},
-			metadata: metadataFromUrl(url),
+			metadata: metadataFromUrl(url, TROJAN_QUERY_KEYS),
 		})
 
 		return [profile]
@@ -150,7 +150,7 @@ export class VmessParser implements ConnectionParser {
 	parse(input: string): readonly ConnectionProfile[] {
 		const payload = input.trim().slice('vmess://'.length)
 		const raw = parseVmessPayload(payload)
-		assertAllowedVmessKeys(raw)
+		const vmessJson = safeUnknownVmessFields(raw)
 		const host = requireString(raw.add, 'VMess URL is missing a host')
 		const port = parseVmessPort(raw.port)
 		const id = requireString(raw.id, 'VMess URL is missing a user id')
@@ -172,6 +172,7 @@ export class VmessParser implements ConnectionParser {
 			metadata: {
 				name: optionalString(raw.ps),
 				source: 'url',
+				...(Object.keys(vmessJson).length ? { extensions: { vmessJson } } : {}),
 			},
 		})
 
@@ -187,7 +188,10 @@ export class ShadowsocksParser implements ConnectionParser {
 	parse(input: string): readonly ConnectionProfile[] {
 		const url = parseUrl(input, 'shadowsocks', 'ss')
 
-		if (url.search || (url.pathname && url.pathname !== '/')) {
+		if (
+			url.searchParams.has('plugin') ||
+			(url.pathname && url.pathname !== '/')
+		) {
 			throw new ProfileError(
 				'invalid_profile',
 				'Shadowsocks plugins and paths are not supported',
@@ -222,7 +226,7 @@ export class ShadowsocksParser implements ConnectionParser {
 				protocol: 'shadowsocks',
 				endpoint: endpointFromUrl(url),
 				authentication: { method, password },
-				metadata: metadataFromUrl(url),
+				metadata: metadataFromUrl(url, SHADOWSOCKS_QUERY_KEYS),
 			}),
 		]
 	}
@@ -272,7 +276,7 @@ export class HysteriaParser implements ConnectionParser {
 					downMbps: parsePositiveNumber(url.searchParams, 'downmbps'),
 					obfsPassword: optionalParam(url.searchParams, 'obfsParam'),
 				},
-				metadata: metadataFromUrl(url),
+				metadata: metadataFromUrl(url, HYSTERIA_QUERY_KEYS),
 			}),
 		]
 	}
@@ -304,7 +308,7 @@ export class Hysteria2Parser implements ConnectionParser {
 					downMbps: parseOptionalPositiveNumber(url.searchParams, 'downmbps'),
 					obfsPassword: optionalParam(url.searchParams, 'obfs-password'),
 				},
-				metadata: metadataFromUrl(url),
+				metadata: metadataFromUrl(url, HYSTERIA2_QUERY_KEYS),
 			}),
 		]
 	}
@@ -334,7 +338,7 @@ export class SshParser implements ConnectionParser {
 				protocol: 'ssh',
 				endpoint: endpointFromUrl(url),
 				authentication: { username, password, hostKey },
-				metadata: metadataFromUrl(url),
+				metadata: metadataFromUrl(url, SSH_QUERY_KEYS),
 			}),
 		]
 	}
@@ -358,6 +362,7 @@ export class VlessSerializer implements ConnectionSerializer {
 			profile.authentication?.encryption,
 		)
 		appendOptional(url.searchParams, 'flow', profile.authentication?.flow)
+		appendUriExtensions(url.searchParams, profile)
 
 		return url.toString()
 	}
@@ -375,6 +380,7 @@ export class TrojanSerializer implements ConnectionSerializer {
 		const url = buildUrl('trojan', password, profile)
 		appendTransport(url.searchParams, profile.transport)
 		appendSecurity(url.searchParams, profile.security)
+		appendUriExtensions(url.searchParams, profile)
 
 		return url.toString()
 	}
@@ -430,6 +436,11 @@ export class VmessSerializer implements ConnectionSerializer {
 		if (profile.transport?.packetEncoding) {
 			payload.packetEncoding = profile.transport.packetEncoding
 		}
+		for (const [key, value] of Object.entries(
+			profile.metadata?.extensions?.vmessJson ?? {},
+		)) {
+			if (!(key in payload)) payload[key] = value
+		}
 
 		return `vmess://${encodeBase64(JSON.stringify(payload))}`
 	}
@@ -455,11 +466,11 @@ export class ShadowsocksSerializer implements ConnectionSerializer {
 		const host = profile.endpoint.host.includes(':')
 			? `[${profile.endpoint.host.replace(/^\[|\]$/gu, '')}]`
 			: profile.endpoint.host
-		const name = profile.metadata?.name
-			? `#${encodeURIComponent(profile.metadata.name)}`
-			: ''
+		const url = new URL(`ss://${userInfo}@${host}:${profile.endpoint.port}`)
+		appendUriExtensions(url.searchParams, profile)
+		if (profile.metadata?.name) url.hash = profile.metadata.name
 
-		return `ss://${userInfo}@${host}:${profile.endpoint.port}${name}`
+		return url.toString()
 	}
 }
 
@@ -484,6 +495,7 @@ export class HysteriaSerializer implements ConnectionSerializer {
 			url.searchParams.set('obfsParam', profile.hysteria.obfsPassword)
 		}
 		appendTlsParameters(url.searchParams, profile.security, 'peer')
+		appendUriExtensions(url.searchParams, profile)
 		if (profile.metadata?.name) url.hash = profile.metadata.name
 
 		return url.toString()
@@ -511,6 +523,7 @@ export class Hysteria2Serializer implements ConnectionSerializer {
 			profile.hysteria?.obfsPassword,
 		)
 		appendTlsParameters(url.searchParams, profile.security)
+		appendUriExtensions(url.searchParams, profile)
 
 		return url.toString()
 	}
@@ -536,6 +549,7 @@ export class SshSerializer implements ConnectionSerializer {
 		const url = buildUrl('ssh', username, profile)
 		url.password = password
 		url.searchParams.set('hostKey', hostKey)
+		appendUriExtensions(url.searchParams, profile)
 
 		return url.toString().replaceAll('+', '%20')
 	}
@@ -892,12 +906,91 @@ function parseVmessSecurity(
 	})
 }
 
-function metadataFromUrl(url: URL) {
+const TRANSPORT_QUERY_KEYS = [
+	'type',
+	'host',
+	'path',
+	'serviceName',
+	'headerType',
+	'packetEncoding',
+	'mux',
+] as const
+const SECURITY_QUERY_KEYS = [
+	'security',
+	'sni',
+	'fp',
+	'pbk',
+	'sid',
+	'spx',
+	'alpn',
+	'allowInsecure',
+] as const
+const VLESS_QUERY_KEYS = new Set([
+	...TRANSPORT_QUERY_KEYS,
+	...SECURITY_QUERY_KEYS,
+	'encryption',
+	'flow',
+])
+const TROJAN_QUERY_KEYS = new Set([
+	...TRANSPORT_QUERY_KEYS,
+	...SECURITY_QUERY_KEYS,
+])
+const SHADOWSOCKS_QUERY_KEYS = new Set(['plugin'])
+const HYSTERIA_QUERY_KEYS = new Set([
+	'protocol',
+	'obfs',
+	'auth',
+	'upmbps',
+	'downmbps',
+	'obfsParam',
+	'peer',
+	'alpn',
+	'insecure',
+])
+const HYSTERIA2_QUERY_KEYS = new Set([
+	'upmbps',
+	'downmbps',
+	'obfs-password',
+	'sni',
+	'alpn',
+	'insecure',
+])
+const SSH_QUERY_KEYS = new Set(['hostKey'])
+const SAFE_EXTENSION_KEY = /^[A-Za-z0-9._~-]{1,100}$/u
+
+function metadataFromUrl(url: URL, knownKeys: ReadonlySet<string>) {
 	const name = url.hash ? decodeURIComponent(url.hash.slice(1)) : undefined
+	const uriQuery: Record<string, string[]> = {}
+	for (const [key, value] of url.searchParams) {
+		if (
+			knownKeys.has(key) ||
+			!SAFE_EXTENSION_KEY.test(key) ||
+			value.length > 2048
+		)
+			continue
+		const values = uriQuery[key] ?? []
+		if (values.length < 20) values.push(value)
+		uriQuery[key] = values
+	}
 
 	return {
 		name: name || undefined,
 		source: 'url' as const,
+		...(Object.keys(uriQuery).length ? { extensions: { uriQuery } } : {}),
+	}
+}
+
+function appendUriExtensions(
+	params: URLSearchParams,
+	profile: ConnectionProfile,
+) {
+	for (const [key, values] of Object.entries(
+		profile.metadata?.extensions?.uriQuery ?? {},
+	)) {
+		if (!SAFE_EXTENSION_KEY.test(key) || params.has(key)) continue
+		for (const value of values) {
+			if (value.length <= 2048) params.append(key, value)
+		}
 	}
 }
 
@@ -1111,15 +1204,23 @@ function parseVmessPayload(payload: string) {
 	}
 }
 
-function assertAllowedVmessKeys(raw: Record<string, unknown>) {
-	const extra = Object.keys(raw).filter((key) => !VMESS_SHARE_LINK_KEYS.has(key))
-
-	if (extra.length > 0) {
-		throw new ProfileError(
-			'invalid_profile',
-			`VMess payload contains unknown fields: ${extra.join(', ')}`,
-		)
+function safeUnknownVmessFields(raw: Record<string, unknown>) {
+	const extensions: Record<string, string> = {}
+	for (const [key, value] of Object.entries(raw)) {
+		if (VMESS_SHARE_LINK_KEYS.has(key)) continue
+		if (
+			!SAFE_EXTENSION_KEY.test(key) ||
+			typeof value !== 'string' ||
+			value.length > 2048
+		) {
+			throw new ProfileError(
+				'invalid_profile',
+				`VMess payload contains an unsafe unknown field: ${key}`,
+			)
+		}
+		extensions[key] = value
 	}
+	return extensions
 }
 
 function parseVmessPort(value: unknown) {

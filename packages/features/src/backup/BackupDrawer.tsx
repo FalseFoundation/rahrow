@@ -31,8 +31,12 @@ import {
 	ImportIcon,
 	LockIcon,
 } from '@rahrow/ui/components/rahrow-icons.tsx'
+import {
+	Alert,
+	AlertDescription,
+	AlertTitle,
+} from '@rahrow/ui/components/ui/alert.tsx'
 import { Button } from '@rahrow/ui/components/ui/button.tsx'
-import { Checkbox } from '@rahrow/ui/components/ui/checkbox.tsx'
 import {
 	Drawer,
 	DrawerBody,
@@ -42,7 +46,11 @@ import {
 	DrawerHeader,
 	DrawerTitle,
 } from '@rahrow/ui/components/ui/drawer.tsx'
-import { Field, FieldLabel } from '@rahrow/ui/components/ui/field.tsx'
+import {
+	Field,
+	FieldError,
+	FieldLabel,
+} from '@rahrow/ui/components/ui/field.tsx'
 import { IconAction } from '@rahrow/ui/components/ui/icon-action.tsx'
 import { Input } from '@rahrow/ui/components/ui/input.tsx'
 import {
@@ -63,7 +71,15 @@ import { recordAdAction } from '../ads/record-ad-action.ts'
 import { useAppTranslation } from '../app/app-i18n.tsx'
 import styles from './BackupDrawer.module.css'
 
-type Screen = 'menu' | 'export' | 'import-password' | 'import-review' | 'done'
+type Screen =
+	| 'menu'
+	| 'export-scope'
+	| 'export-protection'
+	| 'export-password'
+	| 'export-review'
+	| 'import-password'
+	| 'import-review'
+	| 'done'
 type ExportScope = 'all' | 'connections' | 'settings'
 type Protection = 'password' | 'plaintext'
 
@@ -97,7 +113,6 @@ export function BackupDrawer({
 	const [profiles, setProfiles] = useState<readonly ConnectionProfile[]>([])
 	const [settings, setSettings] = useState<Settings>({})
 	const [scope, setScope] = useState<ExportScope>('all')
-	const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set())
 	const [protection, setProtection] = useState<Protection>('password')
 	const [password, setPassword] = useState('')
 	const [passwordConfirmation, setPasswordConfirmation] = useState('')
@@ -114,6 +129,8 @@ export function BackupDrawer({
 	useEffect(() => {
 		if (!open) {
 			setScreen('menu')
+			setScope('all')
+			setProtection('password')
 			setPassword('')
 			setPasswordConfirmation('')
 			setImportPassword('')
@@ -134,8 +151,7 @@ export function BackupDrawer({
 			])
 			setProfiles(nextProfiles)
 			setSettings(nextSettings)
-			setSelectedIds(new Set(nextProfiles.map(({ id }) => id)))
-			setScreen('export')
+			setScreen('export-scope')
 		} catch {
 			setError(t('backup.errors.read'))
 		} finally {
@@ -150,7 +166,8 @@ export function BackupDrawer({
 		setPending(true)
 		setError(undefined)
 		try {
-			const connectionIds = scope === 'settings' ? undefined : [...selectedIds]
+			const connectionIds =
+				scope === 'settings' ? undefined : profiles.map(({ id }) => id)
 			const settingKeys = scope === 'connections' ? undefined : BACKUP_SETTING_KEYS
 			const backup = await createRahrowBackup({
 				connections: profiles,
@@ -168,7 +185,11 @@ export function BackupDrawer({
 				action: 'backup-export',
 				outcome: result === 'saved' ? 'completed' : 'cancelled',
 			})
-			if (result === 'saved') setScreen('done')
+			if (result === 'saved') {
+				setPassword('')
+				setPasswordConfirmation('')
+				setScreen('done')
+			}
 		} catch {
 			setError(t('backup.errors.export'))
 		} finally {
@@ -269,15 +290,11 @@ export function BackupDrawer({
 		}
 	}
 
-	const selectedCount = selectedIds.size
-	const allSelected = profiles.length > 0 && selectedCount === profiles.length
-	const selectAllState: boolean | 'indeterminate' =
-		selectedCount === 0 ? false : allSelected ? true : 'indeterminate'
 	const passwordValid =
 		protection === 'plaintext' ||
 		(password.length > 0 && password === passwordConfirmation)
 	const canSave =
-		!pending && passwordValid && (scope === 'settings' || selectedCount > 0)
+		!pending && passwordValid && (scope !== 'connections' || profiles.length > 0)
 	const title = t(`backup.title.${screen}`)
 	const description = t(`backup.description.${screen}`)
 	const visibleConflicts =
@@ -295,7 +312,7 @@ export function BackupDrawer({
 							disabled={pending}
 							onClick={() => {
 								setError(undefined)
-								setScreen('menu')
+								setScreen(previousScreen(screen, protection))
 							}}
 						>
 							<BackIcon />
@@ -340,21 +357,37 @@ export function BackupDrawer({
 							</div>
 						) : null}
 
-						{screen === 'export' ? (
-							<ExportForm
-								profiles={profiles}
-								scope={scope}
-								onScopeChange={setScope}
-								selectedIds={selectedIds}
-								onSelectedIdsChange={setSelectedIds}
-								selectAllState={selectAllState}
+						{screen === 'export-scope' ? (
+							<ExportScopeForm scope={scope} onScopeChange={setScope} />
+						) : null}
+
+						{screen === 'export-protection' ? (
+							<ExportProtectionForm
 								protection={protection}
 								onProtectionChange={setProtection}
+							/>
+						) : null}
+
+						{screen === 'export-password' ? (
+							<BackupPasswordFields
 								password={password}
 								passwordConfirmation={passwordConfirmation}
 								onPasswordChange={setPassword}
 								onPasswordConfirmationChange={setPasswordConfirmation}
 							/>
+						) : null}
+
+						{screen === 'export-review' ? (
+							<dl className={styles.summary}>
+								<div>
+									<dt>{t('backup.scope.label')}</dt>
+									<dd>{t(`backup.options.${scope}`)}</dd>
+								</div>
+								<div>
+									<dt>{t('backup.protection.label')}</dt>
+									<dd>{t(`backup.options.${protection}`)}</dd>
+								</div>
+							</dl>
 						) : null}
 
 						{screen === 'import-password' ? (
@@ -445,7 +478,32 @@ export function BackupDrawer({
 
 				{screen !== 'menu' && screen !== 'done' ? (
 					<DrawerFooter className={styles.footer}>
-						{screen === 'export' ? (
+						{screen === 'export-scope' ? (
+							<Button
+								disabled={scope === 'connections' && profiles.length === 0}
+								onClick={() => setScreen('export-protection')}
+							>
+								{t('backup.export.continue')}
+							</Button>
+						) : null}
+						{screen === 'export-protection' ? (
+							<Button
+								disabled={pending}
+								onClick={() =>
+									protection === 'password'
+										? setScreen('export-password')
+										: setScreen('export-review')
+								}
+							>
+								{t('backup.export.continue')}
+							</Button>
+						) : null}
+						{screen === 'export-password' ? (
+							<Button disabled={!canSave} onClick={() => setScreen('export-review')}>
+								{t('backup.export.continue')}
+							</Button>
+						) : null}
+						{screen === 'export-review' ? (
 							<Button disabled={!canSave} onClick={() => void saveBackup()}>
 								{pending ? t('backup.working') : t('backup.export.save')}
 							</Button>
@@ -477,22 +535,11 @@ export function BackupDrawer({
 	)
 }
 
-function ExportForm(props: {
-	readonly profiles: readonly ConnectionProfile[]
+function ExportScopeForm(props: {
 	readonly scope: ExportScope
 	readonly onScopeChange: (scope: ExportScope) => void
-	readonly selectedIds: ReadonlySet<string>
-	readonly onSelectedIdsChange: (ids: ReadonlySet<string>) => void
-	readonly selectAllState: boolean | 'indeterminate'
-	readonly protection: Protection
-	readonly onProtectionChange: (protection: Protection) => void
-	readonly password: string
-	readonly passwordConfirmation: string
-	readonly onPasswordChange: (value: string) => void
-	readonly onPasswordConfirmationChange: (value: string) => void
 }) {
 	const { t } = useAppTranslation()
-	const showConnections = props.scope !== 'settings'
 	return (
 		<div className={styles.form}>
 			<RadioChoices
@@ -501,88 +548,96 @@ function ExportForm(props: {
 				values={['all', 'connections', 'settings']}
 				onChange={props.onScopeChange}
 			/>
-			{showConnections ? (
-				<fieldset className={styles.connectionSelection}>
-					<legend>{t('backup.connections.label')}</legend>
-					<label className={styles.checkboxRow} htmlFor='backup-select-all'>
-						<Checkbox
-							id='backup-select-all'
-							checked={props.selectAllState === true}
-							indeterminate={props.selectAllState === 'indeterminate'}
-							onCheckedChange={(checked) =>
-								props.onSelectedIdsChange(
-									checked ? new Set(props.profiles.map(({ id }) => id)) : new Set(),
-								)
-							}
-						/>
-						<span>{t('backup.connections.selectAll')}</span>
-					</label>
-					{props.profiles.map((profile) => {
-						const id = `backup-connection-${profile.id}`
-						return (
-							<label className={styles.checkboxRow} htmlFor={id} key={profile.id}>
-								<Checkbox
-									id={id}
-									checked={props.selectedIds.has(profile.id)}
-									onCheckedChange={(checked) => {
-										const next = new Set(props.selectedIds)
-										if (checked) next.add(profile.id)
-										else next.delete(profile.id)
-										props.onSelectedIdsChange(next)
-									}}
-								/>
-								<span>{profileLabel(profile)}</span>
-							</label>
-						)
-					})}
-				</fieldset>
-			) : null}
+		</div>
+	)
+}
+
+function ExportProtectionForm(props: {
+	readonly protection: Protection
+	readonly onProtectionChange: (protection: Protection) => void
+}) {
+	const { t } = useAppTranslation()
+	return (
+		<div className={styles.form}>
 			<RadioChoices
 				label={t('backup.protection.label')}
 				value={props.protection}
 				values={['password', 'plaintext']}
 				onChange={props.onProtectionChange}
 			/>
-			{props.protection === 'password' ? (
-				<div className={styles.passwordFields}>
-					<Field>
-						<FieldLabel htmlFor='backup-password'>
-							{t('backup.password.label')}
-						</FieldLabel>
-						<Input
-							id='backup-password'
-							type='password'
-							autoComplete='new-password'
-							value={props.password}
-							onChange={(event) => props.onPasswordChange(event.target.value)}
-						/>
-					</Field>
-					<Field>
-						<FieldLabel htmlFor='backup-password-confirm'>
-							{t('backup.password.confirm')}
-						</FieldLabel>
-						<Input
-							id='backup-password-confirm'
-							type='password'
-							autoComplete='new-password'
-							value={props.passwordConfirmation}
-							onChange={(event) =>
-								props.onPasswordConfirmationChange(event.target.value)
-							}
-							aria-invalid={
-								props.passwordConfirmation.length > 0 &&
-								props.password !== props.passwordConfirmation
-							}
-						/>
-					</Field>
-				</div>
-			) : (
-				<p className={styles.warning} role='alert'>
-					{t('backup.plaintextWarning')}
-				</p>
-			)}
+			{props.protection === 'plaintext' ? (
+				<Alert variant='destructive'>
+					<AlertTitle>{t('backup.plaintextWarningTitle')}</AlertTitle>
+					<AlertDescription>{t('backup.plaintextWarning')}</AlertDescription>
+				</Alert>
+			) : null}
 		</div>
 	)
+}
+
+function BackupPasswordFields(props: {
+	readonly password: string
+	readonly passwordConfirmation: string
+	readonly onPasswordChange: (value: string) => void
+	readonly onPasswordConfirmationChange: (value: string) => void
+}) {
+	const { t } = useAppTranslation()
+	return (
+		<div className={styles.passwordFields}>
+			<Field>
+				<FieldLabel htmlFor='backup-password'>
+					{t('backup.password.label')}
+				</FieldLabel>
+				<Input
+					id='backup-password'
+					type='password'
+					autoComplete='new-password'
+					value={props.password}
+					onChange={(event) => props.onPasswordChange(event.target.value)}
+				/>
+			</Field>
+			<Field
+				data-invalid={
+					props.passwordConfirmation.length > 0 &&
+					props.password !== props.passwordConfirmation
+				}
+			>
+				<FieldLabel htmlFor='backup-password-confirm'>
+					{t('backup.password.confirm')}
+				</FieldLabel>
+				<Input
+					id='backup-password-confirm'
+					type='password'
+					autoComplete='new-password'
+					value={props.passwordConfirmation}
+					onChange={(event) =>
+						props.onPasswordConfirmationChange(event.target.value)
+					}
+					aria-invalid={
+						props.passwordConfirmation.length > 0 &&
+						props.password !== props.passwordConfirmation
+					}
+				/>
+				{props.passwordConfirmation.length > 0 &&
+				props.password !== props.passwordConfirmation ? (
+					<FieldError>{t('backup.password.mismatch')}</FieldError>
+				) : null}
+			</Field>
+		</div>
+	)
+}
+
+function previousScreen(screen: Screen, protection: Protection): Screen {
+	switch (screen) {
+		case 'export-review':
+			return protection === 'password' ? 'export-password' : 'export-protection'
+		case 'export-password':
+			return 'export-protection'
+		case 'export-protection':
+			return 'export-scope'
+		default:
+			return 'menu'
+	}
 }
 
 function RadioChoices<T extends string>({

@@ -20,7 +20,7 @@ function createCapability() {
 				})
 				onProgress?.({ phase: 'selecting', total: 2 })
 				return {
-					outcome: 'connected' as const,
+					outcome: 'selected' as const,
 					probed: 2,
 					winner: { profileId: 'fast', latencyMs: 12 },
 					nextRunAt: '2026-09-02T00:05:00.000Z',
@@ -32,7 +32,7 @@ function createCapability() {
 }
 
 describe('useSmartConnect', () => {
-	it('enables, reports progress, connects, and resumes the five-minute schedule', async () => {
+	it('enables, reports progress, selects, and resumes the five-minute schedule', async () => {
 		const capability = createCapability()
 		const { result } = renderHook(() => useSmartConnect(capability))
 		await waitFor(() => expect(result.current.state.isLoading).toBe(false))
@@ -47,7 +47,7 @@ describe('useSmartConnect', () => {
 		expect(result.current.state).toMatchObject({
 			enabled: true,
 			status: 'success',
-			outcome: 'connected',
+			outcome: 'selected',
 			probed: 2,
 			winnerLatencyMs: 12,
 			nextRunAt: '2026-09-02T00:05:00.000Z',

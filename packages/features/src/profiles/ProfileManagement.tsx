@@ -1,3 +1,7 @@
+import {
+	isProfileProtectedByLock,
+	protectedSubscriptionIds,
+} from '@rahrow/core/profile/connection-lock-policy.ts'
 import type {
 	Subscription,
 	SubscriptionFetcher,
@@ -10,6 +14,7 @@ import {
 	FilterIcon,
 	RefreshActionIcon,
 	SearchIcon,
+	ServerIcon,
 	WifiIcon,
 	ZapIconComponent,
 } from '@rahrow/ui/components/rahrow-icons.tsx'
@@ -41,11 +46,13 @@ import {
 	useEffect,
 	useMemo,
 	useRef,
+	useState,
 } from 'react'
 import { useAppTranslation } from '../app/app-i18n.tsx'
 import { useAppScrollViewport } from '../app/app-scroll-context.tsx'
 import { ProductHeader } from '../app/ProductHeader.tsx'
 import { ProductSearch } from '../app/ProductSearch.tsx'
+import type { AppRuntime } from '../app/runtime.tsx'
 import { ConnectionImportDrawer } from '../import/ConnectionImportDrawer.tsx'
 import { ShareDrawerOutlet, useShareDrawer } from '../share/ShareDrawer.tsx'
 import { SmartConnectStatus } from '../smart-connect/SmartConnectStatus.tsx'
@@ -78,6 +85,7 @@ import {
 	subscriptionDetail,
 } from './profile-library-model.ts'
 import { profileSpeedTestStore } from './profile-speed-test-store.ts'
+import { RawEngineDocumentWorkspace } from './RawEngineDocumentWorkspace.tsx'
 import { SubscriptionEditor } from './SubscriptionEditor.tsx'
 import { useConnectionCleanup } from './useConnectionCleanup.ts'
 import { useConnectionLibraryWorkflows } from './useConnectionLibraryWorkflows.ts'
@@ -104,6 +112,7 @@ export type ProfileManagementProps = ProfileManagementDependencies & {
 	readonly subscriptionStore: SubscriptionStore
 	readonly qrPreview?: ReactNode
 	readonly smartConnect?: SmartConnectRuntime
+	readonly rawEngineDocuments?: AppRuntime['rawEngineDocuments']
 }
 
 const emptySpeedTests = {}
@@ -123,6 +132,7 @@ export function ProfileManagement({
 	subscriptionStore,
 	qrPreview,
 	smartConnect,
+	rawEngineDocuments,
 	...dependencies
 }: ProfileManagementProps) {
 	const { t } = useAppTranslation()
@@ -132,6 +142,7 @@ export function ProfileManagement({
 	})
 	const appScrollViewport = useAppScrollViewport()
 	const productHeaderRef = useRef<HTMLElement>(null)
+	const [rawWorkspaceOpen, setRawWorkspaceOpen] = useState(false)
 	const navigate = useNavigate()
 	const shareDrawer = useShareDrawer()
 	const query = state.connectionsView.query
@@ -197,6 +208,16 @@ export function ProfileManagement({
 	])
 
 	const isCollectionLoading = state.isLoading || isLoadingSubscriptions
+	const hasProfiles =
+		library.allOwnership.standalone.length > 0 ||
+		[...library.allOwnership.bySubscription.values()].some(
+			(profiles) => profiles.length > 0,
+		)
+	const hasCollectionContent = hasProfiles || subscriptions.length > 0
+	const lockedSubscriptionIds = useMemo(
+		() => protectedSubscriptionIds(subscriptions),
+		[subscriptions],
+	)
 	const searchVisible = workflows.searchOpen || query.length > 0
 	const pullToRefresh = usePullToRefresh(
 		appScrollViewport,
@@ -242,6 +263,7 @@ export function ProfileManagement({
 				onOpenChange: (open) => actions.setConnectionGroupOpen(key, open),
 				title: subscription.name ?? subscription.id,
 				kind: 'subscription',
+				locked: subscription.locked,
 				detail: subscriptionDetail(
 					subscription,
 					library.allOwnership.bySubscription.get(subscription.id)?.length ?? 0,
@@ -314,7 +336,7 @@ export function ProfileManagement({
 					title={t('app.screens.profiles')}
 					actions={
 						<>
-							{smartConnect ? (
+							{hasProfiles && smartConnect ? (
 								<IconAction
 									variant='toolbar'
 									size='square'
@@ -336,36 +358,42 @@ export function ProfileManagement({
 									<ZapIconComponent />
 								</IconAction>
 							) : null}
-							<IconAction
-								variant='toolbar'
-								size='square'
-								disabled={state.isInitialized === false || isLoadingSubscriptions}
-								data-active
-								label={t('profiles.actions.cleanup')}
-								onClick={() => cleanup.actions.openDrawer()}
-							>
-								<CleanActionIcon />
-							</IconAction>
-							<IconAction
-								variant='toolbar'
-								size='square'
-								disabled={state.isInitialized === false}
-								data-active
-								label={t('profiles.actions.search')}
-								onClick={() => workflows.setSearchOpen(true)}
-							>
-								<SearchIcon />
-							</IconAction>
-							<IconAction
-								variant='toolbar'
-								size='square'
-								disabled={state.isInitialized === false}
-								data-active
-								label={t('profiles.actions.sort')}
-								onClick={() => workflows.setDrawer('sort')}
-							>
-								<FilterIcon />
-							</IconAction>
+							{hasCollectionContent ? (
+								<IconAction
+									variant='toolbar'
+									size='square'
+									disabled={state.isInitialized === false || isLoadingSubscriptions}
+									data-active
+									label={t('profiles.actions.cleanup')}
+									onClick={() => cleanup.actions.openDrawer()}
+								>
+									<CleanActionIcon />
+								</IconAction>
+							) : null}
+							{hasProfiles ? (
+								<>
+									<IconAction
+										variant='toolbar'
+										size='square'
+										disabled={state.isInitialized === false}
+										data-active
+										label={t('profiles.actions.search')}
+										onClick={() => workflows.setSearchOpen(true)}
+									>
+										<SearchIcon />
+									</IconAction>
+									<IconAction
+										variant='toolbar'
+										size='square'
+										disabled={state.isInitialized === false}
+										data-active
+										label={t('profiles.actions.sort')}
+										onClick={() => workflows.setDrawer('sort')}
+									>
+										<FilterIcon />
+									</IconAction>
+								</>
+							) : null}
 							<IconAction
 								variant='toolbar'
 								size='square'
@@ -376,6 +404,18 @@ export function ProfileManagement({
 							>
 								<AddIcon />
 							</IconAction>
+							{rawEngineDocuments ? (
+								<IconAction
+									variant='toolbar'
+									size='square'
+									disabled={state.isInitialized === false}
+									data-active
+									label={t('profiles.rawEngine.action')}
+									onClick={() => setRawWorkspaceOpen(true)}
+								>
+									<ServerIcon />
+								</IconAction>
+							) : null}
 						</>
 					}
 				/>
@@ -451,7 +491,14 @@ export function ProfileManagement({
 							selectedId={state.selectedId}
 							onActivate={workflows.activateProfile}
 							onProfileActions={(profile) =>
-								workflows.openActions({ kind: 'profile', profile })
+								workflows.openActions({
+									kind: 'profile',
+									profile,
+									locked: isProfileProtectedByLock(profile, lockedSubscriptionIds),
+								})
+							}
+							isProfileLocked={(profile) =>
+								isProfileProtectedByLock(profile, lockedSubscriptionIds)
 							}
 							testingIds={state.speedTestingIds}
 							persistedScrollOffset={state.connectionsView.scrollOffset}
@@ -471,6 +518,7 @@ export function ProfileManagement({
 
 			<Drawer
 				open={workflows.drawer !== null}
+				disablePointerDismissal={workflows.mutationPending}
 				onOpenChange={(open) => {
 					if (!open) workflows.closeDrawer()
 				}}
@@ -558,6 +606,7 @@ export function ProfileManagement({
 
 				<Drawer
 					open={workflows.nestedDrawer !== null}
+					disablePointerDismissal={workflows.mutationPending}
 					onOpenChange={(open) => {
 						if (!open) workflows.closeNestedDrawer()
 					}}
@@ -577,6 +626,7 @@ export function ProfileManagement({
 								variant='toolbar'
 								size='square'
 								label={t('common.closeDrawer')}
+								disabled={workflows.mutationPending}
 								onClick={workflows.closeNestedDrawer}
 							>
 								<CloseIcon />
@@ -604,6 +654,7 @@ export function ProfileManagement({
 
 				<Drawer
 					open={workflows.deleteOpen}
+					disablePointerDismissal={workflows.mutationPending}
 					onOpenChange={workflows.setDeleteOpen}
 					showSwipeHandle
 				>
@@ -611,18 +662,32 @@ export function ProfileManagement({
 						<DrawerHeader className={styles.confirmationHeader}>
 							<DrawerTitle>{removeTitle(workflows.target)}</DrawerTitle>
 							<DrawerDescription>
-								{t('profiles.remove.irreversible')}
+								{workflows.target.kind === 'subscription'
+									? `${t('profiles.remove.subscriptionConsequence', {
+											count: workflows.target.profiles.length,
+										})} ${t('profiles.remove.irreversible')}`
+									: t('profiles.remove.irreversible')}
 							</DrawerDescription>
 						</DrawerHeader>
 						<DrawerFooter className={styles.confirmationFooter}>
-							<Button variant='outline' onClick={() => workflows.setDeleteOpen(false)}>
+							{workflows.mutationError ? (
+								<p role='alert'>{workflows.mutationError}</p>
+							) : null}
+							<Button
+								variant='outline'
+								disabled={workflows.mutationPending}
+								onClick={() => workflows.setDeleteOpen(false)}
+							>
 								{t('common.cancel')}
 							</Button>
 							<Button
 								variant='destructive'
+								disabled={workflows.mutationPending}
 								onClick={() => void workflows.confirmDelete()}
 							>
-								{t('profiles.actions.remove')}
+								{workflows.mutationPending
+									? t('profiles.status.removing')
+									: t('profiles.actions.remove')}
 							</Button>
 						</DrawerFooter>
 					</DrawerContent>
@@ -632,6 +697,44 @@ export function ProfileManagement({
 			</Drawer>
 
 			<ConnectionCleanupDrawer cleanup={cleanup} />
+
+			{rawEngineDocuments ? (
+				<Drawer
+					open={rawWorkspaceOpen}
+					onOpenChange={setRawWorkspaceOpen}
+					showSwipeHandle
+				>
+					<DrawerContent variant='app' scrollable>
+						<DrawerHeader className={styles.drawerHeader}>
+							<div>
+								<DrawerTitle>{t('profiles.rawEngine.title')}</DrawerTitle>
+								<DrawerDescription>
+									{t('profiles.rawEngine.description')}
+								</DrawerDescription>
+							</div>
+							<IconAction
+								variant='toolbar'
+								size='square'
+								label={t('common.closeDrawer')}
+								onClick={() => setRawWorkspaceOpen(false)}
+							>
+								<CloseIcon />
+							</IconAction>
+						</DrawerHeader>
+						<div className={styles.drawerBody}>
+							<RawEngineDocumentWorkspace
+								adapters={rawEngineDocuments.adapters}
+								storeFor={rawEngineDocuments.storeFor}
+								createIdentity={() => ({ id: crypto.randomUUID() })}
+								onExtract={async (profile) => {
+									await actions.saveProfile(profile)
+									setRawWorkspaceOpen(false)
+								}}
+							/>
+						</div>
+					</DrawerContent>
+				</Drawer>
+			) : null}
 		</>
 	)
 }

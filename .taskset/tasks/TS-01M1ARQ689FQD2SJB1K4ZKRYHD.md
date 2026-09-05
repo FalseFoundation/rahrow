@@ -1,11 +1,11 @@
 ---
 id: TS-01M1ARQ689FQD2SJB1K4ZKRYHD
 title: Rollback Settings after persistence or native failures
-status: doing
+status: done
 priority: high
 risk: high
 createdAt: 2026-08-31 02:00 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - p1
   - hardening

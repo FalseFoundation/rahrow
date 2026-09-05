@@ -38,8 +38,12 @@ class SmartTestEngine implements ProxyEngine {
 	readonly id = 'sing-box'
 	readonly manifest = { id: this.id, supportedProtocols: ['trojan'] as const }
 	#running = false
+	failHost: string | undefined
 
-	async start(_input: EngineStartInput) {
+	async start(input: EngineStartInput) {
+		if (input.profile.endpoint.host === this.failHost) {
+			throw new Error('replacement failed')
+		}
 		this.#running = true
 	}
 
@@ -406,6 +410,14 @@ describe('RahRow CLI command framework', () => {
 		await expect(
 			runCli(['subscription', 'lock', 'locked'], io, context),
 		).resolves.toBe(0)
+		await expect(runCli(['profiles', 'list'], io, context)).resolves.toBe(0)
+		await expect(
+			runCli(['profiles', 'show', profile.id], io, context),
+		).resolves.toBe(0)
+		await expect(runCli(['subscription', 'list'], io, context)).resolves.toBe(0)
+		await expect(
+			runCli(['subscription', 'show', 'locked'], io, context),
+		).resolves.toBe(0)
 		await expect(
 			runCli(
 				['profiles', 'cleanup', '--subscription', 'locked', '--commit'],
@@ -425,6 +437,14 @@ describe('RahRow CLI command framework', () => {
 		).resolves.toBe(1)
 
 		expect(await context.profileStore.get(profile.id)).not.toBeNull()
+		expect(stdout.at(-5)).toContain(`"id": "${profile.id}"`)
+		expect(stdout.at(-5)).toContain('"protocol": "trojan"')
+		expect(stdout.at(-5)).toContain('"subscriptionId": "locked"')
+		expect(stdout.at(-5)).toContain('"locked": true')
+		expect(stdout.at(-4)).toContain('"lockSource": "subscription"')
+		expect(stdout.at(-3)).toContain('"locked": true')
+		expect(stdout.at(-2)).toContain('"id": "locked"')
+		expect(stdout.at(-2)).toContain('"locked": true')
 		expect(stderr).toEqual([
 			expect.stringContaining('protected by locked subscription'),
 			expect.stringContaining('subscription is locked'),
@@ -588,6 +608,51 @@ describe('RahRow CLI command framework', () => {
 		expect(stdout[4]).toContain('"state": "disconnected"')
 	})
 
+	it('rolls a failed CLI restart back to the previous active profile', async () => {
+		const { io, stderr } = createTestIo()
+		const engine = new SmartTestEngine()
+		const context = createCliContext(io, {
+			profileStore: new JsonProfileStore(new MemoryDocumentStore()),
+			settingsStore: new JsonSettingsStore(new MemoryDocumentStore()),
+			subscriptionDocument: new MemoryDocumentStore(),
+			logger: silentLogger,
+			engineRegistry: createEngineRegistry([engine]),
+		})
+		await runCli(
+			['import', 'trojan://secret@stable.example.com:443#Stable'],
+			io,
+			context,
+		)
+		await runCli(
+			['import', 'trojan://secret@broken.example.com:443#Broken'],
+			io,
+			context,
+		)
+		const profiles = await context.profileStore.list()
+		const stable = profiles.find(
+			(candidate) => candidate.endpoint.host === 'stable.example.com',
+		)
+		const broken = profiles.find(
+			(candidate) => candidate.endpoint.host === 'broken.example.com',
+		)
+		if (!stable || !broken) throw new Error('Expected both test profiles')
+		await runCli(['connect', stable.id, '--mode', 'proxy'], io, context)
+		engine.failHost = 'broken.example.com'
+
+		await expect(
+			runCli(['restart', broken.id, '--mode', 'proxy'], io, context),
+		).resolves.toBe(1)
+
+		expect(stderr.at(-1)).toContain('replacement failed')
+		expect(context.connectionController.current).toMatchObject({
+			state: 'connected',
+			profile: { id: stable.id },
+		})
+		expect(await context.settingsStore.read()).toMatchObject({
+			activeProfileId: stable.id,
+		})
+	})
+
 	it('runs, enables, reports, and disables Smart Connect explicitly', async () => {
 		const { io, stdout, stderr } = createTestIo()
 		const context = createCliContext(io, {
@@ -613,7 +678,7 @@ describe('RahRow CLI command framework', () => {
 		})
 
 		await expect(runCli(['smart-connect', 'run'], io, context)).resolves.toBe(0)
-		expect(stdout.at(-1)).toContain('"outcome": "connected"')
+		expect(stdout.at(-1)).toContain('"outcome": "selected"')
 		expect(stdout.at(-1)).toContain('fast.example.com')
 		await expect(runCli(['smart-connect', 'start'], io, context)).resolves.toBe(0)
 		await expect(runCli(['smart-connect', 'status'], io, context)).resolves.toBe(

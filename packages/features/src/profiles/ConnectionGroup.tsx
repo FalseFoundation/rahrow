@@ -2,13 +2,27 @@ import {
 	ChevronIcon,
 	CloudDownloadActionIcon,
 	InfoIcon,
+	LockIcon,
 	MoreIcon,
 	ServerIcon,
 } from '@rahrow/ui/components/rahrow-icons.tsx'
+import { Badge } from '@rahrow/ui/components/ui/badge.tsx'
+import {
+	ContextMenu,
+	ContextMenuContent,
+	ContextMenuItem,
+	ContextMenuTrigger,
+} from '@rahrow/ui/components/ui/context-menu.tsx'
 import { IconAction } from '@rahrow/ui/components/ui/icon-action.tsx'
 import { ItemMedia } from '@rahrow/ui/components/ui/item.tsx'
 import { Skeleton } from '@rahrow/ui/components/ui/skeleton.tsx'
 import { Spinner } from '@rahrow/ui/components/ui/spinner.tsx'
+import {
+	Tooltip,
+	TooltipContent,
+	TooltipProvider,
+	TooltipTrigger,
+} from '@rahrow/ui/components/ui/tooltip.tsx'
 import type { ReactNode } from 'react'
 import { useAppTranslation } from '../app/app-i18n.tsx'
 import styles from './ConnectionGroup.module.css'
@@ -20,6 +34,7 @@ export function ConnectionGroup({
 	detail,
 	kind = 'profiles',
 	refreshing = false,
+	locked = false,
 	onActions,
 	children,
 }: {
@@ -29,6 +44,7 @@ export function ConnectionGroup({
 	readonly detail: string
 	readonly kind?: ConnectionGroupKind
 	readonly refreshing?: boolean
+	readonly locked?: boolean
 	readonly onActions: () => void
 	readonly children: ReactNode
 }) {
@@ -41,6 +57,7 @@ export function ConnectionGroup({
 				detail={detail}
 				kind={kind}
 				refreshing={refreshing}
+				locked={locked}
 				onActions={onActions}
 			/>
 			{open ? children : null}
@@ -55,6 +72,7 @@ export function ConnectionGroupHeader({
 	detail,
 	kind = 'profiles',
 	refreshing = false,
+	locked = false,
 	onActions,
 	headingHidden = false,
 	children,
@@ -65,6 +83,7 @@ export function ConnectionGroupHeader({
 	readonly detail: string
 	readonly kind?: ConnectionGroupKind
 	readonly refreshing?: boolean
+	readonly locked?: boolean
 	readonly onActions: () => void
 	readonly headingHidden?: boolean
 	readonly children?: ReactNode
@@ -72,52 +91,76 @@ export function ConnectionGroupHeader({
 	const { t } = useAppTranslation()
 	return (
 		<div className={styles.stickySurface}>
-			<div
-				className={styles.groupHeading}
-				aria-hidden={headingHidden || undefined}
-			>
-				<div className={styles.groupToggle}>
-					<ItemMedia variant='tile'>
-						{refreshing ? (
-							<Spinner aria-label={`Refreshing ${title}`} />
-						) : (
-							<ConnectionGroupIcon kind={kind} />
-						)}
-					</ItemMedia>
-					<div className={styles.groupCopy}>
-						<h2 title={title}>{title}</h2>
-						<span title={detail}>{detail}</span>
+			<ContextMenu>
+				<ContextMenuTrigger
+					className={styles.groupHeading}
+					aria-hidden={headingHidden || undefined}
+				>
+					<div className={styles.groupToggle}>
+						<ItemMedia variant='tile'>
+							{refreshing ? (
+								<Spinner aria-label={`Refreshing ${title}`} />
+							) : (
+								<ConnectionGroupIcon kind={kind} />
+							)}
+						</ItemMedia>
+						<div className={styles.groupCopy}>
+							<h2 title={title}>{title}</h2>
+							<span title={detail}>{detail}</span>
+						</div>
 					</div>
-				</div>
-				<div className={styles.groupActions}>
-					<IconAction
-						variant='toolbar'
-						size='square'
-						label={t('profiles.actions.more')}
-						tabIndex={headingHidden ? -1 : undefined}
-						onClick={onActions}
-					>
-						<MoreIcon />
-					</IconAction>
-					<IconAction
-						className={styles.groupChevron}
-						variant='toolbar'
-						size='icon-xs'
-						aria-expanded={open}
-						label={t(
-							open ? 'profiles.actions.collapseGroup' : 'profiles.actions.expandGroup',
-						)}
-						tabIndex={headingHidden ? -1 : undefined}
-						onClick={() => onOpenChange(!open)}
-					>
-						<ChevronIcon />
-					</IconAction>
-				</div>
-			</div>
+					<div className={styles.groupActions}>
+						{locked ? <LockedBadge label={t('profiles.locked')} /> : null}
+						<IconAction
+							variant='toolbar'
+							size='square'
+							label={t('profiles.actions.more')}
+							tabIndex={headingHidden ? -1 : undefined}
+							onClick={onActions}
+						>
+							<MoreIcon />
+						</IconAction>
+						<IconAction
+							className={styles.groupChevron}
+							variant='toolbar'
+							size='icon-xs'
+							aria-expanded={open}
+							label={t(
+								open
+									? 'profiles.actions.collapseGroup'
+									: 'profiles.actions.expandGroup',
+							)}
+							tabIndex={headingHidden ? -1 : undefined}
+							onClick={() => onOpenChange(!open)}
+						>
+							<ChevronIcon />
+						</IconAction>
+					</div>
+				</ContextMenuTrigger>
+				<ContextMenuContent>
+					<ContextMenuItem onClick={onActions}>
+						{t('profiles.actions.more')}
+					</ContextMenuItem>
+				</ContextMenuContent>
+			</ContextMenu>
 			{open && children ? (
 				<div className={styles.groupSummary}>{children}</div>
 			) : null}
 		</div>
+	)
+}
+
+function LockedBadge({ label }: { readonly label: string }) {
+	return (
+		<TooltipProvider>
+			<Tooltip>
+				<TooltipTrigger render={<Badge variant='outline' tabIndex={0} />}>
+					<LockIcon data-icon='inline-start' />
+					{label}
+				</TooltipTrigger>
+				<TooltipContent>{label}</TooltipContent>
+			</Tooltip>
+		</TooltipProvider>
 	)
 }
 

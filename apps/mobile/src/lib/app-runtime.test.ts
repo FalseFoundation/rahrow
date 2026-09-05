@@ -27,6 +27,12 @@ const profile: ConnectionProfile = {
 	},
 }
 
+class AtomicMemoryDocumentStore extends MemoryDocumentStore {
+	async writeAtomic(value: string) {
+		await this.write(value)
+	}
+}
+
 class FakeRahRowVpnPlugin implements RahRowVpnPlugin {
 	connectedProfileId: string | undefined
 	receivedEngineId: string | undefined
@@ -225,7 +231,60 @@ describe('createMobileRuntime', () => {
 		expect(runtime.capabilities.vpn).toBeDefined()
 		expect(runtime.capabilities.autostart).toBeUndefined()
 		expect(runtime.capabilities.systemProxy).toBeUndefined()
+		expect(runtime.capabilities.lanProxySharing).toMatchObject({
+			supported: false,
+		})
 		expect(runtime.advertising?.provider.id).toBe('house-development')
+	})
+
+	it('cleans the active native tunnel and durable stores during an app-data reset', async () => {
+		const plugin = new FakeRahRowVpnPlugin()
+		let credentialsCleared = 0
+		const rawDocument = new AtomicMemoryDocumentStore()
+		const runtime = createMobileRuntime({
+			platform: 'android',
+			vpn: new CapacitorMobileVpn(plugin),
+			clearSecureCredentials: async () => {
+				credentialsCleared += 1
+			},
+			buildMetadata: {
+				version: '2.0.0',
+				build: 'android-42',
+				engines: [
+					{ id: 'sing-box', version: '1.13.19', license: 'GPL-3.0-or-later' },
+				],
+			},
+			profileDocument: new MemoryDocumentStore(),
+			settingsDocument: new MemoryDocumentStore(),
+			subscriptionDocument: new MemoryDocumentStore(),
+			rawEngineDocumentStore: () => rawDocument,
+		})
+		await runtime.profileStore.save(profile)
+		await runtime.subscriptionStore.save({
+			id: 'main',
+			url: 'https://example.com/subscription',
+		})
+		await runtime.settingsStore.write({ theme: 'dark', engineId: 'sing-box' })
+		await rawDocument.writeAtomic('{"outbounds":[]}')
+		await runtime.connection.connect(profile, { mode: 'vpn' })
+
+		await expect(runtime.reset?.reset('app-data')).resolves.toMatchObject({
+			status: 'completed',
+		})
+		expect(plugin.connectedProfileId).toBeUndefined()
+		expect(runtime.buildMetadata?.build).toBe('android-42')
+		expect(runtime.rawEngineDocuments?.adapters).toMatchObject([
+			{ engineId: 'sing-box', engineVersion: '1.13.19' },
+		])
+		expect(runtime.rawEngineDocuments?.storeFor('sing-box')).toBe(rawDocument)
+		await expect(rawDocument.read()).resolves.toBe('')
+		await expect(runtime.profileStore.list()).resolves.toEqual([])
+		await expect(runtime.subscriptionStore.list()).resolves.toEqual([])
+		await expect(runtime.settingsStore.read()).resolves.toMatchObject({
+			connectionMode: 'vpn',
+		})
+		expect((await runtime.settingsStore.read()).theme).toBeUndefined()
+		expect(credentialsCleared).toBe(1)
 	})
 
 	it('exposes an explicitly injected native network identity port', async () => {

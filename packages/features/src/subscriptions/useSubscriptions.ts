@@ -14,12 +14,15 @@ import {
 	countSubscriptionProfilesPaced,
 	createPacedProfileCollectionScheduler,
 } from '../profiles/connection-work-pacing.ts'
-import { runAsyncQueue } from '../profiles/paced-profile-work.ts'
 import { parseSubscriptionProfilesPaced } from './paced-subscription-parser.ts'
 import {
 	deriveSubscriptionId,
 	normalizeSubscriptionUrl,
 } from './subscription-actions-model.ts'
+import {
+	runSubscriptionRefreshQueue,
+	type SubscriptionRefreshQueueProgress,
+} from './subscription-refresh-queue.ts'
 
 export interface SubscriptionActionFailure {
 	readonly operation: 'add' | 'refresh' | 'remove'
@@ -35,6 +38,8 @@ export interface SubscriptionRemovalCandidate {
 interface RefreshOptions {
 	readonly publish?: boolean
 	readonly notify?: boolean
+	readonly rethrow?: boolean
+	readonly signal?: AbortSignal
 }
 
 export function useSubscriptions() {
@@ -68,13 +73,18 @@ export function useSubscriptions() {
 		new Set(),
 	)
 	const [removingIds, setRemovingIds] = useState<ReadonlySet<string>>(new Set())
+	const [refreshQueueProgress, setRefreshQueueProgress] =
+		useState<SubscriptionRefreshQueueProgress | null>(null)
 	const addInFlight = useRef(false)
 	const refreshInFlight = useRef(new Set<string>())
 	const refreshControllers = useRef(new Map<string, AbortController>())
+	const refreshAllController = useRef<AbortController | null>(null)
 	const removeInFlight = useRef(new Set<string>())
 
 	useEffect(
 		() => () => {
+			refreshAllController.current?.abort()
+			refreshAllController.current = null
 			for (const controller of refreshControllers.current.values())
 				controller.abort()
 			refreshControllers.current.clear()
@@ -91,11 +101,19 @@ export function useSubscriptions() {
 	const refreshOne = useCallback(
 		async (
 			subscription: Subscription,
-			{ publish = true, notify = true }: RefreshOptions = {},
+			{
+				publish = true,
+				notify = true,
+				rethrow = false,
+				signal,
+			}: RefreshOptions = {},
 		) => {
 			if (refreshInFlight.current.has(subscription.id)) return
 			refreshInFlight.current.add(subscription.id)
 			const controller = new AbortController()
+			const abortFromQueue = () => controller.abort()
+			if (signal?.aborted) controller.abort()
+			else signal?.addEventListener('abort', abortFromQueue, { once: true })
 			refreshControllers.current.set(subscription.id, controller)
 			setRefreshingIds((current) => new Set(current).add(subscription.id))
 			try {
@@ -180,7 +198,7 @@ export function useSubscriptions() {
 				}
 			} catch (error) {
 				if (error instanceof DOMException && error.name === 'AbortError') {
-					if (!notify) throw error
+					if (!notify || rethrow) throw error
 					return
 				}
 				logger.warn(
@@ -201,7 +219,9 @@ export function useSubscriptions() {
 				toast.error(t('subscriptions.errors.refresh'), {
 					description: t('subscriptions.errors.tryMoment'),
 				})
+				if (rethrow) throw error
 			} finally {
+				signal?.removeEventListener('abort', abortFromQueue)
 				refreshInFlight.current.delete(subscription.id)
 				if (refreshControllers.current.get(subscription.id) === controller) {
 					refreshControllers.current.delete(subscription.id)
@@ -222,19 +242,40 @@ export function useSubscriptions() {
 	const refreshAll = useCallback(
 		async (subscriptions: readonly Subscription[]) => {
 			if (subscriptions.length === 0) return
+			refreshAllController.current?.abort()
+			const controller = new AbortController()
+			refreshAllController.current = controller
 			try {
-				await runAsyncQueue(
+				await runSubscriptionRefreshQueue(
 					subscriptions,
-					(subscription) =>
-						refreshOne(subscription, { publish: false, notify: false }),
-					{ concurrency: 2, wait: 40 },
+					(subscription, { signal }) =>
+						refreshOne(subscription, {
+							publish: false,
+							notify: false,
+							rethrow: true,
+							signal,
+						}),
+					{
+						signal: controller.signal,
+						onProgress: setRefreshQueueProgress,
+					},
 				)
+			} catch (error) {
+				if (!(error instanceof DOMException && error.name === 'AbortError')) {
+					throw error
+				}
 			} finally {
 				await reload()
+				if (refreshAllController.current === controller) {
+					refreshAllController.current = null
+				}
 			}
 		},
 		[refreshOne, reload],
 	)
+	const cancelRefreshAll = useCallback(() => {
+		refreshAllController.current?.abort()
+	}, [])
 
 	const saveDraft = useCallback(
 		async (replacement?: Subscription) => {
@@ -352,12 +393,17 @@ export function useSubscriptions() {
 			await runtime.subscriptionStore.save(subscription)
 			await reload()
 			setMessage(t('subscriptions.feedback.savedRefreshing'))
-			toast.success(t('subscriptions.feedback.added'), {
-				description: t('subscriptions.feedback.refreshingBackground'),
-			})
-			void refresh(subscription)
+			try {
+				await refreshOne(subscription, { rethrow: true })
+			} catch (error) {
+				await runtime.subscriptionStore
+					.remove(subscription.id)
+					.catch(() => undefined)
+				await reload().catch(() => undefined)
+				throw error
+			}
 		},
-		[refresh, reload, runtime, t],
+		[refreshOne, reload, runtime, t],
 	)
 
 	const remove = useCallback(
@@ -514,6 +560,7 @@ export function useSubscriptions() {
 				: null,
 			addPending,
 			refreshingIds,
+			refreshQueueProgress,
 			removingIds,
 		},
 		actions: {
@@ -527,6 +574,7 @@ export function useSubscriptions() {
 			addFromUrl,
 			refresh,
 			refreshAll,
+			cancelRefreshAll,
 			requestRemove,
 			confirmRemove,
 			cancelRemove,

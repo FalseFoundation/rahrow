@@ -5,6 +5,7 @@ import {
 	buildEditedConnectionProfile,
 	formatCanonicalProfileJson,
 	parseCanonicalProfileJson,
+	previewCanonicalProfileJsonChange,
 	toConnectionProfileEditorValues,
 } from './connection-profile-editor-model.ts'
 
@@ -108,6 +109,28 @@ describe('connection profile editor model', () => {
 		expect(() => parseCanonicalProfileJson(unknownField, vlessProfile)).toThrow(
 			'Invalid profile',
 		)
+	})
+
+	it('stages canonical JSON changes as a path-only diff before applying them', () => {
+		const preview = previewCanonicalProfileJsonChange(
+			JSON.stringify({
+				...vlessProfile,
+				endpoint: { host: 'new.example.com', port: 8443 },
+				metadata: { ...vlessProfile.metadata, name: 'Edited' },
+			}),
+			vlessProfile,
+		)
+
+		expect(preview.changedPaths).toEqual([
+			'$.endpoint.host',
+			'$.endpoint.port',
+			'$.metadata.name',
+		])
+		expect(preview.profile.endpoint).toEqual({
+			host: 'new.example.com',
+			port: 8443,
+		})
+		expect(JSON.stringify(preview.changedPaths)).not.toContain('new.example.com')
 	})
 
 	it('does not expose transport or TLS fields for SSH profiles', () => {

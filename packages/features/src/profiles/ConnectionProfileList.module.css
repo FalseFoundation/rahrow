@@ -3,6 +3,9 @@
 .rows {
 	@apply mt-2.25 gap-0;
 }
+.profileContext {
+	@apply w-full;
+}
 .profileRow {
 	@apply relative isolate transition-colors;
 }

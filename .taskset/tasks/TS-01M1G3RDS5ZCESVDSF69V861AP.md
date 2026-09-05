@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RDS5ZCESVDSF69V861AP
 title: Use Persian Backup, Download Backup, and Import Backup copy
-status: todo
+status: done
 priority: medium
 risk: low
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - backup-restore
   - localization

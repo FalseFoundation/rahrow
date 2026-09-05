@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RB1RAXDT7ZYR2WREWDKA
 title: Reveal URL-imported subscriptions and profiles immediately
-status: todo
+status: done
 priority: urgent
 risk: high
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - connections
   - subscriptions

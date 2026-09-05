@@ -1,11 +1,11 @@
 ---
 id: TS-01M1ARQ59ZNG3M665KVZYT2TJT
 title: Correct proxy-mode connection language and Home headings
-status: doing
+status: done
 priority: high
 risk: high
 createdAt: 2026-08-31 02:00 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:48 UTC
 labels:
   - p1
   - hardening

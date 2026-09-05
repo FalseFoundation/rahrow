@@ -17,6 +17,7 @@ import { englishMessages, persianMessages } from './messages.ts'
 export const appI18n: i18n = i18next.createInstance()
 
 let rtlFontPromise: Promise<unknown> | undefined
+let localeChangeSequence = 0
 
 function ensureLocaleFont(direction: 'ltr' | 'rtl'): Promise<unknown> {
 	if (direction !== 'rtl') return Promise.resolve()
@@ -55,9 +56,16 @@ export async function changeAppLanguage(
 	language: string | undefined,
 	documentElement: Pick<HTMLElement, 'lang' | 'dir'> = document.documentElement,
 ): Promise<string> {
+	const sequence = ++localeChangeSequence
 	const locale = resolveAppLocale(language)
 	await ensureLocaleFont(locale.direction)
+	if (sequence !== localeChangeSequence) {
+		return resolveAppLocale(appI18n.resolvedLanguage).language
+	}
 	await appI18n.changeLanguage(locale.language)
+	if (sequence !== localeChangeSequence) {
+		return resolveAppLocale(appI18n.resolvedLanguage).language
+	}
 	const resolved = resolveAppLocale(appI18n.resolvedLanguage)
 	applyDocumentLocale(documentElement, {
 		...resolved,

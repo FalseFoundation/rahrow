@@ -133,7 +133,7 @@ describe('share-link golden profiles', () => {
 		})
 	})
 
-	it('ignores unknown VLESS query params without leaking them onto the profile', () => {
+	it('preserves unknown VLESS query params only in the URI extension namespace', () => {
 		const [profile] = parseConnectionUrl(
 			`vless://${validUuid}@example.com:443?security=none&unknown=value&fragment=tlshello#Direct`,
 		)
@@ -151,6 +151,12 @@ describe('share-link golden profiles', () => {
 			metadata: {
 				name: 'Direct',
 				source: 'url',
+				extensions: {
+					uriQuery: {
+						fragment: ['tlshello'],
+						unknown: ['value'],
+					},
+				},
 			},
 		})
 		expect(profile.id).toMatch(/^vless:example\.com:443\.[a-f0-9-]+$/u)

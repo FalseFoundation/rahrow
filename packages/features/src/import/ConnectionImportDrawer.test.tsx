@@ -132,6 +132,7 @@ describe('ConnectionImportDrawer', () => {
 	})
 
 	it('preserves the URL and exposes retry after an Enter-submit failure', async () => {
+		const onValueChange = vi.fn()
 		const onImportUrl = vi
 			.fn<() => Promise<void>>()
 			.mockRejectedValueOnce(new Error('command rahrow_import not found'))
@@ -140,7 +141,7 @@ describe('ConnectionImportDrawer', () => {
 		render(
 			<ConnectionImportDrawer
 				value='vless://still-editable'
-				onValueChange={() => undefined}
+				onValueChange={onValueChange}
 				onPaste={async () => undefined}
 				onImportUrl={onImportUrl}
 				supportedProtocols={['vless']}
@@ -155,6 +156,7 @@ describe('ConnectionImportDrawer', () => {
 		const alert = await screen.findByRole('alert')
 		expect(alert.textContent).toContain('Could not add this connection')
 		expect(input.value).toBe('vless://still-editable')
+		expect(onValueChange).not.toHaveBeenCalledWith('')
 		expect(
 			screen.getByText('Technical details').closest('details')?.textContent,
 		).not.toContain('command rahrow_import not found')
@@ -162,6 +164,33 @@ describe('ConnectionImportDrawer', () => {
 		await user.click(screen.getByRole('button', { name: 'Add connection' }))
 		await waitFor(() => expect(onImportUrl).toHaveBeenCalledTimes(2))
 		await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
+		expect(onValueChange).toHaveBeenLastCalledWith('')
+	})
+
+	it('resets the URL only after a successful import finishes', async () => {
+		let finishImport: (() => void) | undefined
+		const onValueChange = vi.fn()
+		const onImportUrl = vi.fn(
+			() =>
+				new Promise<void>((resolve) => {
+					finishImport = resolve
+				}),
+		)
+		const user = userEvent.setup()
+		render(
+			<ConnectionImportDrawer
+				value='https://example.com/subscription'
+				onValueChange={onValueChange}
+				onImportUrl={onImportUrl}
+				supportedProtocols={['vless']}
+				onCreateProfile={async () => undefined}
+			/>,
+		)
+
+		await user.click(screen.getByRole('button', { name: 'Add connection' }))
+		expect(onValueChange).not.toHaveBeenCalledWith('')
+		finishImport?.()
+		await waitFor(() => expect(onValueChange).toHaveBeenLastCalledWith(''))
 	})
 
 	it('composes injected camera preview and protocol-first manual forms', () => {

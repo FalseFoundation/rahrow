@@ -224,42 +224,44 @@ export function Home() {
 								{/* <div className={styles.pointField} aria-hidden='true'>
 							· ··· · · ·· · ··· ·
 						</div> */}
-								<Backlight className={styles.powerBacklight} blur={connected ? 14 : 8}>
-									<div
-										className={styles.powerHalo}
-										data-active={connected || connecting}
-										data-connected={connected}
-									>
-										<Ripple
-											className={styles.powerRipple}
-											mainCircleSize={92}
-											mainCircleOpacity={connected ? 0.2 : 0.1}
-											numCircles={4}
-										/>
-										<Button
-											variant='status'
-											size='control-xl'
+								<div className={styles.powerControl} data-connected={connected}>
+									<Ripple
+										className={styles.powerRipple}
+										mainCircleSize={92}
+										mainCircleOpacity={connected ? 0.2 : 0.1}
+										numCircles={4}
+									/>
+									<Backlight className={styles.powerBacklight} blur={connected ? 14 : 8}>
+										<div
+											className={styles.powerHalo}
+											data-active={connected || connecting}
 											data-connected={connected}
-											disabled={
-												state.isPending || (!state.canConnect && !state.canDisconnect)
-											}
-											onClick={() => void toggleConnection()}
-											aria-label={connectionActionLabel}
-											title={connectionActionLabel}
-											aria-describedby={
-												!connected && state.connectUnavailableReason
-													? 'home-connect-unavailable'
-													: undefined
-											}
 										>
-											{state.isPending && state.pendingAction !== 'test' ? (
-												<Spinner />
-											) : (
-												<PowerIcon strokeWidth={1.5} />
-											)}
-										</Button>
-									</div>
-								</Backlight>
+											<Button
+												variant='status'
+												size='control-xl'
+												data-connected={connected}
+												disabled={
+													state.isPending || (!state.canConnect && !state.canDisconnect)
+												}
+												onClick={() => void toggleConnection()}
+												aria-label={connectionActionLabel}
+												title={connectionActionLabel}
+												aria-describedby={
+													!connected && state.connectUnavailableReason
+														? 'home-connect-unavailable'
+														: undefined
+												}
+											>
+												{state.isPending && state.pendingAction !== 'test' ? (
+													<Spinner />
+												) : (
+													<PowerIcon strokeWidth={1.5} />
+												)}
+											</Button>
+										</div>
+									</Backlight>
+								</div>
 								<div className={styles.connectionCopy}>
 									{connecting ? (
 										<MorphingText

@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RC3HF16KDH9NG51YMFK2
 title: Give Smart Connect a distinct but cohesive Connections container
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - smart-connect
   - connections

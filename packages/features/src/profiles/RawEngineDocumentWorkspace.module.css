@@ -1,0 +1,42 @@
+@reference "@rahrow/ui/global.css";
+
+.workspace {
+	@apply flex min-w-0 flex-col gap-5;
+}
+
+.header {
+	@apply flex flex-col gap-1;
+}
+
+.header h2,
+.result h3 {
+	@apply text-base font-semibold;
+}
+
+.header p {
+	@apply text-sm text-muted-foreground;
+}
+
+.editor {
+	@apply min-h-80 resize-y text-xs leading-relaxed;
+	font-family: var(--font-mono);
+}
+
+.actions {
+	@apply grid grid-cols-2 gap-2;
+}
+
+.result {
+	@apply flex flex-col gap-3 rounded-xl border border-border bg-muted/30 p-4;
+}
+
+.lossList {
+	@apply mt-2 list-inside list-disc text-xs;
+	font-family: var(--font-mono);
+}
+
+@media (max-width: 28rem) {
+	.actions {
+		@apply grid-cols-1;
+	}
+}

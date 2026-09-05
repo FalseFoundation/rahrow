@@ -12,6 +12,10 @@ import { useAppTranslation } from './app-i18n.tsx'
 import { ProductHeader } from './ProductHeader.tsx'
 import styles from './router.module.css'
 import type { AppRuntime } from './runtime.tsx'
+import {
+	ScreenLoadingState,
+	type ScreenLoadingVariant,
+} from './ScreenLoadingState.tsx'
 
 interface RouterContext {
 	readonly runtime: AppRuntime
@@ -25,7 +29,7 @@ const homeRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: '/',
 	component: lazyRouteComponent(() => import('../home/Home.tsx'), 'Home'),
-	pendingComponent: RouteLoadingFallback,
+	pendingComponent: HomeRouteLoading,
 	errorComponent: RouteErrorFallback,
 })
 
@@ -36,7 +40,7 @@ const profilesRoute = createRoute({
 		() => import('../profiles/Profiles.tsx'),
 		'Profiles',
 	),
-	pendingComponent: RouteLoadingFallback,
+	pendingComponent: ConnectionsRouteLoading,
 	errorComponent: RouteErrorFallback,
 })
 
@@ -47,7 +51,7 @@ const subscriptionsRoute = createRoute({
 		() => import('../subscriptions/Subscriptions.tsx'),
 		'Subscriptions',
 	),
-	pendingComponent: RouteLoadingFallback,
+	pendingComponent: SubscriptionsRouteLoading,
 	errorComponent: RouteErrorFallback,
 })
 
@@ -55,7 +59,7 @@ const importRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: '/import',
 	component: lazyRouteComponent(() => import('../import/Import.tsx'), 'Import'),
-	pendingComponent: RouteLoadingFallback,
+	pendingComponent: ConnectionsRouteLoading,
 	errorComponent: RouteErrorFallback,
 })
 
@@ -70,7 +74,7 @@ const settingsRoute = createRoute({
 		() => import('../settings/Settings.tsx'),
 		'Settings',
 	),
-	pendingComponent: RouteLoadingFallback,
+	pendingComponent: SettingsRouteLoading,
 	errorComponent: RouteErrorFallback,
 })
 
@@ -90,19 +94,34 @@ export function createAppRouter(runtime: AppRuntime) {
 	})
 }
 
-export function RouteLoadingFallback() {
+export function RouteLoadingFallback({
+	variant = 'generic',
+}: {
+	readonly variant?: ScreenLoadingVariant
+} = {}) {
 	const { t } = useAppTranslation()
 	return (
 		<>
 			<ProductHeader title={t('route.loading.title')} />
-			<section className={styles.routeState}>
-				<div role='status' aria-live='polite' aria-atomic='true'>
-					<span className={styles.srOnly}>{t('route.loading.title')}</span>
-					<p>{t('route.loading.description')}</p>
-				</div>
-			</section>
+			<ScreenLoadingState label={t('route.loading.title')} variant={variant} />
 		</>
 	)
+}
+
+function HomeRouteLoading() {
+	return <RouteLoadingFallback variant='home' />
+}
+
+function ConnectionsRouteLoading() {
+	return <RouteLoadingFallback variant='connections' />
+}
+
+function SubscriptionsRouteLoading() {
+	return <RouteLoadingFallback variant='subscriptions' />
+}
+
+function SettingsRouteLoading() {
+	return <RouteLoadingFallback variant='settings' />
 }
 
 export function RouteErrorFallback({

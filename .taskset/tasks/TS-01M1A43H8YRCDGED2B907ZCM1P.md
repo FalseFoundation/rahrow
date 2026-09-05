@@ -1,11 +1,11 @@
 ---
 id: TS-01M1A43H8YRCDGED2B907ZCM1P
 title: Unify Settings information architecture, reset safety, and About metadata
-status: todo
+status: done
 priority: high
 risk: high
 createdAt: 2026-08-30 19:59 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 17:14 UTC
 labels:
   - settings
   - ui-system

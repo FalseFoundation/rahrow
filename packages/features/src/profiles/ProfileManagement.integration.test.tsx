@@ -491,6 +491,31 @@ describe('ProfileManagement connection-library seam', () => {
 		).toBeTruthy()
 	})
 
+	it('keeps only Add connection when the canonical collection is empty', () => {
+		harness.state.profiles = []
+		renderManagement({ subscriptions: [] })
+
+		expect(
+			screen.getAllByRole('button', { name: 'Add connection' }),
+		).toHaveLength(2)
+		expect(
+			screen.queryByRole('button', { name: 'Clean up connections' }),
+		).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Open search' })).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Sort connections' })).toBeNull()
+	})
+
+	it('shows only collection actions with a valid target for a subscription-only library', () => {
+		harness.state.profiles = []
+		renderManagement()
+
+		expect(
+			screen.getByRole('button', { name: 'Clean up connections' }),
+		).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Open search' })).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Sort connections' })).toBeNull()
+	})
+
 	it('completes canonical URL acquisition from the first-run CTA', async () => {
 		harness.state.profiles = []
 		harness.state.importText = 'vless://first-run-profile'
@@ -560,7 +585,7 @@ describe('ProfileManagement connection-library seam', () => {
 		expect(harness.navigate).toHaveBeenCalledWith({ to: '/' })
 	})
 
-	it('names action targets and keeps locked destructive actions disabled', async () => {
+	it('names action targets and keeps locked mutation actions disabled', async () => {
 		const { props } = renderManagement()
 
 		const lockedSourceHeading = screen.getByRole('heading', {
@@ -582,6 +607,10 @@ describe('ProfileManagement connection-library seam', () => {
 			),
 		).toBeTruthy()
 		const remove = screen.getByRole('button', { name: 'Remove' })
+		expect(screen.getByRole('button', { name: 'Edit' })).toHaveProperty(
+			'disabled',
+			true,
+		)
 		expect(remove).toHaveProperty('disabled', true)
 		expect(remove.className).toContain('text-destructive')
 
@@ -590,6 +619,30 @@ describe('ProfileManagement connection-library seam', () => {
 			expect(props.onRefreshSubscription).toHaveBeenCalledWith(subscriptions[0]),
 		)
 		expect(harness.actions.reloadProfiles).toHaveBeenCalled()
+	})
+
+	it('counts owned profiles in subscription removal consequences', () => {
+		const subscription = subscriptions[0]
+		if (!subscription) throw new Error('Expected a subscription fixture')
+		const source = { ...subscription, locked: false }
+		renderManagement({ subscriptions: [source] })
+
+		const sourceHeading = screen.getByRole('heading', { name: 'Locked source' })
+		const sourceGroup = sourceHeading.closest('section')
+		const actions = sourceGroup?.querySelector(
+			'button[aria-label="More actions"]',
+		)
+		if (!(actions instanceof HTMLElement)) {
+			throw new Error('Expected the subscription actions')
+		}
+		fireEvent.click(actions)
+		fireEvent.click(screen.getByRole('button', { name: 'Remove' }))
+
+		expect(
+			screen.getByText(
+				/This also removes 1 connection owned by this subscription\./,
+			),
+		).toBeTruthy()
 	})
 
 	it('opens profile actions without changing the active connection', () => {
@@ -610,6 +663,21 @@ describe('ProfileManagement connection-library seam', () => {
 				'Test, duplicate, share, edit, or remove Alpha. Removal requires confirmation.',
 			),
 		).toBeNull()
+	})
+
+	it('inherits lock protection into subscription-owned profile actions', () => {
+		renderManagement()
+
+		fireEvent.click(connectionAction('Wire route', 'More actions'))
+		expect(screen.getByRole('button', { name: 'Edit' })).toHaveProperty(
+			'disabled',
+			true,
+		)
+		expect(screen.getByRole('button', { name: 'Remove' })).toHaveProperty(
+			'disabled',
+			true,
+		)
+		expect(screen.getAllByText('Locked').length).toBeGreaterThan(0)
 	})
 
 	it('closes latency actions immediately and shows progress on the affected row', () => {
@@ -742,7 +810,7 @@ describe('ProfileManagement connection-library seam', () => {
 		)
 	})
 
-	it('starts Smart Connect from the generic header action and reports its result', async () => {
+	it('starts Smart Connect from the generic header action and reports its selection', async () => {
 		const run = vi.fn(async ({ onProgress }) => {
 			onProgress?.({ phase: 'queued', total: 2 })
 			onProgress?.({
@@ -753,7 +821,7 @@ describe('ProfileManagement connection-library seam', () => {
 				total: 2,
 			})
 			return {
-				outcome: 'connected' as const,
+				outcome: 'selected' as const,
 				probed: 2,
 				winner: { profileId: 'alpha', latencyMs: 12 },
 				nextRunAt: '2026-09-02T00:05:00.000Z',
@@ -776,8 +844,26 @@ describe('ProfileManagement connection-library seam', () => {
 
 		await waitFor(() => expect(run).toHaveBeenCalledOnce())
 		await waitFor(() =>
-			expect(screen.getByText('Fastest connection active')).toBeTruthy(),
+			expect(screen.getByText('Fastest connection selected')).toBeTruthy(),
 		)
 		expect(action.getAttribute('aria-pressed')).toBe('true')
+	})
+
+	it('opens the runtime-backed raw engine document workspace', () => {
+		renderManagement({
+			rawEngineDocuments: {
+				adapters: [],
+				storeFor: vi.fn(),
+			},
+			subscriptions: [],
+		} as never)
+
+		fireEvent.click(
+			screen.getByRole('button', { name: 'Import raw engine configuration' }),
+		)
+
+		expect(
+			screen.getAllByRole('heading', { name: 'Raw engine configuration' }),
+		).not.toHaveLength(0)
 	})
 })

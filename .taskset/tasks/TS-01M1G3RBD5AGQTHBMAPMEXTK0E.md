@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RBD5AGQTHBMAPMEXTK0E
 title: Reset Add Connection after a successful import
-status: todo
+status: done
 priority: high
 risk: medium
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - connections
   - import

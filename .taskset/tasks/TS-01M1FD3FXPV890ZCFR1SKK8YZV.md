@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3FXPV890ZCFR1SKK8YZV
 title: Remove locale-direction startup and navigation races
-status: todo
+status: done
 priority: urgent
 risk: high
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - cross-platform-hardening
   - i18n

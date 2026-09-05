@@ -70,6 +70,32 @@ describe('useAppShellResources', () => {
 		expect(document.documentElement.dir).toBe('ltr')
 	})
 
+	it('keeps the query cache stable when the host wrapper object is recreated', () => {
+		const connection: ConnectionPort = {
+			async connect() {},
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected' }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		}
+		const initialRuntime = runtimeWith(connection)
+		const { result, rerender } = renderHook(
+			({ runtime }: { readonly runtime: AppRuntime }) =>
+				useAppShellResources(runtime),
+			{ initialProps: { runtime: initialRuntime } },
+		)
+		const initialQueryClient = result.current.queryClient
+		const initialShellRuntime = result.current.runtime
+
+		rerender({ runtime: { ...initialRuntime } })
+
+		expect(result.current.queryClient).toBe(initialQueryClient)
+		expect(result.current.runtime).toBe(initialShellRuntime)
+	})
+
 	it('initializes the document semantic state safely from runtime status', async () => {
 		const runtime = runtimeWith({
 			async connect() {},

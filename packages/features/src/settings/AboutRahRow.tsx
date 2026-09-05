@@ -18,7 +18,13 @@ import styles from './AboutRahRow.module.css'
 
 export interface AboutRahRowProps {
 	readonly version?: string
+	readonly build?: string
 	readonly engines?: readonly EngineManifest[]
+	readonly engineMetadata?: readonly {
+		readonly id: EngineManifest['id']
+		readonly version?: string
+		readonly license?: string
+	}[]
 	readonly externalNavigation?: ExternalNavigation
 	readonly configuration?: RahrowAboutConfiguration
 }
@@ -31,7 +37,9 @@ const groupOrder: readonly RahrowAboutGroup[] = [
 
 export function AboutRahRow({
 	version,
+	build,
 	engines = [],
+	engineMetadata = [],
 	externalNavigation,
 	configuration,
 }: AboutRahRowProps) {
@@ -79,6 +87,12 @@ export function AboutRahRow({
 							: t('settings.about.versionUnavailable')}
 					</strong>
 				</div>
+				{build ? (
+					<div>
+						<span>{t('settings.about.buildLabel')}</span>
+						<strong>{build}</strong>
+					</div>
+				) : null}
 				<div>
 					<span>{t('settings.about.licenseLabel')}</span>
 					<strong>{manifest.license.name}</strong>
@@ -86,8 +100,22 @@ export function AboutRahRow({
 				{engines.length > 0 ? (
 					<div>
 						<span>{t('settings.about.enginesLabel')}</span>
-						<strong>{engines.map((engine) => engine.id).join(', ')}</strong>
-						<small>{t('settings.about.engineMetadataUnavailable')}</small>
+						<strong>
+							{engines
+								.map((engine) => {
+									const metadata = engineMetadata.find((item) => item.id === engine.id)
+									return [engine.id, metadata?.version, metadata?.license]
+										.filter(Boolean)
+										.join(' · ')
+								})
+								.join(', ')}
+						</strong>
+						{engines.some(
+							(engine) =>
+								!engineMetadata.find((item) => item.id === engine.id)?.version,
+						) ? (
+							<small>{t('settings.about.engineMetadataUnavailable')}</small>
+						) : null}
 					</div>
 				) : null}
 			</section>

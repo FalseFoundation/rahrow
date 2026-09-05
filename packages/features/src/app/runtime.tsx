@@ -19,6 +19,7 @@ import type {
 } from '@rahrow/core/platform/capabilities.ts'
 import type { EgressIdentity } from '@rahrow/core/platform/egress-identity.ts'
 import type { ConnectionProfile } from '@rahrow/core/profile/connection-profile.ts'
+import type { RawEngineDocumentAdapter } from '@rahrow/core/profile/raw-engine-document.ts'
 import type { ProtocolRegistry } from '@rahrow/core/protocol/connection-protocol.ts'
 import type {
 	EngineId,
@@ -26,8 +27,13 @@ import type {
 	ProxyEngine,
 } from '@rahrow/core/runtime/proxy-engine.ts'
 import type {
+	ResetOutcome,
+	ResetScope,
+} from '@rahrow/core/settings/reset-orchestrator.ts'
+import type {
 	ProfileStore,
 	SettingsStore,
+	StringDocumentStore,
 } from '@rahrow/core/storage/json-store.ts'
 import type {
 	SubscriptionFetcher,
@@ -107,11 +113,21 @@ export interface AppCapabilities {
 	readonly vpn?: Vpn
 	readonly systemProxy?: SystemProxy
 	readonly networkIdentity?: NetworkIdentity
+	readonly lanProxySharing?: {
+		readonly supported: boolean
+		readonly detail?: string
+	}
 }
 
 export interface AppRuntime {
 	readonly buildMetadata?: {
 		readonly version?: string
+		readonly build?: string
+		readonly engines?: readonly {
+			readonly id: EngineId
+			readonly version?: string
+			readonly license?: string
+		}[]
 		readonly about?: {
 			readonly telegramUrl?: string
 			readonly donationUrl?: string
@@ -124,6 +140,15 @@ export interface AppRuntime {
 	readonly engine: ProxyEngine
 	readonly availableEngines?: readonly EngineManifest[]
 	readonly connection: ConnectionPort
+	readonly rawEngineDocuments?: {
+		readonly adapters: readonly RawEngineDocumentAdapter[]
+		readonly storeFor: (
+			engineId: RawEngineDocumentAdapter['engineId'],
+		) => StringDocumentStore
+	}
+	readonly reset?: {
+		reset(scope: ResetScope): Promise<ResetOutcome>
+	}
 	readonly smartConnect?: SmartConnectRuntime
 	readonly egressIdentity?: EgressIdentity
 	readonly networkQuality?: NetworkQualityProbe

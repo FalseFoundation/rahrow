@@ -1,5 +1,12 @@
 import type { ConnectionProfile } from '@rahrow/core/profile/connection-profile.ts'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import {
+	act,
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within,
+} from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ConnectionProfileList } from './ConnectionProfileList.tsx'
@@ -52,6 +59,23 @@ describe('ConnectionProfileList selection', () => {
 
 		const endpoint = screen.getByText('standalone.example:443')
 		expect(endpoint.hasAttribute('data-selectable')).toBe(false)
+	})
+
+	it('keeps inherited lock state visible beside the profile identity', () => {
+		render(
+			<ConnectionProfileList
+				profiles={[subscribed]}
+				selectedId=''
+				isLocked={() => true}
+				onActivate={vi.fn().mockResolvedValue(undefined)}
+				onActions={vi.fn()}
+				speedTests={{}}
+			/>,
+		)
+
+		expect(screen.getByText('Locked')).toBeTruthy()
+		expect(screen.getByText('Subscribed')).toBeTruthy()
+		expect(screen.getByText('SS')).toBeTruthy()
 	})
 
 	it('moves the neutral programmatic current state across standalone and subscription rows', () => {
@@ -137,5 +161,79 @@ describe('ConnectionProfileList selection', () => {
 		await user.click(actions)
 		expect(onActions).toHaveBeenCalledWith(standalone)
 		expect(onActivate).toHaveBeenCalledTimes(1)
+	})
+
+	it('opens the same actions from a secondary click without activating the profile', async () => {
+		const user = userEvent.setup()
+		const onActivate = vi.fn().mockResolvedValue(undefined)
+		const onActions = vi.fn()
+		render(
+			<ConnectionProfileList
+				profiles={[standalone]}
+				selectedId=''
+				onActivate={onActivate}
+				onActions={onActions}
+				speedTests={{}}
+			/>,
+		)
+
+		const row = screen.getByText('Standalone').closest('[data-slot="item"]')
+		if (!(row instanceof HTMLElement)) {
+			throw new Error('Expected the standalone connection row')
+		}
+		fireEvent.contextMenu(row)
+		await user.click(
+			await screen.findByRole('menuitem', { name: 'More actions' }),
+		)
+
+		expect(onActions).toHaveBeenCalledWith(standalone)
+		expect(onActivate).not.toHaveBeenCalled()
+	})
+
+	it('opens actions after the Base UI touch hold and cancels when touch moves', () => {
+		vi.useFakeTimers()
+		try {
+			const onActivate = vi.fn().mockResolvedValue(undefined)
+			const onActions = vi.fn()
+			render(
+				<ConnectionProfileList
+					profiles={[standalone]}
+					selectedId=''
+					onActivate={onActivate}
+					onActions={onActions}
+					speedTests={{}}
+				/>,
+			)
+
+			const row = screen.getByText('Standalone').closest('[data-slot="item"]')
+			if (!(row instanceof HTMLElement)) {
+				throw new Error('Expected the standalone connection row')
+			}
+			const surface = row.closest('[data-slot="context-menu-trigger"]')
+			if (!(surface instanceof HTMLElement)) {
+				throw new Error('Expected the profile context-menu surface')
+			}
+
+			fireEvent.touchStart(surface, {
+				touches: [{ clientX: 20, clientY: 20, identifier: 1 }],
+			})
+			fireEvent.touchMove(surface, {
+				touches: [{ clientX: 31, clientY: 20, identifier: 1 }],
+			})
+			act(() => vi.advanceTimersByTime(500))
+			expect(screen.queryByRole('menuitem')).toBeNull()
+
+			fireEvent.touchStart(surface, {
+				touches: [{ clientX: 20, clientY: 20, identifier: 1 }],
+			})
+			act(() => vi.advanceTimersByTime(500))
+			const item = screen.getByRole('menuitem', { name: 'More actions' })
+			fireEvent.click(item)
+
+			expect(onActions).toHaveBeenCalledWith(standalone)
+			expect(onActivate).not.toHaveBeenCalled()
+		} finally {
+			vi.useRealTimers()
+		}
 	})
 })

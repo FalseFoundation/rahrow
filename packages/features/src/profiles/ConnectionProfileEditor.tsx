@@ -43,9 +43,10 @@ import {
 import styles from './ConnectionProfileEditor.module.css'
 import {
 	buildEditedConnectionProfile,
+	type CanonicalProfileChangePreview,
 	connectionProfileEditorFormSchema,
 	formatCanonicalProfileJson,
-	parseCanonicalProfileJson,
+	previewCanonicalProfileJsonChange,
 	profileSupportsSecurity,
 	profileSupportsTransport,
 	toConnectionProfileEditorValues,
@@ -76,6 +77,8 @@ export function ConnectionProfileEditor({
 		formatCanonicalProfileJson(profile),
 	)
 	const [jsonError, setJsonError] = useState('')
+	const [jsonPreview, setJsonPreview] =
+		useState<CanonicalProfileChangePreview | null>(null)
 	const submitInFlight = useRef(false)
 	const form = useForm({
 		defaultValues: toConnectionProfileEditorValues(baseProfile),
@@ -95,6 +98,7 @@ export function ConnectionProfileEditor({
 		setCanonicalJson(formatCanonicalProfileJson(profile))
 		setTab('form')
 		setJsonError('')
+		setJsonPreview(null)
 		setError('')
 		form.reset(toConnectionProfileEditorValues(profile))
 	}, [profile])
@@ -118,6 +122,7 @@ export function ConnectionProfileEditor({
 
 	function syncFormToCanonicalJson() {
 		setJsonError('')
+		setJsonPreview(null)
 		try {
 			setCanonicalJson(
 				formatCanonicalProfileJson(
@@ -132,10 +137,17 @@ export function ConnectionProfileEditor({
 	function applyCanonicalJson() {
 		setJsonError('')
 		try {
-			const parsed = parseCanonicalProfileJson(canonicalJson, baseProfile)
+			const preview =
+				jsonPreview ?? previewCanonicalProfileJsonChange(canonicalJson, baseProfile)
+			if (!jsonPreview && preview.changedPaths.length > 0) {
+				setJsonPreview(preview)
+				return
+			}
+			const parsed = preview.profile
 			setBaseProfile(parsed)
 			form.reset(toConnectionProfileEditorValues(parsed))
 			setCanonicalJson(formatCanonicalProfileJson(parsed))
+			setJsonPreview(null)
 		} catch {
 			setJsonError(t('editor.errors.applyJson'))
 			setTimeout(() => document.getElementById('profile-editor-json')?.focus(), 0)
@@ -377,11 +389,24 @@ export function ConnectionProfileEditor({
 										aria-describedby={jsonError ? 'profile-editor-json-error' : undefined}
 										spellCheck={false}
 										value={canonicalJson}
-										onChange={(event) => setCanonicalJson(event.target.value)}
+										onChange={(event) => {
+											setCanonicalJson(event.target.value)
+											setJsonPreview(null)
+										}}
 									/>
 									<FieldDescription>{t('editor.json.description')}</FieldDescription>
 									{jsonError ? (
 										<FieldError id='profile-editor-json-error'>{jsonError}</FieldError>
+									) : null}
+									{jsonPreview ? (
+										<div className={styles.jsonDiff} role='status'>
+											<strong>{t('editor.json.apply')}</strong>
+											<ul>
+												{jsonPreview.changedPaths.map((path) => (
+													<li key={path}>{path}</li>
+												))}
+											</ul>
+										</div>
 									) : null}
 								</Field>
 							</FieldGroup>

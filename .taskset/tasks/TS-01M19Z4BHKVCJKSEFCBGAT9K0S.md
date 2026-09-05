@@ -1,11 +1,11 @@
 ---
 id: TS-01M19Z4BHKVCJKSEFCBGAT9K0S
 title: Build schema-driven canonical profile editor and raw engine document workspace
-status: doing
+status: done
 priority: high
 risk: high
 createdAt: 2026-08-30 18:32 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 17:11 UTC
 labels:
   - profile-editor
   - protocols

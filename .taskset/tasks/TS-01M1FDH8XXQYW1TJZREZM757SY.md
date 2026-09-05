@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FDH8XXQYW1TJZREZM757SY
 title: Make locked connections unmistakable without hiding their identity
-status: todo
+status: done
 priority: high
 risk: medium
 createdAt: 2026-09-01 21:20 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 17:14 UTC
 labels:
   - cross-platform-hardening
   - connections

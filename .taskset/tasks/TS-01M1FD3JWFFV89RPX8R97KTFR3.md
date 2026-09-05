@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3JWFFV89RPX8R97KTFR3
 title: Separate VPN, system proxy, and LAN proxy sharing settings
-status: todo
+status: done
 priority: high
 risk: high
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 17:14 UTC
 labels:
   - cross-platform-hardening
   - settings

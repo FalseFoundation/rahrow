@@ -19,6 +19,10 @@ import type {
 import { VpnTunnelCoordinator } from '@rahrow/core/platform/vpn-tunnel-provider.ts'
 import type { ConnectionProfile } from '@rahrow/core/profile/connection-profile.ts'
 import { defaultProtocolRegistry } from '@rahrow/core/protocol/connection-protocol.ts'
+import {
+	createStringDocumentReset,
+	ResetOrchestrator,
+} from '@rahrow/core/settings/reset-orchestrator.ts'
 import type { StringDocumentStore } from '@rahrow/core/storage/json-store.ts'
 import {
 	JsonProfileStore,
@@ -32,6 +36,10 @@ import {
 	createHttpSubscriptionFetcher,
 } from '@rahrow/core/subscription/http-subscription-fetcher.ts'
 import type { SubscriptionFetcher } from '@rahrow/core/subscription/subscription-import.ts'
+import {
+	SingBoxRawDocumentAdapter,
+	XrayRawDocumentAdapter,
+} from '@rahrow/engine/import/raw-engine-document.ts'
 import { redactDiagnosticsSnapshot } from '@rahrow/features/app/diagnostics-snapshot.ts'
 import type {
 	AppRuntime,
@@ -39,6 +47,8 @@ import type {
 	DiagnosticsPort,
 } from '@rahrow/features/app/runtime.tsx'
 import { createSmartConnectRuntime } from '@rahrow/features/smart-connect/smart-connect-runtime.ts'
+import singBoxRuntime from '../../../../engines/sing-box/runtime.json'
+import xrayRuntime from '../../../../engines/xray/runtime.json'
 
 import {
 	createDesktopConnectionStack,
@@ -60,6 +70,8 @@ import { createDesktopDocumentStore } from './tauri-document-store.ts'
 export interface CreateDesktopRuntimeOptions {
 	readonly advertising?: AppRuntime['advertising'] | null
 	readonly advertisingDocument?: StringDocumentStore
+	readonly buildMetadata?: AppRuntime['buildMetadata']
+	readonly clearSecureCredentials?: () => Promise<void>
 	readonly native?: DesktopNativeCommands
 	readonly platformNative?: DesktopNativePlatformCommands
 	readonly environment?: WebviewPlatformEnvironment
@@ -74,6 +86,9 @@ export interface CreateDesktopRuntimeOptions {
 	readonly egressIdentity?: EgressIdentity
 	readonly networkQuality?: NetworkQualityProbe
 	readonly routedRequest?: EgressIdentityRequester
+	readonly rawEngineDocumentStore?: (
+		engineId: 'xray' | 'sing-box',
+	) => StringDocumentStore
 }
 
 export function createDesktopRuntime(
@@ -85,12 +100,16 @@ export function createDesktopRuntime(
 		destination: logs,
 		level: 'debug',
 	})
-	const settingsStore = new JsonSettingsStore(
-		options.settingsDocument ?? createDesktopDocumentStore('settings.json'),
-	)
-	const profileStore = new JsonProfileStore(
-		options.profileDocument ?? createDesktopDocumentStore('profiles.json'),
-	)
+	const settingsDocument =
+		options.settingsDocument ?? createDesktopDocumentStore('settings.json')
+	const profileDocument =
+		options.profileDocument ?? createDesktopDocumentStore('profiles.json')
+	const subscriptionDocument =
+		options.subscriptionDocument ??
+		createDesktopDocumentStore('subscriptions.json')
+	const settingsStore = new JsonSettingsStore(settingsDocument)
+	const profileStore = new JsonProfileStore(profileDocument)
+	const subscriptionStore = new JsonSubscriptionStore(subscriptionDocument)
 	const stack = createDesktopConnectionStack(options.native, {
 		logger,
 		selectEngine: async () => (await settingsStore.read()).engineId ?? 'sing-box',
@@ -131,20 +150,47 @@ export function createDesktopRuntime(
 					),
 		},
 	})
-
+	const buildMetadata = options.buildMetadata ?? createBuildMetadata()
+	const rawEngineDocuments = createRawEngineDocuments(
+		buildMetadata,
+		options.rawEngineDocumentStore,
+	)
+	const reset = new ResetOrchestrator({
+		settings: settingsStore,
+		profiles: profileStore,
+		subscriptions: subscriptionStore,
+		additionalAppData: rawEngineDocuments.adapters.map((adapter) => ({
+			snapshot: () =>
+				createStringDocumentReset(
+					rawEngineDocuments.storeFor(adapter.engineId),
+				).snapshot(),
+			clear: () =>
+				createStringDocumentReset(
+					rawEngineDocuments.storeFor(adapter.engineId),
+				).clear(),
+			restore: (snapshot) =>
+				createStringDocumentReset(
+					rawEngineDocuments.storeFor(adapter.engineId),
+				).restore(snapshot),
+		})),
+		disconnectAndCleanup: () => connection.disconnect(),
+		...(options.clearSecureCredentials
+			? { credentials: { clear: options.clearSecureCredentials } }
+			: {}),
+		clearTransientState: () => logs.clear(),
+	})
 	return {
-		buildMetadata: createBuildMetadata(),
+		buildMetadata,
 		...(advertising ? { advertising } : {}),
 		profileStore,
 		settingsStore,
-		subscriptionStore: new JsonSubscriptionStore(
-			options.subscriptionDocument ??
-				createDesktopDocumentStore('subscriptions.json'),
-		),
+		subscriptionStore,
 		registry: defaultProtocolRegistry,
 		engine: stack.engine,
 		availableEngines: stack.registry.list().map((engine) => engine.manifest),
 		connection,
+		reset,
+		rawEngineDocuments,
 		smartConnect,
 		egressIdentity:
 			options.egressIdentity ??
@@ -165,6 +211,11 @@ export function createDesktopRuntime(
 			autostart: platform.autostart,
 			vpn: platform.vpn,
 			systemProxy: platform.systemProxy,
+			lanProxySharing: {
+				supported: false,
+				detail:
+					'LAN proxy sharing is unavailable until this desktop build provides authenticated listeners and firewall cleanup.',
+			},
 			...(networkIdentity ? { networkIdentity } : {}),
 		},
 		diagnostics: createDesktopDiagnosticsPort(stack.commands, platform, logger),
@@ -179,10 +230,29 @@ export function createDesktopRuntime(
 }
 
 function createBuildMetadata(): NonNullable<AppRuntime['buildMetadata']> {
+	const xrayVersion =
+		import.meta.env.VITE_RAHROW_XRAY_VERSION?.trim() || xrayRuntime.version
+	const singBoxVersion =
+		import.meta.env.VITE_RAHROW_SING_BOX_VERSION?.trim() || singBoxRuntime.version
 	return {
 		...(import.meta.env.VITE_RAHROW_VERSION?.trim()
 			? { version: import.meta.env.VITE_RAHROW_VERSION.trim() }
 			: {}),
+		...(import.meta.env.VITE_RAHROW_BUILD?.trim()
+			? { build: import.meta.env.VITE_RAHROW_BUILD.trim() }
+			: {}),
+		engines: [
+			{
+				id: 'xray',
+				...(xrayVersion ? { version: xrayVersion } : {}),
+				license: 'MPL-2.0',
+			},
+			{
+				id: 'sing-box',
+				...(singBoxVersion ? { version: singBoxVersion } : {}),
+				license: 'GPL-3.0-or-later',
+			},
+		],
 		about: {
 			...(import.meta.env.VITE_RAHROW_TELEGRAM_URL?.trim()
 				? { telegramUrl: import.meta.env.VITE_RAHROW_TELEGRAM_URL.trim() }
@@ -190,6 +260,39 @@ function createBuildMetadata(): NonNullable<AppRuntime['buildMetadata']> {
 			...(import.meta.env.VITE_RAHROW_DONATION_URL?.trim()
 				? { donationUrl: import.meta.env.VITE_RAHROW_DONATION_URL.trim() }
 				: {}),
+		},
+	}
+}
+
+function createRawEngineDocuments(
+	buildMetadata: NonNullable<AppRuntime['buildMetadata']>,
+	createStore: (engineId: 'xray' | 'sing-box') => StringDocumentStore = (
+		engineId,
+	) => createDesktopDocumentStore(`raw-engine/${engineId}.json`),
+): NonNullable<AppRuntime['rawEngineDocuments']> {
+	const versionFor = (engineId: 'xray' | 'sing-box') =>
+		buildMetadata.engines?.find((engine) => engine.id === engineId)?.version
+	const adapters = [
+		...(versionFor('xray')
+			? [new XrayRawDocumentAdapter(versionFor('xray') as string)]
+			: []),
+		...(versionFor('sing-box')
+			? [new SingBoxRawDocumentAdapter(versionFor('sing-box') as string)]
+			: []),
+	]
+	const stores = new Map<'xray' | 'sing-box', StringDocumentStore>()
+	return {
+		adapters,
+		storeFor(engineId) {
+			if (engineId !== 'xray' && engineId !== 'sing-box') {
+				throw new Error(`Raw ${engineId} documents are unavailable in this build.`)
+			}
+			if (!adapters.some((adapter) => adapter.engineId === engineId)) {
+				throw new Error(`Raw ${engineId} documents are unavailable in this build.`)
+			}
+			const store = stores.get(engineId) ?? createStore(engineId)
+			stores.set(engineId, store)
+			return store
 		},
 	}
 }

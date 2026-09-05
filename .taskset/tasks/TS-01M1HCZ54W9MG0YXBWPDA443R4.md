@@ -1,11 +1,11 @@
 ---
 id: TS-01M1HCZ54W9MG0YXBWPDA443R4
 title: Remove scaffold-demo code and references from RahRow
-status: todo
+status: done
 priority: high
 risk: medium
 createdAt: 2026-09-02 15:49 UTC
-updatedAt: 2026-09-02 15:49 UTC
+updatedAt: 2026-09-02 16:47 UTC
 labels:
   - cleanup
   - scaffold-demo

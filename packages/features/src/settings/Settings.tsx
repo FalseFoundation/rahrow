@@ -1,3 +1,4 @@
+import type { ResetScope } from '@rahrow/core/settings/reset-orchestrator.ts'
 import {
 	ChevronIcon,
 	CloseIcon,
@@ -42,11 +43,16 @@ import { SUPPORTED_APP_LOCALES } from '../app/app-locale.ts'
 import { ProductHeader } from '../app/ProductHeader.tsx'
 import { ProductSearch } from '../app/ProductSearch.tsx'
 import { useAppRuntime } from '../app/runtime.tsx'
+import { ScreenLoadingState } from '../app/ScreenLoadingState.tsx'
 import { BackupDrawer } from '../backup/BackupDrawer.tsx'
 import { Diagnostics } from '../diagnostics/Diagnostics.tsx'
 import { AboutRahRow } from './AboutRahRow.tsx'
 import styles from './Settings.module.css'
-import { settingsQueryMatches } from './settings-model.ts'
+import {
+	availableSettings,
+	type SettingsRegistryEntry,
+	settingsQueryMatches,
+} from './settings-model.ts'
 import { useSettings } from './useSettings.ts'
 
 type Sheet =
@@ -69,6 +75,7 @@ export function Settings() {
 	const { setTheme: applyTheme } = useTheme()
 	const [sheet, setSheet] = useState<Sheet>(null)
 	const [resetOpen, setResetOpen] = useState(false)
+	const [resetScope, setResetScope] = useState<ResetScope>('settings')
 	const [backupOpen, setBackupOpen] = useState(false)
 	const [searchOpen, setSearchOpen] = useState(false)
 	const [query, setQuery] = useState('')
@@ -82,13 +89,33 @@ export function Settings() {
 	}
 	const settingsLocked = state.pendingAction !== null
 	const appVersion = state.appVersion ?? t('settings.about.versionUnavailable')
+	const settingsRegistry = availableSettings({
+		vpnSupported: state.vpnSupported,
+		systemProxySupported: state.systemProxySupported,
+		lanProxySharingSupported:
+			runtime.capabilities.lanProxySharing?.supported === true,
+		autostartSupported: state.autostartSupported,
+		privacyOptionsSupported: Boolean(
+			runtime.advertising?.provider.openPrivacyOptions,
+		),
+		connectionMode: state.connectionMode,
+		selectableLocaleCount: SUPPORTED_APP_LOCALES.length,
+	})
+	const visibleSettingIds = new Set(settingsRegistry.map((entry) => entry.id))
+	const sectionMatches = (section: SettingsRegistryEntry['section']) =>
+		settingsRegistry
+			.filter((entry) => entry.section === section)
+			.some((entry) =>
+				settingsQueryMatches(query, [t(entry.titleKey), ...entry.searchKeywords]),
+			)
 	const updateTheme = (theme: typeof state.theme) => {
+		const previousTheme = state.theme
 		actions.setTheme(theme)
 		applyTheme(theme)
-		void actions.save({ theme })
+		void actions.save({ theme }).then((saved) => {
+			if (!saved) applyTheme(previousTheme)
+		})
 	}
-	const matches = (...terms: readonly string[]) =>
-		settingsQueryMatches(query, terms)
 	useEffect(() => {
 		if (state.failure) {
 			toast.error(t('settings.errors.updateTitle'), {
@@ -145,18 +172,9 @@ export function Settings() {
 				<SettingsSection
 					icon={<ConnectionIcon />}
 					title={t('settings.sections.connection')}
-					hidden={
-						!matches(
-							'Connection',
-							'Engine selection',
-							'Routing mode',
-							'VPN TUN',
-							'System proxy',
-							'SOCKS',
-						)
-					}
+					hidden={!sectionMatches('connection')}
 				>
-					{state.vpnSupported || state.systemProxySupported ? (
+					{visibleSettingIds.has('connection-mode') ? (
 						<Setting
 							title={t('settings.connection.mode')}
 							description={
@@ -172,13 +190,15 @@ export function Settings() {
 							disabled={settingsLocked}
 						/>
 					) : null}
-					<Setting
-						title={t('settings.connection.engine')}
-						description={state.engineId === 'xray' ? 'Xray Core' : state.engineId}
-						onClick={() => setSheet('engine')}
-						disabled={settingsLocked}
-					/>
-					{state.connectionMode === 'vpn' ? (
+					{visibleSettingIds.has('engine') ? (
+						<Setting
+							title={t('settings.connection.engine')}
+							description={state.engineId === 'xray' ? 'Xray Core' : state.engineId}
+							onClick={() => setSheet('engine')}
+							disabled={settingsLocked}
+						/>
+					) : null}
+					{visibleSettingIds.has('routing') ? (
 						<Setting
 							title={t('settings.connection.routing')}
 							description={t(`settings.options.${state.routingMode}`)}
@@ -186,7 +206,7 @@ export function Settings() {
 							disabled={settingsLocked}
 						/>
 					) : null}
-					{state.systemProxySupported && state.connectionMode === 'proxy' ? (
+					{visibleSettingIds.has('system-proxy') ? (
 						<Setting
 							title={t('settings.connection.proxy')}
 							description={`SOCKS · 127.0.0.1:${state.localPort}`}
@@ -194,24 +214,20 @@ export function Settings() {
 							disabled={settingsLocked}
 						/>
 					) : null}
+					{visibleSettingIds.has('lan-proxy-sharing') ? (
+						<Setting
+							title={t('settings.connection.lanSharing')}
+							description={t('settings.connection.lanSharingDescription')}
+							accessory={false}
+						/>
+					) : null}
 				</SettingsSection>
 				<SettingsSection
 					icon={<SettingsIcon />}
 					title={t('settings.sections.app')}
-					hidden={
-						!matches(
-							'App',
-							'Launch at startup',
-							'Diagnostics logs',
-							'Appearance theme',
-							'Language فارسی',
-							'Privacy choices',
-							'Backup Import Export',
-							'Reset settings',
-						)
-					}
+					hidden={!sectionMatches('app')}
 				>
-					{state.autostartSupported ? (
+					{visibleSettingIds.has('autostart') ? (
 						<Setting
 							title={t('settings.app.autostart')}
 							description={t('settings.app.autostartDescription')}
@@ -227,35 +243,43 @@ export function Settings() {
 							/>
 						</Setting>
 					) : null}
-					<Setting
-						title={t('settings.language.label')}
-						description={
-							SUPPORTED_APP_LOCALES.find(
-								(locale) => locale.language === state.language,
-							)?.label ?? SUPPORTED_APP_LOCALES[0].label
-						}
-						onClick={() => setSheet('language')}
-						disabled={settingsLocked}
-					/>
-					<Setting
-						title={t('settings.app.appearance')}
-						description={t(`settings.options.${state.theme}`)}
-						onClick={() => setSheet('appearance')}
-						disabled={settingsLocked}
-					/>
-					<Setting
-						title={t('backup.title.menu')}
-						description={t('backup.description.menu')}
-						onClick={() => setBackupOpen(true)}
-						disabled={settingsLocked}
-					/>
-					<Setting
-						title={t('settings.app.diagnostics')}
-						description={t('settings.app.diagnosticsDescription')}
-						onClick={() => setSheet('diagnostics')}
-						disabled={settingsLocked}
-					/>
-					{runtime.advertising?.provider.openPrivacyOptions ? (
+					{visibleSettingIds.has('language') ? (
+						<Setting
+							title={t('settings.language.label')}
+							description={
+								SUPPORTED_APP_LOCALES.find(
+									(locale) => locale.language === state.language,
+								)?.label ?? SUPPORTED_APP_LOCALES[0].label
+							}
+							onClick={() => setSheet('language')}
+							disabled={settingsLocked}
+						/>
+					) : null}
+					{visibleSettingIds.has('appearance') ? (
+						<Setting
+							title={t('settings.app.appearance')}
+							description={t(`settings.options.${state.theme}`)}
+							onClick={() => setSheet('appearance')}
+							disabled={settingsLocked}
+						/>
+					) : null}
+					{visibleSettingIds.has('backup') ? (
+						<Setting
+							title={t('backup.title.menu')}
+							description={t('backup.description.menu')}
+							onClick={() => setBackupOpen(true)}
+							disabled={settingsLocked}
+						/>
+					) : null}
+					{visibleSettingIds.has('diagnostics') ? (
+						<Setting
+							title={t('settings.app.diagnostics')}
+							description={t('settings.app.diagnosticsDescription')}
+							onClick={() => setSheet('diagnostics')}
+							disabled={settingsLocked}
+						/>
+					) : null}
+					{visibleSettingIds.has('privacy') ? (
 						<Setting
 							title={t('settings.app.privacy')}
 							description={t('settings.app.privacyDescription')}
@@ -269,32 +293,36 @@ export function Settings() {
 							disabled={settingsLocked}
 						/>
 					) : null}
-					<Setting
-						title={t('settings.app.reset')}
-						description={t('settings.app.resetDescription')}
-						destructive
-						onClick={() => setResetOpen(true)}
-						disabled={settingsLocked}
-					/>
+					{visibleSettingIds.has('reset-settings') ? (
+						<Setting
+							title={t('settings.app.reset')}
+							description={t('settings.app.resetDescription')}
+							destructive
+							onClick={() => setResetOpen(true)}
+							disabled={settingsLocked}
+						/>
+					) : null}
 				</SettingsSection>
 				<SettingsSection
 					icon={<InfoIcon />}
 					title={t('settings.sections.about')}
-					hidden={
-						!matches(t('settings.about.title'), t('settings.about.appVersion'))
-					}
+					hidden={!sectionMatches('about')}
 				>
-					<Setting
-						title={t('settings.about.title')}
-						description={t('settings.about.description')}
-						onClick={() => setSheet('about')}
-						disabled={settingsLocked}
-					/>
-					<Setting
-						title={t('settings.about.appVersion')}
-						description={appVersion}
-						accessory={false}
-					/>
+					{visibleSettingIds.has('about') ? (
+						<Setting
+							title={t('settings.about.title')}
+							description={t('settings.about.description')}
+							onClick={() => setSheet('about')}
+							disabled={settingsLocked}
+						/>
+					) : null}
+					{visibleSettingIds.has('app-version') ? (
+						<Setting
+							title={t('settings.about.appVersion')}
+							description={appVersion}
+							accessory={false}
+						/>
+					) : null}
 				</SettingsSection>
 			</section>
 			<Drawer
@@ -420,7 +448,9 @@ export function Settings() {
 							{activeSheet === 'about' ? (
 								<AboutRahRow
 									version={state.appVersion}
+									build={runtime.buildMetadata?.build}
 									engines={runtime.availableEngines}
+									engineMetadata={runtime.buildMetadata?.engines}
 									externalNavigation={runtime.capabilities.externalNavigation}
 									configuration={runtime.buildMetadata?.about}
 								/>
@@ -449,8 +479,24 @@ export function Settings() {
 				<DrawerContent variant='app'>
 					<DrawerHeader className={styles.confirmationHeader}>
 						<DrawerTitle>{t('settings.reset.title')}</DrawerTitle>
-						<DrawerDescription>{t('settings.reset.description')}</DrawerDescription>
+						<DrawerDescription>
+							{t(`settings.reset.scopes.${resetScope}.description`)}
+						</DrawerDescription>
 					</DrawerHeader>
+					<DrawerBody>
+						<Choice
+							label={t('settings.reset.scopeLabel')}
+							value={resetScope}
+							values={
+								runtime.reset
+									? ['tunnel-configuration', 'settings', 'app-data']
+									: ['settings']
+							}
+							optionLabel={(scope) => t(`settings.reset.scopes.${scope}.label`)}
+							onChange={setResetScope}
+							disabled={settingsLocked}
+						/>
+					</DrawerBody>
 					<DrawerFooter className={styles.confirmationFooter}>
 						<Button
 							variant='outline'
@@ -463,9 +509,9 @@ export function Settings() {
 							variant='destructive'
 							disabled={settingsLocked}
 							onClick={() => {
-								void actions.reset().then((reset) => {
+								void actions.reset(resetScope).then((reset) => {
 									if (!reset) return
-									applyTheme('system')
+									if (resetScope !== 'tunnel-configuration') applyTheme('system')
 									setResetOpen(false)
 								})
 							}}
@@ -530,9 +576,7 @@ function UnavailableSettings({
 						<Button onClick={onRetry}>{t('common.tryAgain')}</Button>
 					</div>
 				) : (
-					<p className={styles.feedback} role='status' aria-live='polite'>
-						{message}
-					</p>
+					<ScreenLoadingState label={message} variant='settings' />
 				)}
 			</section>
 		</>

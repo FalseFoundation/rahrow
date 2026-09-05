@@ -8,13 +8,24 @@ const applyTheme = vi.hoisted(() => vi.fn())
 const search = vi.hoisted(() => ({ drawer: undefined as string | undefined }))
 const toast = vi.hoisted(() => ({ dismiss: vi.fn(), error: vi.fn() }))
 const externalOpen = vi.hoisted(() => vi.fn(async () => undefined))
+const resetRuntime = vi.hoisted(() => vi.fn())
 const runtime = vi.hoisted(() => ({
 	advertising: undefined,
 	availableEngines: [
 		{ id: 'sing-box', supportedProtocols: ['vless'] },
 		{ id: 'xray', supportedProtocols: ['vless'] },
 	],
-	buildMetadata: undefined,
+	buildMetadata: undefined as
+		| {
+				build?: string
+				engines?: readonly {
+					id: 'sing-box' | 'xray'
+					version?: string
+					license?: string
+				}[]
+		  }
+		| undefined,
+	reset: undefined as { reset: typeof resetRuntime } | undefined,
 	capabilities: {
 		externalNavigation: { open: externalOpen } as
 			| { open(target: string): Promise<void> }
@@ -86,6 +97,9 @@ describe('Settings', () => {
 		toast.dismiss.mockReset()
 		toast.error.mockReset()
 		externalOpen.mockReset()
+		resetRuntime.mockReset()
+		runtime.reset = undefined
+		runtime.buildMetadata = undefined
 		runtime.capabilities.externalNavigation = { open: externalOpen }
 		search.drawer = undefined
 	})
@@ -97,6 +111,9 @@ describe('Settings', () => {
 
 		expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
 		expect(screen.getByRole('status').textContent).toContain('Loading settings')
+		expect(document.querySelectorAll('[data-slot="skeleton"]')).not.toHaveLength(
+			0,
+		)
 		expect(screen.queryByRole('button', { name: /Engine/ })).toBeNull()
 		expect(screen.queryByRole('button', { name: /Reset settings/ })).toBeNull()
 	})
@@ -155,7 +172,7 @@ describe('Settings', () => {
 		render(<Settings />)
 
 		expect(screen.queryByText('Connection mode')).toBeNull()
-		expect(screen.queryByText('Proxy settings')).toBeNull()
+		expect(screen.queryByText('System proxy')).toBeNull()
 		expect(screen.queryByRole('switch', { name: 'Launch at startup' })).toBeNull()
 		expect(screen.queryByText('Subscriptions')).toBeNull()
 	})
@@ -170,7 +187,7 @@ describe('Settings', () => {
 		)
 		const { rerender } = render(<Settings />)
 
-		expect(screen.queryByText('Proxy settings')).toBeNull()
+		expect(screen.queryByText('System proxy')).toBeNull()
 		expect(screen.getByText('Routing')).toBeTruthy()
 
 		useSettings.mockReturnValue(
@@ -182,8 +199,8 @@ describe('Settings', () => {
 		)
 		rerender(<Settings />)
 
-		expect(screen.getByText('Proxy settings')).toBeTruthy()
-		expect(screen.queryByText('Routing')).toBeNull()
+		expect(screen.getByText('System proxy')).toBeTruthy()
+		expect(screen.getByText('Routing')).toBeTruthy()
 	})
 
 	it('uses a mutually exclusive radio group for choices', async () => {
@@ -202,6 +219,22 @@ describe('Settings', () => {
 		expect(
 			screen.getByRole('radio', { name: 'Light' }).getAttribute('aria-checked'),
 		).toBe('false')
+	})
+
+	it('restores the applied theme when persistence fails', async () => {
+		const result = settingsResult()
+		result.actions.save.mockResolvedValue(false)
+		useSettings.mockReturnValue(result)
+		const user = userEvent.setup()
+		render(<Settings />)
+
+		await user.click(screen.getByRole('button', { name: /Appearance/ }))
+		await user.click(screen.getByRole('radio', { name: 'Light' }))
+
+		await waitFor(() => {
+			expect(applyTheme).toHaveBeenNthCalledWith(1, 'light')
+			expect(applyTheme).toHaveBeenNthCalledWith(2, 'system')
+		})
 	})
 
 	it('persists a language selected in Settings', async () => {
@@ -292,6 +325,32 @@ describe('Settings', () => {
 		)
 	})
 
+	it('shows manifest-derived build and bundled engine metadata', async () => {
+		runtime.buildMetadata = {
+			build: 'desktop-204',
+			engines: [
+				{ id: 'sing-box', version: '1.12.0', license: 'GPL-3.0-or-later' },
+				{ id: 'xray', version: '26.7.28', license: 'MPL-2.0' },
+			],
+		}
+		useSettings.mockReturnValue(settingsResult())
+		const user = userEvent.setup()
+		render(<Settings />)
+
+		await user.click(screen.getByRole('button', { name: /About RahRow/ }))
+
+		expect(screen.getByText('desktop-204')).toBeTruthy()
+		const engineSummary =
+			screen
+				.getAllByText(/sing-box/)
+				.map((element) => element.textContent ?? '')
+				.find((content) => content.includes('1.12.0')) ?? ''
+		expect(engineSummary).toContain('1.12.0')
+		expect(engineSummary).toContain('GPL-3.0-or-later')
+		expect(engineSummary).toContain('26.7.28')
+		expect(engineSummary).toContain('MPL-2.0')
+	})
+
 	it('hides actions when the platform cannot open external destinations', async () => {
 		runtime.capabilities.externalNavigation = undefined
 		useSettings.mockReturnValue(settingsResult())
@@ -340,5 +399,27 @@ describe('Settings', () => {
 
 		expect(screen.getByText('Not provided by this build')).toBeTruthy()
 		expect(screen.queryByText('0.0.0')).toBeNull()
+	})
+
+	it('offers scoped destructive resets and submits the selected scope once', async () => {
+		runtime.reset = { reset: resetRuntime }
+		const result = settingsResult()
+		useSettings.mockReturnValue(result)
+		const user = userEvent.setup()
+		render(<Settings />)
+
+		await user.click(screen.getByRole('button', { name: /Reset settings/ }))
+		expect(
+			screen.getByRole('radio', { name: 'Tunnel configuration' }),
+		).toBeTruthy()
+		expect(screen.getByRole('radio', { name: 'Settings' })).toBeTruthy()
+		expect(screen.getByRole('radio', { name: 'All app data' })).toBeTruthy()
+
+		await user.click(screen.getByRole('radio', { name: 'All app data' }))
+		expect(screen.getByText(/stored credentials/)).toBeTruthy()
+		await user.click(screen.getByRole('button', { name: 'Reset settings' }))
+
+		expect(result.actions.reset).toHaveBeenCalledOnce()
+		expect(result.actions.reset).toHaveBeenCalledWith('app-data')
 	})
 })

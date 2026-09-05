@@ -144,6 +144,37 @@ describe('parseConnectionProfile', () => {
 		expect(profile.authentication?.encryption).toBe('none')
 	})
 
+	it('rejects transport and security combinations outside the canonical capability matrix', () => {
+		const ssh = {
+			id: 'profile-ssh',
+			protocol: 'ssh',
+			endpoint: { host: 'ssh.example.com', port: 22 },
+			authentication: {
+				username: 'alice',
+				password: 'test-password',
+				hostKey: 'ssh-ed25519 test-key',
+			},
+		}
+		const hysteria = {
+			id: 'profile-hysteria',
+			protocol: 'hysteria',
+			endpoint: { host: 'hy.example.com', port: 443 },
+			authentication: { password: 'test-password' },
+			security: { type: 'tls' },
+			hysteria: { upMbps: 10, downMbps: 20 },
+		}
+
+		expect(() =>
+			parseConnectionProfile({ ...ssh, transport: { type: 'ws' } }),
+		).toThrow('transport')
+		expect(() =>
+			parseConnectionProfile({ ...ssh, security: { type: 'tls' } }),
+		).toThrow('security')
+		expect(() =>
+			parseConnectionProfile({ ...hysteria, transport: { type: 'quic' } }),
+		).toThrow('transport')
+	})
+
 	it('rejects extra unknown fields on the profile and nested objects', () => {
 		const baseProfile = {
 			id: 'profile-1',

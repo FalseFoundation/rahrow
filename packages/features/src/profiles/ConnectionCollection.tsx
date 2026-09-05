@@ -52,6 +52,7 @@ export interface ConnectionCollectionGroup {
 	readonly detail: string
 	readonly kind?: ConnectionGroupKind
 	readonly refreshing?: boolean
+	readonly locked?: boolean
 	readonly profiles: readonly ConnectionProfile[]
 	readonly summary?: ReactNode
 	readonly emptyContent?: ReactNode
@@ -64,6 +65,7 @@ export interface ConnectionCollectionProps {
 	readonly selectedId: string
 	readonly onActivate: (profile: ConnectionProfile) => Promise<void>
 	readonly onProfileActions: (profile: ConnectionProfile) => void
+	readonly isProfileLocked?: (profile: ConnectionProfile) => boolean
 	readonly speedTests: Readonly<Record<string, LatencyProbeResult | undefined>>
 	readonly testingIds?: ReadonlySet<string>
 	readonly persistedScrollOffset?: number
@@ -100,6 +102,7 @@ function StaticConnectionCollection({
 	selectedId,
 	onActivate,
 	onProfileActions,
+	isProfileLocked,
 	speedTests,
 	testingIds,
 }: ConnectionCollectionProps) {
@@ -114,6 +117,7 @@ function StaticConnectionCollection({
 					detail={group.detail}
 					kind={group.kind}
 					refreshing={group.refreshing}
+					locked={group.locked}
 					onActions={group.onActions}
 				>
 					{group.summary}
@@ -125,6 +129,7 @@ function StaticConnectionCollection({
 							onActions={onProfileActions}
 							speedTests={speedTests}
 							testingIds={testingIds}
+							isLocked={isProfileLocked}
 						/>
 					) : (
 						group.emptyContent
@@ -140,6 +145,7 @@ function VirtualConnectionCollection({
 	selectedId,
 	onActivate,
 	onProfileActions,
+	isProfileLocked,
 	speedTests,
 	testingIds,
 	persistedScrollOffset = 0,
@@ -415,9 +421,7 @@ function VirtualConnectionCollection({
 
 	return (
 		<>
-			<div ref={listRef}
-			className={styles.collection}
-			>
+			<div ref={listRef} className={styles.collection}>
 				<ul
 					className={styles.virtualCanvas}
 					style={{ height: virtualizer.getTotalSize() }}
@@ -460,6 +464,7 @@ function VirtualConnectionCollection({
 										detail={group.detail}
 										kind={group.kind}
 										refreshing={group.refreshing}
+										locked={group.locked}
 										onActions={group.onActions}
 										headingHidden={
 											floatingHeaderVisible && virtualRow.index === activeStickyIndex
@@ -490,6 +495,7 @@ function VirtualConnectionCollection({
 									selected={row.profile.id === selectedId}
 									latency={speedTests[row.profile.id]}
 									testing={testingIds?.has(row.profile.id) ?? false}
+									locked={isProfileLocked?.(row.profile) ?? false}
 									onActivate={onActivate}
 									onActions={onProfileActions}
 									onFocus={() => {
@@ -532,6 +538,7 @@ function VirtualConnectionCollection({
 									detail={floatingGroup.detail}
 									kind={floatingGroup.kind}
 									refreshing={floatingGroup.refreshing}
+									locked={floatingGroup.locked}
 									onActions={floatingGroup.onActions}
 								/>
 							</div>

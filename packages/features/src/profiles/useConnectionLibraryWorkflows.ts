@@ -2,7 +2,7 @@ import type { ConnectionProfile } from '@rahrow/core/profile/connection-profile.
 import type { ProtocolRegistry } from '@rahrow/core/protocol/connection-protocol.ts'
 import type { Subscription } from '@rahrow/core/subscription/subscription-import.ts'
 import { toast } from '@rahrow/ui/components/ui/sonner.tsx'
-import { useCallback, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { translate } from '../app/app-i18n.tsx'
 import type { ShareDrawerPayload } from '../share/ShareDrawer.tsx'
 import { serializeProfilesPaced } from './connection-work-pacing.ts'
@@ -52,21 +52,30 @@ export function useConnectionLibraryWorkflows({
 	})
 	const [searchOpen, setSearchOpen] = useState(false)
 	const [deleteOpen, setDeleteOpen] = useState(false)
+	const mutationInFlight = useRef(false)
+	const [mutationPending, setMutationPending] = useState(false)
+	const [mutationError, setMutationError] = useState<string | null>(null)
 	const selectedTargetProfiles = targetProfiles(target)
 
 	const openActions = useCallback((nextTarget: ActionTarget) => {
+		if (mutationInFlight.current) return
 		setDeleteOpen(false)
 		setNestedDrawer(null)
+		setMutationError(null)
 		setTarget(nextTarget)
 		setDrawer('actions')
 	}, [])
 
 	const closeDrawer = useCallback(() => {
+		if (mutationInFlight.current) return
 		setDeleteOpen(false)
 		setNestedDrawer(null)
+		setMutationError(null)
 		setDrawer(null)
 	}, [])
-	const closeNestedDrawer = useCallback(() => setNestedDrawer(null), [])
+	const closeNestedDrawer = useCallback(() => {
+		if (!mutationInFlight.current) setNestedDrawer(null)
+	}, [])
 	const activateProfile = useCallback(
 		async (profile: ConnectionProfile) => {
 			await actions.activateProfile(profile)
@@ -154,33 +163,47 @@ export function useConnectionLibraryWorkflows({
 	}, [target.kind])
 
 	const requestDelete = useCallback(() => {
+		if (mutationInFlight.current) return
+		setMutationError(null)
 		setDeleteOpen(true)
 	}, [])
 
 	const confirmDelete = useCallback(async () => {
-		let removedCount = selectedTargetProfiles.length
-		let skippedLockedCount = 0
-		if (target.kind === 'profile' || target.kind === 'local') {
-			const outcome = await actions.deleteProfiles(
-				target.kind === 'profile' ? [target.profile] : target.profiles,
-			)
-			removedCount = outcome?.removedCount ?? removedCount
-			skippedLockedCount = outcome?.skippedLockedCount ?? 0
-		}
-		if (target.kind === 'subscription') {
-			await onRemoveSubscription(target.subscription.id)
-			await actions.reloadProfiles()
-		}
-		setDeleteOpen(false)
-		closeDrawer()
-		if (skippedLockedCount > 0) {
-			toast.info(
-				translate('profiles.toasts.lockedSkipped', {
-					count: skippedLockedCount,
-				}),
-			)
-		} else {
-			toast.success(translate('profiles.toasts.removed', { count: removedCount }))
+		if (mutationInFlight.current) return
+		mutationInFlight.current = true
+		setMutationPending(true)
+		setMutationError(null)
+		try {
+			let removedCount = selectedTargetProfiles.length
+			let skippedLockedCount = 0
+			if (target.kind === 'profile' || target.kind === 'local') {
+				const outcome = await actions.deleteProfiles(
+					target.kind === 'profile' ? [target.profile] : target.profiles,
+				)
+				removedCount = outcome?.removedCount ?? removedCount
+				skippedLockedCount = outcome?.skippedLockedCount ?? 0
+			}
+			if (target.kind === 'subscription') {
+				await onRemoveSubscription(target.subscription.id)
+				await actions.reloadProfiles()
+			}
+			mutationInFlight.current = false
+			setDeleteOpen(false)
+			closeDrawer()
+			if (skippedLockedCount > 0) {
+				toast.info(
+					translate('profiles.toasts.lockedSkipped', {
+						count: skippedLockedCount,
+					}),
+				)
+			} else {
+				toast.success(translate('profiles.toasts.removed', { count: removedCount }))
+			}
+		} catch {
+			setMutationError(translate('profiles.errors.mutationFailed'))
+		} finally {
+			mutationInFlight.current = false
+			setMutationPending(false)
 		}
 	}, [
 		actions.deleteProfiles,
@@ -198,11 +221,18 @@ export function useConnectionLibraryWorkflows({
 		selectedTargetProfiles,
 		searchOpen,
 		deleteOpen,
+		mutationPending,
+		mutationError,
 		drawerCopy: connectionDrawerCopy(drawer, target),
 		nestedDrawerCopy: connectionDrawerCopy(nestedDrawer, target),
 		setDrawer,
 		setSearchOpen,
-		setDeleteOpen,
+		setDeleteOpen: (open: boolean) => {
+			if (!mutationInFlight.current) {
+				setMutationError(null)
+				setDeleteOpen(open)
+			}
+		},
 		setTarget,
 		openActions,
 		closeDrawer,
@@ -236,16 +266,42 @@ export function useConnectionLibraryWorkflows({
 				)
 		},
 		saveProfile: async (profile: ConnectionProfile) => {
-			await actions.saveProfile(profile)
-			setTarget({ kind: 'profile', profile })
-			closeNestedDrawer()
+			if (mutationInFlight.current) return
+			mutationInFlight.current = true
+			setMutationPending(true)
+			setMutationError(null)
+			try {
+				await actions.saveProfile(profile)
+				setTarget({ kind: 'profile', profile })
+				mutationInFlight.current = false
+				closeNestedDrawer()
+			} catch (error) {
+				setMutationError(translate('profiles.errors.mutationFailed'))
+				throw error
+			} finally {
+				mutationInFlight.current = false
+				setMutationPending(false)
+			}
 		},
 		saveSubscription: async (subscription: Subscription) => {
-			await onUpdateSubscription(subscription)
-			setTarget((current) =>
-				current.kind === 'subscription' ? { ...current, subscription } : current,
-			)
-			closeNestedDrawer()
+			if (mutationInFlight.current) return
+			mutationInFlight.current = true
+			setMutationPending(true)
+			setMutationError(null)
+			try {
+				await onUpdateSubscription(subscription)
+				setTarget((current) =>
+					current.kind === 'subscription' ? { ...current, subscription } : current,
+				)
+				mutationInFlight.current = false
+				closeNestedDrawer()
+			} catch (error) {
+				setMutationError(translate('profiles.errors.mutationFailed'))
+				throw error
+			} finally {
+				mutationInFlight.current = false
+				setMutationPending(false)
+			}
 		},
 	}
 }

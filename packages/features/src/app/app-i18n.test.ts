@@ -28,6 +28,17 @@ describe('app internationalization', () => {
 		expect(element).toEqual({ lang: 'en', dir: 'ltr' })
 	})
 
+	it('keeps the newest locale during overlapping language changes', async () => {
+		const element = { lang: 'en', dir: 'ltr' }
+
+		const first = changeAppLanguage('fa', element)
+		const second = changeAppLanguage('en', element)
+		await Promise.all([first, second])
+
+		expect(appI18n.resolvedLanguage).toBe('en')
+		expect(element).toEqual({ lang: 'en', dir: 'ltr' })
+	})
+
 	it('formats utility numbers with the selected locale', async () => {
 		await changeAppLanguage('fa')
 

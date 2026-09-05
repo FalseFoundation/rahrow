@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3EMM5HCWEJ5NR97A7JBP
 title: Eliminate route loading stalls and standardize screen skeletons
-status: todo
+status: done
 priority: urgent
 risk: high
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - cross-platform-hardening
   - loading

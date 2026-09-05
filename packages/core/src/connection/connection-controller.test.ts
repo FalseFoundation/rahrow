@@ -21,6 +21,24 @@ const profile: ConnectionProfile = {
 	},
 }
 
+const replacementProfile: ConnectionProfile = {
+	id: 'profile-2',
+	protocol: 'trojan',
+	endpoint: {
+		host: 'replacement.example.com',
+		port: 443,
+	},
+}
+
+const latestProfile: ConnectionProfile = {
+	id: 'profile-3',
+	protocol: 'vmess',
+	endpoint: {
+		host: 'latest.example.com',
+		port: 443,
+	},
+}
+
 class TestClock implements Clock {
 	#index = 0
 
@@ -39,11 +57,17 @@ class TestEngine implements ProxyEngine {
 
 	starts = 0
 	stops = 0
+	events: string[] = []
 	startError: Error | undefined
 	failuresRemaining = 0
+	failOnceForProfiles = new Set<string>()
 
-	async start(_input: EngineStartInput): Promise<void> {
+	async start(input: EngineStartInput): Promise<void> {
 		this.starts += 1
+		this.events.push(`start:${input.profile.id}:${input.engineId ?? 'default'}`)
+		if (this.failOnceForProfiles.delete(input.profile.id)) {
+			throw new Error(`start failed for ${input.profile.id}`)
+		}
 
 		if (this.failuresRemaining > 0) {
 			this.failuresRemaining -= 1
@@ -57,6 +81,7 @@ class TestEngine implements ProxyEngine {
 
 	async stop(): Promise<void> {
 		this.stops += 1
+		this.events.push('stop')
 	}
 
 	async restart(input: EngineStartInput): Promise<void> {
@@ -82,6 +107,151 @@ class TestEngine implements ProxyEngine {
 }
 
 describe('ConnectionController', () => {
+	it('atomically stops the effective session before starting a changed configuration', async () => {
+		const engine = new TestEngine()
+		const controller = new ConnectionController(engine)
+		const initial = { profile, engineId: 'xray' as const, mode: 'vpn' as const }
+		const replacement = {
+			profile: replacementProfile,
+			engineId: 'sing-box' as const,
+			mode: 'proxy' as const,
+		}
+
+		await controller.connect(initial)
+		await expect(controller.reconfigure(replacement)).resolves.toMatchObject({
+			state: 'connected',
+			profile: { id: 'profile-2' },
+		})
+
+		expect(engine.events).toEqual([
+			'start:profile-1:xray',
+			'stop',
+			'start:profile-2:sing-box',
+		])
+		expect(controller.configuration).toMatchObject({
+			phase: 'idle',
+			desired: replacement,
+			effective: replacement,
+		})
+	})
+
+	it('restores the previous effective session when the replacement fails to start', async () => {
+		const engine = new TestEngine()
+		const controller = new ConnectionController(engine)
+		const initial = { profile, engineId: 'xray' as const, mode: 'vpn' as const }
+		const replacement = {
+			profile: replacementProfile,
+			engineId: 'sing-box' as const,
+			mode: 'proxy' as const,
+		}
+
+		await controller.connect(initial)
+		engine.failOnceForProfiles.add('profile-2')
+
+		await expect(controller.reconfigure(replacement)).rejects.toThrow(
+			'start failed for profile-2',
+		)
+		expect(controller.current).toMatchObject({
+			state: 'connected',
+			profile: { id: 'profile-1' },
+		})
+		expect(controller.configuration).toMatchObject({
+			phase: 'rollback-succeeded',
+			desired: replacement,
+			effective: initial,
+			error: expect.stringContaining('previous connection restored'),
+		})
+		expect(engine.events).toEqual([
+			'start:profile-1:xray',
+			'stop',
+			'start:profile-2:sing-box',
+			'stop',
+			'start:profile-1:xray',
+		])
+	})
+
+	it('serializes rapid reconfiguration requests and leaves the latest request effective', async () => {
+		const engine = new TestEngine()
+		const controller = new ConnectionController(engine)
+		await controller.connect({ profile, engineId: 'xray', mode: 'vpn' })
+
+		const first = controller.reconfigure({
+			profile: replacementProfile,
+			engineId: 'sing-box',
+			mode: 'proxy',
+		})
+		const latest = {
+			profile: latestProfile,
+			engineId: 'xray' as const,
+			mode: 'vpn' as const,
+			localPort: 1090,
+		}
+		const second = controller.reconfigure(latest)
+
+		await Promise.all([first, second])
+
+		expect(engine.events).toEqual([
+			'start:profile-1:xray',
+			'stop',
+			'start:profile-2:sing-box',
+			'stop',
+			'start:profile-3:xray',
+		])
+		expect(controller.configuration).toMatchObject({
+			phase: 'idle',
+			desired: latest,
+			effective: latest,
+		})
+	})
+
+	it('publishes truthful reconfiguration phases without invoking engine restart', async () => {
+		const engine = new TestEngine()
+		const controller = new ConnectionController(engine)
+		await controller.connect({ profile, engineId: 'xray', mode: 'vpn' })
+		const phases: string[] = []
+		const unsubscribe = controller.subscribeConfiguration(({ phase }) => {
+			phases.push(phase)
+		})
+
+		await controller.reconfigure({
+			profile: replacementProfile,
+			engineId: 'sing-box',
+			mode: 'proxy',
+		})
+		unsubscribe()
+
+		expect(phases).toEqual(
+			expect.arrayContaining([
+				'queued',
+				'preparing',
+				'stopping-old-connection',
+				'restoring-device-settings',
+				'initializing-engine',
+				'applying-system-proxy',
+				'verifying',
+				'idle',
+			]),
+		)
+	})
+
+	it('cleans up an externally recovered engine before reconfiguring after app resume', async () => {
+		const engine = new TestEngine()
+		engine.starts = 1
+		const controller = new ConnectionController(engine)
+
+		await controller.reconfigure({
+			profile: replacementProfile,
+			engineId: 'sing-box',
+			mode: 'proxy',
+		})
+
+		expect(engine.events).toEqual(['stop', 'start:profile-2:sing-box'])
+		expect(controller.current).toMatchObject({
+			state: 'connected',
+			profile: { id: 'profile-2' },
+		})
+	})
+
 	it('connects and disconnects through a proxy engine', async () => {
 		const engine = new TestEngine()
 		const controller = new ConnectionController(engine, new TestClock())

@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3NZ72RNAGDVDW27XN9RD
 title: Persist settings without remounting pages or losing scroll
-status: todo
+status: done
 priority: urgent
 risk: high
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - cross-platform-hardening
   - settings

@@ -62,6 +62,7 @@ export interface SmartConnectDependencies {
 
 export type SmartConnectOutcome =
 	| 'connected'
+	| 'selected'
 	| 'unchanged'
 	| 'no-reachable-profile'
 	| 'stale-winner'
@@ -106,6 +107,10 @@ interface ActiveSmartConnectRun {
 	promise: Promise<SmartConnectRunResult>
 }
 
+interface PacedOperation {
+	execute(): Promise<void>
+}
+
 /**
  * Owns the framework-independent Smart Connect policy. Platform hosts decide
  * when to call runIfDue (foreground timer, native background task, or daemon).
@@ -114,14 +119,17 @@ export class SmartConnectOrchestrator {
 	readonly #now: () => string
 	readonly #concurrency: number
 	readonly #wait: number
+	readonly #runQueue: AsyncQueuer<PacedOperation>
+	readonly #settingsQueue: AsyncQueuer<PacedOperation>
 	#generation = 0
-	#settingsMutation: Promise<void> = Promise.resolve()
 	#activeRun: ActiveSmartConnectRun | undefined
 
 	constructor(private readonly dependencies: SmartConnectDependencies) {
 		this.#now = dependencies.now ?? (() => new Date().toISOString())
 		this.#concurrency = Math.max(1, Math.floor(dependencies.concurrency ?? 4))
 		this.#wait = Math.max(0, Math.floor(dependencies.wait ?? 0))
+		this.#runQueue = pacedOperationQueue(1)
+		this.#settingsQueue = pacedOperationQueue(8)
 	}
 
 	async status(): Promise<SmartConnectScheduleState> {
@@ -207,24 +215,22 @@ export class SmartConnectOrchestrator {
 		}
 		this.#activeRun = active
 		const generation = this.#generation
-		active.promise = Promise.resolve()
-			.then(() =>
-				this.executeRun(
-					{
-						signal: controller.signal,
-						onProgress: (progress) => {
-							for (const listener of [...listeners]) {
-								emitProgress(listener, progress)
-							}
-						},
+		active.promise = enqueuePacedOperation(this.#runQueue, () =>
+			this.executeRun(
+				{
+					signal: controller.signal,
+					onProgress: (progress) => {
+						for (const listener of [...listeners]) {
+							emitProgress(listener, progress)
+						}
 					},
-					generation,
-					requiresEnabled,
-				),
-			)
-			.finally(() => {
-				if (this.#activeRun === active) this.#activeRun = undefined
-			})
+				},
+				generation,
+				requiresEnabled,
+			),
+		).finally(() => {
+			if (this.#activeRun === active) this.#activeRun = undefined
+		})
 
 		return this.observeRun(active, options)
 	}
@@ -316,6 +322,21 @@ export class SmartConnectOrchestrator {
 			requiresEnabled,
 			options.signal,
 		)
+		if (active?.state !== 'connected') {
+			await this.persistDecision({
+				runAt,
+				nextRunAt,
+				decision,
+				generation,
+				requiresEnabled,
+			})
+			return {
+				outcome: 'selected',
+				probed: profiles.length,
+				winner: decision,
+				nextRunAt,
+			}
+		}
 		let nextInput = connectionInput(
 			freshProfile,
 			decisionSettings,
@@ -357,20 +378,12 @@ export class SmartConnectOrchestrator {
 			await this.assertCanContinue(generation, requiresEnabled, options.signal)
 		}
 		try {
-			if (active && active.state !== 'disconnected') {
-				emitProgress(options.onProgress, {
-					phase: 'switching',
-					total: profiles.length,
-					winnerLatencyMs: winner.latencyMs,
-				})
-				await this.dependencies.connection.disconnect()
-			} else {
-				emitProgress(options.onProgress, {
-					phase: 'switching',
-					total: profiles.length,
-					winnerLatencyMs: winner.latencyMs,
-				})
-			}
+			emitProgress(options.onProgress, {
+				phase: 'switching',
+				total: profiles.length,
+				winnerLatencyMs: winner.latencyMs,
+			})
+			await this.dependencies.connection.disconnect()
 			await this.assertCanContinue(generation, requiresEnabled, options.signal)
 			await this.dependencies.connection.connect(nextInput)
 			await this.persistDecision({
@@ -452,15 +465,10 @@ export class SmartConnectOrchestrator {
 	private mutateSettings<Result>(
 		mutation: (settings: Settings) => Promise<Result>,
 	): Promise<Result> {
-		const run = this.#settingsMutation.then(async () => {
+		return enqueuePacedOperation(this.#settingsQueue, async () => {
 			const settings = await this.dependencies.settingsStore.read()
 			return mutation(settings)
 		})
-		this.#settingsMutation = run.then(
-			() => undefined,
-			() => undefined,
-		)
-		return run
 	}
 
 	private async assertCanContinue(
@@ -478,6 +486,32 @@ export class SmartConnectOrchestrator {
 		}
 		return settings
 	}
+}
+
+function pacedOperationQueue(maxSize: number): AsyncQueuer<PacedOperation> {
+	return new AsyncQueuer((operation) => operation.execute(), {
+		concurrency: 1,
+		maxSize,
+		throwOnError: false,
+	})
+}
+
+function enqueuePacedOperation<Result>(
+	queue: AsyncQueuer<PacedOperation>,
+	operation: () => Promise<Result>,
+): Promise<Result> {
+	return new Promise((resolve, reject) => {
+		const accepted = queue.addItem({
+			async execute() {
+				try {
+					resolve(await operation())
+				} catch (error) {
+					reject(error)
+				}
+			},
+		})
+		if (!accepted) reject(new Error('Smart Connect action queue is full'))
+	})
 }
 
 function connectionInput(

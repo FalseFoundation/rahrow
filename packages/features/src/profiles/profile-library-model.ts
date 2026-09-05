@@ -20,7 +20,7 @@ export type SortValue = ConnectionsSort
 
 export type ActionTarget =
 	| { kind: 'local'; profiles: readonly ConnectionProfile[] }
-	| { kind: 'profile'; profile: ConnectionProfile }
+	| { kind: 'profile'; profile: ConnectionProfile; locked?: boolean }
 	| {
 			kind: 'subscription'
 			subscription: Subscription
@@ -138,7 +138,10 @@ export function connectionDrawerCopy(
 			: { title }
 	}
 
-	return target.kind === 'subscription' && target.subscription.locked
+	const locked =
+		(target.kind === 'subscription' && target.subscription.locked) ||
+		(target.kind === 'profile' && target.locked)
+	return locked
 		? {
 				title,
 				description: translate('profiles.drawer.lockedDescription', {

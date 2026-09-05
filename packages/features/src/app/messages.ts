@@ -275,8 +275,8 @@ export const englishMessages = {
 		restoringTitle: 'Restoring your connection',
 		restoring:
 			'The switch did not finish. RahRow is restoring the previous connection.',
-		successTitle: 'Fastest connection active',
-		unchangedTitle: 'Fastest connection already active',
+		successTitle: 'Fastest connection selected',
+		unchangedTitle: 'Fastest connection already selected',
 		noReachableTitle: 'No reachable connection',
 		noReachable:
 			'Your current connection was kept. Check the network, then try again.',
@@ -294,6 +294,36 @@ export const englishMessages = {
 	},
 	profiles: {
 		search: 'Search connections',
+		locked: 'Locked',
+		rawEngine: {
+			action: 'Import raw engine configuration',
+			title: 'Raw engine configuration',
+			description:
+				'Validate a complete Xray or sing-box document, then preserve it or extract one supported outbound.',
+			engineLabel: 'Engine and pinned validator',
+			documentLabel: 'Raw engine configuration',
+			secretDescription:
+				'Secret-bearing content is shown only for editing and is never included in validation or conversion messages.',
+			validate: 'Validate document',
+			reviewReplacement: 'Review replacement',
+			replace: 'Replace raw document',
+			extractTitle: 'Extract one outbound',
+			outboundLabel: 'Supported outbound',
+			extract: 'Extract selected outbound',
+			confirmLossy: 'Confirm lossy extraction',
+			noOutboundTitle: 'No supported outbound',
+			noOutboundDescription:
+				'The validated document is preserved, but none of its outbounds can be extracted as a RahRow profile.',
+			lossyTitle: 'Lossy extraction requires confirmation',
+			errors: {
+				validation:
+					'The raw engine document could not be validated. No changes were saved.',
+				extraction:
+					'The selected outbound could not be converted to a canonical profile.',
+				replacement:
+					'The raw engine document was not replaced. The previous document is intact.',
+			},
+		},
 		actions: {
 			cleanup: 'Clean up connections',
 			search: 'Open search',
@@ -412,6 +442,10 @@ export const englishMessages = {
 		},
 		remove: {
 			subscription: 'Remove this subscription?',
+			subscriptionConsequence_one:
+				'This also removes {{count, number}} connection owned by this subscription.',
+			subscriptionConsequence_other:
+				'This also removes {{count, number}} connections owned by this subscription.',
 			connections: 'Remove these connections?',
 			connection: 'Remove this connection?',
 			irreversible: 'This action cannot be undone.',
@@ -448,6 +482,8 @@ export const englishMessages = {
 			testAgain: 'Try testing again.',
 		},
 		status: {
+			saving: 'Saving changes…',
+			removing: 'Removing…',
 			importCanceled: 'Import canceled',
 			selected: '{{name}} selected',
 			updated: 'Profile updated',
@@ -459,6 +495,8 @@ export const englishMessages = {
 			latencyCanceled: 'Latency test canceled',
 		},
 		errors: {
+			mutationFailed:
+				'The change could not be saved. Nothing was dismissed; try again.',
 			viewSave:
 				'Connections view preferences could not be saved. Your current view is still usable.',
 			latencySave:
@@ -644,9 +682,9 @@ export const englishMessages = {
 			profilesReady: '{{count, number}} profiles are ready.',
 			replaced: 'Subscription replaced',
 			saved: 'Subscription saved',
-			savedRefreshing: 'Subscription saved; refreshing in the background',
+			savedRefreshing: 'Subscription saved; refreshing connections now',
 			added: 'Subscription added',
-			refreshingBackground: 'Profiles are refreshing in the background.',
+			refreshingBackground: 'Connections are refreshing now.',
 			removed: 'Subscription removed',
 			updated: 'Subscription updated',
 		},
@@ -699,13 +737,16 @@ export const englishMessages = {
 			mode: 'Connection mode',
 			engine: 'Engine',
 			routing: 'Routing',
-			proxy: 'Proxy settings',
+			proxy: 'System proxy',
 			localPort: 'Local SOCKS port',
 			savePort: 'Save port',
 			vpnDescription: 'VPN/TUN · routes device traffic',
 			vpnUnavailable: 'VPN/TUN · unavailable in this build',
 			proxyDescription: 'System proxy fallback',
 			proxyUnavailable: 'System proxy fallback · unavailable',
+			lanSharing: 'LAN proxy sharing',
+			lanSharingDescription:
+				'Expose an authenticated proxy listener to devices on the local network',
 		},
 		options: {
 			system: 'System',
@@ -741,6 +782,7 @@ export const englishMessages = {
 			versionUnavailable: 'Not provided by this build',
 			build: 'Build information',
 			versionLabel: 'App version',
+			buildLabel: 'Build',
 			licenseLabel: 'License',
 			enginesLabel: 'Bundled engines',
 			engineMetadataUnavailable:
@@ -771,15 +813,31 @@ export const englishMessages = {
 			diagnostics: 'Diagnostics',
 			engine: 'Engine',
 			language: 'Language',
-			proxy: 'Proxy settings',
+			proxy: 'System proxy',
 			routing: 'Routing',
 			description: 'Configure RahRow settings.',
 			diagnosticsDescription: 'Check runtime health and review application logs.',
 		},
 		reset: {
-			title: 'Reset all settings?',
-			description:
-				'Connection profiles stay intact. App preferences return to defaults.',
+			title: 'Reset RahRow?',
+			scopeLabel: 'Choose what to reset',
+			scopes: {
+				'tunnel-configuration': {
+					label: 'Tunnel configuration',
+					description:
+						'Disconnect and remove RahRow-applied VPN, proxy, routes, and DNS state. Connections and app preferences stay intact.',
+				},
+				settings: {
+					label: 'Settings',
+					description:
+						'Restore app and engine preferences to defaults. Connections, subscriptions, and credentials stay intact.',
+				},
+				'app-data': {
+					label: 'All app data',
+					description:
+						'Disconnect and permanently remove settings, connections, subscriptions, history, logs, cached imports, and stored credentials.',
+				},
+			},
 		},
 		status: {
 			loading: 'Loading settings…',
@@ -808,16 +866,23 @@ export const englishMessages = {
 		done: 'Backup operation completed.',
 		plaintextWarning:
 			'This plaintext backup contains sensitive connection secrets and settings. Store it securely.',
+		plaintextWarningTitle: 'No password protection',
 		title: {
 			menu: 'Backup',
-			export: 'Export backup',
+			'export-scope': 'Choose backup contents',
+			'export-protection': 'Protect your backup',
+			'export-password': 'Set a backup password',
+			'export-review': 'Review backup',
 			'import-password': 'Unlock backup',
 			'import-review': 'Review import',
 			done: 'Backup complete',
 		},
 		description: {
 			menu: 'Import or export RahRow data.',
-			export: 'Choose exactly what this file should contain.',
+			'export-scope': 'Choose settings, connections, or both.',
+			'export-protection': 'Choose whether the backup requires a password.',
+			'export-password': 'Enter and confirm the password for this backup.',
+			'export-review': 'Confirm what the backup contains before saving it.',
 			'import-password': 'Enter the password used when this backup was created.',
 			'import-review':
 				'Review contents and resolve conflicts before anything changes.',
@@ -825,7 +890,8 @@ export const englishMessages = {
 		},
 		export: {
 			action: 'Export backup',
-			description: 'Save selected connections and settings to a file.',
+			description: 'Save connections, settings, or both to a file.',
+			continue: 'Continue',
 			save: 'Save backup',
 		},
 		import: {
@@ -836,7 +902,11 @@ export const englishMessages = {
 		scope: { label: 'Backup contents' },
 		connections: { label: 'Connections', selectAll: 'Select all connections' },
 		protection: { label: 'Protection' },
-		password: { label: 'Backup password', confirm: 'Confirm backup password' },
+		password: {
+			label: 'Backup password',
+			confirm: 'Confirm backup password',
+			mismatch: 'Passwords do not match.',
+		},
 		options: {
 			all: 'Connections and settings',
 			connections: 'Connections only',
@@ -1134,8 +1204,8 @@ export const persianMessages = {
 			'سریع‌ترین پاسخ: {{latency, number}} میلی‌ثانیه. راهرو در حال راه‌اندازی دوباره اتصال است.',
 		restoringTitle: 'بازیابی اتصال',
 		restoring: 'تغییر کامل نشد. راهرو در حال بازیابی اتصال قبلی است.',
-		successTitle: 'سریع‌ترین کانکشن فعال شد',
-		unchangedTitle: 'سریع‌ترین کانکشن از قبل فعال است',
+		successTitle: 'سریع‌ترین کانکشن انتخاب شد',
+		unchangedTitle: 'سریع‌ترین کانکشن از قبل انتخاب شده است',
 		noReachableTitle: 'کانکشن در دسترسی پیدا نشد',
 		noReachable: 'اتصال فعلی حفظ شد. شبکه را بررسی و دوباره تلاش کنید.',
 		staleTitle: 'کانکشن‌ها هنگام بررسی تغییر کردند',
@@ -1151,6 +1221,33 @@ export const persianMessages = {
 	},
 	profiles: {
 		search: 'جست‌وجوی کانکشن‌ها',
+		locked: 'قفل‌شده',
+		rawEngine: {
+			action: 'واردکردن کانفیگ خام انجین',
+			title: 'کانفیگ خام انجین',
+			description:
+				'سند کامل Xray یا sing-box را اعتبارسنجی کنید، سپس آن را نگه دارید یا یک outbound پشتیبانی‌شده را استخراج کنید.',
+			engineLabel: 'انجین و اعتبارسنج نسخه ثابت',
+			documentLabel: 'کانفیگ خام انجین',
+			secretDescription:
+				'محتوای دارای اطلاعات محرمانه فقط برای ویرایش نمایش داده می‌شود و در پیام‌های اعتبارسنجی یا تبدیل نمی‌آید.',
+			validate: 'اعتبارسنجی سند',
+			reviewReplacement: 'بررسی جایگزینی',
+			replace: 'جایگزینی سند خام',
+			extractTitle: 'استخراج یک outbound',
+			outboundLabel: 'outbound پشتیبانی‌شده',
+			extract: 'استخراج outbound انتخاب‌شده',
+			confirmLossy: 'تأیید استخراج ناقص',
+			noOutboundTitle: 'outbound پشتیبانی‌شده‌ای نیست',
+			noOutboundDescription:
+				'سند اعتبارسنجی‌شده حفظ می‌شود، اما هیچ outbound آن قابل استخراج به‌عنوان پروفایل راهرو نیست.',
+			lossyTitle: 'استخراج ناقص نیاز به تأیید دارد',
+			errors: {
+				validation: 'سند خام انجین معتبر نبود و تغییری ذخیره نشد.',
+				extraction: 'outbound انتخاب‌شده به پروفایل استاندارد تبدیل نشد.',
+				replacement: 'سند خام جایگزین نشد و سند قبلی دست‌نخورده ماند.',
+			},
+		},
 		actions: {
 			cleanup: 'پاک‌سازی کانکشن‌ها',
 			search: 'باز کردن جست‌وجو',
@@ -1266,6 +1363,10 @@ export const persianMessages = {
 		},
 		remove: {
 			subscription: 'این اشتراک حذف شود؟',
+			subscriptionConsequence_one:
+				'با این کار، {{count, number}} کانکشن متعلق به این اشتراک نیز حذف می‌شود.',
+			subscriptionConsequence_other:
+				'با این کار، {{count, number}} کانکشن متعلق به این اشتراک نیز حذف می‌شوند.',
 			connections: 'این کانکشن‌ها حذف شوند؟',
 			connection: 'این کانکشن حذف شود؟',
 			irreversible: 'این کار بازگشت‌پذیر نیست.',
@@ -1301,6 +1402,8 @@ export const persianMessages = {
 			testAgain: 'دوباره تست کنید.',
 		},
 		status: {
+			saving: 'در حال ذخیره تغییرات…',
+			removing: 'در حال حذف…',
 			importCanceled: 'ایمپورت لغو شد',
 			selected: '{{name}} انتخاب شد',
 			updated: 'کانکشن آپدیت شد',
@@ -1312,6 +1415,7 @@ export const persianMessages = {
 			latencyCanceled: 'تست پینگ لغو شد',
 		},
 		errors: {
+			mutationFailed: 'تغییر ذخیره نشد. چیزی بسته نشد؛ دوباره تلاش کنید.',
 			viewSave:
 				'تنظیمات نمایش کانکشن‌ها ذخیره نشد؛ نمای فعلی همچنان قابل استفاده است.',
 			latencySave: 'نتیجه پینگ ذخیره نشد، ولی تا بستن برنامه نشان داده می‌شود.',
@@ -1491,9 +1595,9 @@ export const persianMessages = {
 			profilesReady: '{{count, number}} پروفایل آماده است.',
 			replaced: 'اشتراک جایگزین شد',
 			saved: 'اشتراک ذخیره شد',
-			savedRefreshing: 'اشتراک ذخیره شد؛ رفرش در پس‌زمینه ادامه دارد',
+			savedRefreshing: 'اشتراک ذخیره شد؛ کانکشن‌ها در حال رفرش هستند',
 			added: 'اشتراک افزوده شد',
-			refreshingBackground: 'کانکشن‌ها در پس‌زمینه رفرش می‌شوند.',
+			refreshingBackground: 'کانکشن‌ها در حال رفرش هستند.',
 			removed: 'اشتراک حذف شد',
 			updated: 'اشتراک آپدیت شد',
 		},
@@ -1546,13 +1650,15 @@ export const persianMessages = {
 			mode: 'حالت اتصال',
 			engine: 'انجین',
 			routing: 'مسیریابی',
-			proxy: 'تنظیمات پراکسی',
+			proxy: 'پراکسی سیستم',
 			localPort: 'پورت SOCKS لوکال',
 			savePort: 'ذخیره پورت',
 			vpnDescription: 'VPN/TUN · هدایت ترافیک دستگاه',
 			vpnUnavailable: 'VPN/TUN · در این بیلد در دسترس نیست',
 			proxyDescription: 'جایگزین پراکسی سیستم',
 			proxyUnavailable: 'جایگزین پراکسی سیستم · در دسترس نیست',
+			lanSharing: 'اشتراک‌گذاری پراکسی در LAN',
+			lanSharingDescription: 'نمایش پراکسی احراز هویت‌شده برای دستگاه‌های شبکه محلی',
 		},
 		options: {
 			system: 'سیستم',
@@ -1588,6 +1694,7 @@ export const persianMessages = {
 			versionUnavailable: 'نسخه این بیلد مشخص نیست',
 			build: 'اطلاعات بیلد',
 			versionLabel: 'نسخه برنامه',
+			buildLabel: 'بیلد',
 			licenseLabel: 'مجوز',
 			enginesLabel: 'انجین‌های همراه',
 			engineMetadataUnavailable: 'نسخه و مجوز انجین‌ها در این بیلد مشخص نشده است.',
@@ -1616,15 +1723,31 @@ export const persianMessages = {
 			diagnostics: 'دیاگ',
 			engine: 'انجین',
 			language: 'زبان',
-			proxy: 'تنظیمات پراکسی',
+			proxy: 'پراکسی سیستم',
 			routing: 'مسیریابی',
 			description: 'تنظیمات راهرو را کانفیگ کنید.',
 			diagnosticsDescription: 'وضعیت انجین و لاگ‌های برنامه را در دیاگ چک کنید.',
 		},
 		reset: {
-			title: 'همه تنظیمات ریسِت شوند؟',
-			description:
-				'پروفایل‌های اتصال حفظ می‌شوند و تنظیمات برنامه به حالت پیش‌فرض بازمی‌گردند.',
+			title: 'راهرو ریسِت شود؟',
+			scopeLabel: 'انتخاب کنید چه چیزی ریسِت شود',
+			scopes: {
+				'tunnel-configuration': {
+					label: 'تنظیمات تونل',
+					description:
+						'اتصال قطع و وضعیت VPN، پراکسی، مسیرها و DNS اعمال‌شده توسط راهرو پاک می‌شود. اتصال‌ها و تنظیمات برنامه حفظ می‌شوند.',
+				},
+				settings: {
+					label: 'تنظیمات',
+					description:
+						'تنظیمات برنامه و انجین به پیش‌فرض برمی‌گردند. اتصال‌ها، اشتراک‌ها و اطلاعات ورود حفظ می‌شوند.',
+				},
+				'app-data': {
+					label: 'همه داده‌های برنامه',
+					description:
+						'اتصال قطع و تنظیمات، اتصال‌ها، اشتراک‌ها، تاریخچه، لاگ‌ها، ایمپورت‌های کش‌شده و اطلاعات ورود برای همیشه پاک می‌شوند.',
+				},
+			},
 		},
 		status: {
 			loading: 'در حال بروزرسانی تنظیمات…',
@@ -1646,42 +1769,53 @@ export const persianMessages = {
 		},
 	},
 	backup: {
-		back: 'بازگشت به پشتیبان',
+		back: 'بازگشت به بک‌آپ',
 		working: 'در حال انجام…',
 		unavailable:
-			'تا زمانی که این پلتفرم دسترسی فایل را فراهم نکند، ایمپورت یا اکسپورت در دسترس نیست.',
-		done: 'عملیات پشتیبان انجام شد.',
+			'تا زمانی که این پلتفرم دسترسی فایل را فراهم نکند، دانلود یا واردکردن بک‌آپ در دسترس نیست.',
+		done: 'عملیات بک‌آپ انجام شد.',
 		plaintextWarning:
-			'این فایل پشتیبان بدون رمز شامل اطلاعات حساس کانکشن‌ها و تنظیمات است. آن را در جای امن نگه دارید.',
+			'این فایل بک‌آپ بدون رمز شامل اطلاعات حساس کانکشن‌ها و تنظیمات است. آن را در جای امن نگه دارید.',
+		plaintextWarningTitle: 'بدون محافظت پسورد',
 		title: {
-			menu: 'پشتیبان',
-			export: 'اکسپورت پشتیبان',
-			'import-password': 'باز کردن پشتیبان',
-			'import-review': 'مرور ایمپورت',
-			done: 'پشتیبان کامل شد',
+			menu: 'بک‌آپ',
+			'export-scope': 'انتخاب محتوای بک‌آپ',
+			'export-protection': 'محافظت از بک‌آپ',
+			'export-password': 'تنظیم پسورد بک‌آپ',
+			'export-review': 'مرور بک‌آپ',
+			'import-password': 'باز کردن بک‌آپ',
+			'import-review': 'مرور واردکردن بک‌آپ',
+			done: 'بک‌آپ کامل شد',
 		},
 		description: {
-			menu: 'داده‌های راهرو را ایمپورت یا اکسپورت کنید.',
-			export: 'دقیقاً انتخاب کنید این فایل شامل چه چیزهایی باشد.',
-			'import-password':
-				'پسوردی را وارد کنید که هنگام ساخت پشتیبان استفاده شده است.',
+			menu: 'از داده‌های راهرو بک‌آپ بگیرید یا یک بک‌آپ را وارد کنید.',
+			'export-scope': 'تنظیمات، کانکشن‌ها یا هر دو را انتخاب کنید.',
+			'export-protection': 'انتخاب کنید بک‌آپ با پسورد محافظت شود یا نه.',
+			'export-password': 'پسورد بک‌آپ را وارد و تکرار کنید.',
+			'export-review': 'پیش از دانلود، محتوای بک‌آپ را تأیید کنید.',
+			'import-password': 'پسوردی را وارد کنید که هنگام ساخت بک‌آپ استفاده شده است.',
 			'import-review': 'پیش از هر تغییری، محتوا و تداخل‌ها را مرور کنید.',
-			done: 'عملیات پشتیبان درخواستی انجام شد.',
+			done: 'عملیات بک‌آپ درخواستی انجام شد.',
 		},
 		export: {
-			action: 'اکسپورت پشتیبان',
-			description: 'کانکشن‌ها و تنظیمات انتخاب‌شده را در فایل ذخیره کنید.',
-			save: 'ذخیره پشتیبان',
+			action: 'دانلود بک‌آپ',
+			description: 'کانکشن‌ها، تنظیمات یا هر دو را در فایل ذخیره کنید.',
+			continue: 'ادامه',
+			save: 'دانلود بک‌آپ',
 		},
 		import: {
-			action: 'ایمپورت پشتیبان',
-			description: 'فایل پشتیبان راهرو را مرور و بازیابی کنید.',
-			unlock: 'باز کردن پشتیبان',
+			action: 'واردکردن بک‌آپ',
+			description: 'فایل بک‌آپ راهرو را مرور و بازیابی کنید.',
+			unlock: 'باز کردن بک‌آپ',
 		},
-		scope: { label: 'محتوای پشتیبان' },
+		scope: { label: 'محتوای بک‌آپ' },
 		connections: { label: 'کانکشن‌ها', selectAll: 'انتخاب همه کانکشن‌ها' },
 		protection: { label: 'محافظت' },
-		password: { label: 'پسورد پشتیبان', confirm: 'تکرار پسورد پشتیبان' },
+		password: {
+			label: 'پسورد بک‌آپ',
+			confirm: 'تکرار پسورد بک‌آپ',
+			mismatch: 'پسوردها یکسان نیستند.',
+		},
 		options: {
 			all: 'کانکشن‌ها و تنظیمات',
 			connections: 'فقط کانکشن‌ها',
@@ -1698,14 +1832,14 @@ export const persianMessages = {
 			conflictCount_one: '{{count}} تداخل',
 			conflictCount_other: '{{count}} تداخل',
 			resolution: 'حل تداخل',
-			ready: 'آماده ایمپورت',
+			ready: 'آماده واردکردن بک‌آپ',
 		},
 		errors: {
 			read: 'راهرو نتوانست داده‌های ذخیره‌شده را بخواند.',
-			export: 'فایل پشتیبان ذخیره نشد.',
-			import: 'این فایل پشتیبان باز نشد.',
-			password: 'پسورد نادرست است یا فایل پشتیبان آسیب دیده است.',
-			apply: 'فایل پشتیبان ایمپورت نشد و چیزی تغییر نکرد.',
+			export: 'فایل بک‌آپ ذخیره نشد.',
+			import: 'این فایل بک‌آپ باز نشد.',
+			password: 'پسورد نادرست است یا فایل بک‌آپ آسیب دیده است.',
+			apply: 'فایل بک‌آپ وارد نشد و چیزی تغییر نکرد.',
 		},
 	},
 } as const

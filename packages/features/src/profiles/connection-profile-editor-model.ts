@@ -13,6 +13,7 @@ import {
 	positiveNumberTextSchema,
 	requiredTextSchema,
 } from '../forms/form-validation.ts'
+import { profileFormCapability } from './profile-form-capability-matrix.ts'
 
 export interface ConnectionProfileEditorValues {
 	readonly name: string
@@ -146,15 +147,13 @@ export function connectionProfileEditorFormSchema(
 }
 
 export function profileSupportsTransport(profile: ConnectionProfile): boolean {
-	return (
-		profile.protocol === 'vless' ||
-		profile.protocol === 'vmess' ||
-		profile.protocol === 'trojan'
-	)
+	return profileFormCapability(profile.protocol).transports.length > 0
 }
 
 export function profileSupportsSecurity(profile: ConnectionProfile): boolean {
-	return profile.protocol !== 'shadowsocks' && profile.protocol !== 'ssh'
+	return profileFormCapability(profile.protocol).security.some(
+		(security) => security !== 'none',
+	)
 }
 
 export function toConnectionProfileEditorValues(
@@ -261,6 +260,56 @@ export function parseCanonicalProfileJson(
 
 export function formatCanonicalProfileJson(profile: ConnectionProfile): string {
 	return JSON.stringify(profile, null, 2)
+}
+
+export interface CanonicalProfileChangePreview {
+	readonly profile: ConnectionProfile
+	readonly changedPaths: readonly string[]
+}
+
+export function previewCanonicalProfileJsonChange(
+	input: string,
+	expectedProfile: ConnectionProfile,
+): CanonicalProfileChangePreview {
+	const profile = parseCanonicalProfileJson(input, expectedProfile)
+	return {
+		profile,
+		changedPaths: changedJsonPaths(expectedProfile, profile),
+	}
+}
+
+function changedJsonPaths(
+	before: unknown,
+	after: unknown,
+	path = '$',
+): string[] {
+	if (Object.is(before, after)) return []
+	if (Array.isArray(before) && Array.isArray(after)) {
+		const paths: string[] = []
+		for (
+			let index = 0;
+			index < Math.max(before.length, after.length);
+			index += 1
+		) {
+			paths.push(
+				...changedJsonPaths(before[index], after[index], `${path}[${index}]`),
+			)
+		}
+		return paths
+	}
+	if (isJsonRecord(before) && isJsonRecord(after)) {
+		const paths: string[] = []
+		const keys = new Set([...Object.keys(before), ...Object.keys(after)])
+		for (const key of [...keys].sort()) {
+			paths.push(...changedJsonPaths(before[key], after[key], `${path}.${key}`))
+		}
+		return paths
+	}
+	return [path]
+}
+
+function isJsonRecord(value: unknown): value is Record<string, unknown> {
+	return Boolean(value) && typeof value === 'object' && !Array.isArray(value)
 }
 
 function buildAuthentication(

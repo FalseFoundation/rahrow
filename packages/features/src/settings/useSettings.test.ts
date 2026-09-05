@@ -12,7 +12,7 @@ import { httpSubscriptionFetcher } from '@rahrow/core/subscription/http-subscrip
 import { act, renderHook, waitFor } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
-
+import { changeAppLanguage } from '../app/app-i18n.tsx'
 import { type AppRuntime, AppRuntimeProvider } from '../app/runtime.tsx'
 import { useSettings } from './useSettings.ts'
 
@@ -162,6 +162,128 @@ describe('useSettings', () => {
 		)
 	})
 
+	it('rolls visible and native settings back when persistence fails', async () => {
+		const enable = vi.fn().mockResolvedValue(undefined)
+		const disable = vi.fn().mockResolvedValue(undefined)
+		const read = vi.fn().mockResolvedValue({
+			engineId: 'xray',
+			launchAtStartup: false,
+			localPort: 12080,
+		})
+		const runtime = createRuntime({
+			settingsStore: {
+				read,
+				write: vi.fn().mockRejectedValue(new Error('disk is read-only')),
+			},
+			capabilities: {
+				clipboard: {
+					async read() {
+						return ''
+					},
+					async write() {},
+				},
+				qrEncoder: {
+					async encode(value) {
+						return value
+					},
+				},
+				autostart: {
+					enable,
+					disable,
+					async status() {
+						return { enabled: false, supported: true }
+					},
+				},
+			},
+		})
+		const { result } = renderHook(() => useSettings(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+		await waitFor(() => expect(result.current.state.isLoading).toBe(false))
+
+		act(() => {
+			result.current.actions.setEngineId('sing-box')
+			result.current.actions.setLaunchAtStartup(true)
+		})
+		await act(async () => {
+			expect(
+				await result.current.actions.save({
+					engineId: 'sing-box',
+					launchAtStartup: true,
+				}),
+			).toBe(false)
+		})
+
+		expect(enable).toHaveBeenCalledOnce()
+		expect(disable).toHaveBeenCalledOnce()
+		expect(result.current.state.engineId).toBe('xray')
+		expect(result.current.state.launchAtStartup).toBe(false)
+		expect(result.current.state.localPort).toBe('12080')
+	})
+
+	it('does not re-enter initial loading when translations change', async () => {
+		const read = vi.fn().mockResolvedValue({ language: 'en' })
+		const runtime = createRuntime({
+			settingsStore: { read, write: vi.fn() },
+		})
+		const { result } = renderHook(() => useSettings(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+		await waitFor(() => expect(result.current.state.isLoading).toBe(false))
+
+		await act(async () => {
+			await changeAppLanguage('fa')
+		})
+
+		expect(read).toHaveBeenCalledOnce()
+		expect(result.current.state.isLoading).toBe(false)
+		await changeAppLanguage('en')
+	})
+
+	it('keeps a saved edit when an older background refresh finishes later', async () => {
+		let resolveRefresh:
+			| ((value: { readonly engineId: 'xray' }) => void)
+			| undefined
+		const read = vi
+			.fn()
+			.mockResolvedValueOnce({ engineId: 'xray' })
+			.mockImplementationOnce(
+				() =>
+					new Promise<{ readonly engineId: 'xray' }>((resolve) => {
+						resolveRefresh = resolve
+					}),
+			)
+			.mockResolvedValue({ engineId: 'xray' })
+		const runtime = createRuntime({
+			settingsStore: { read, write: vi.fn().mockResolvedValue(undefined) },
+		})
+		const { result } = renderHook(() => useSettings(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+		await waitFor(() => expect(result.current.state.isLoading).toBe(false))
+
+		let refresh: Promise<boolean> | undefined
+		act(() => {
+			refresh = result.current.actions.load()
+			result.current.actions.setEngineId('sing-box')
+		})
+		expect(result.current.state.isLoading).toBe(false)
+		await act(async () => {
+			expect(await result.current.actions.save({ engineId: 'sing-box' })).toBe(
+				true,
+			)
+		})
+		act(() => resolveRefresh?.({ engineId: 'xray' }))
+		await act(async () => {
+			await refresh
+		})
+
+		expect(result.current.state.engineId).toBe('sing-box')
+	})
+
 	it('keeps current values and reports a failed reset', async () => {
 		const runtime = createRuntime({
 			settingsStore: {
@@ -184,6 +306,36 @@ describe('useSettings', () => {
 		expect(result.current.state.failure).toBe(
 			"Couldn't reset settings. Try again.",
 		)
+	})
+
+	it('delegates scoped resets to the runtime and reloads the retained settings', async () => {
+		const read = vi
+			.fn()
+			.mockResolvedValueOnce({ localPort: 12080, engineId: 'xray' })
+			.mockResolvedValue({ connectionMode: 'vpn', theme: 'system' })
+		const reset = vi.fn().mockResolvedValue({
+			status: 'completed',
+			scope: 'app-data',
+			completed: ['read-current-data', 'native-cleanup'],
+		})
+		const runtime = createRuntime({
+			settingsStore: { read, write: vi.fn() },
+			reset: { reset },
+		})
+		const { result } = renderHook(() => useSettings(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+		await waitFor(() => expect(result.current.state.localPort).toBe('12080'))
+
+		await act(async () => {
+			expect(await result.current.actions.reset('app-data')).toBe(true)
+		})
+
+		expect(reset).toHaveBeenCalledOnce()
+		expect(reset).toHaveBeenCalledWith('app-data')
+		expect(result.current.state.localPort).toBe('10808')
+		expect(result.current.state.engineId).toBe('sing-box')
 	})
 
 	it('defaults to sing-box over VPN and reports unavailable tunnel capability honestly', async () => {

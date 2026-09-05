@@ -1,11 +1,11 @@
 ---
 id: TS-01M1AP3W0V9EAG00WX8M1CEVP7
 title: Keep the connected app neutral except for the blue power control
-status: doing
+status: done
 priority: high
 risk: medium
 createdAt: 2026-08-31 01:14 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - theme
   - connection-state

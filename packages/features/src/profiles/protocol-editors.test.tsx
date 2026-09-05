@@ -191,6 +191,9 @@ describe('protocol editor validation', () => {
 			},
 		})
 		await user.click(screen.getByRole('button', { name: 'Validate and apply' }))
+		expect(screen.getByText('$.endpoint.host')).toBeTruthy()
+		expect(screen.getByText('$.endpoint.port')).toBeTruthy()
+		await user.click(screen.getByRole('button', { name: 'Validate and apply' }))
 		await user.click(screen.getByRole('tab', { name: 'Fields' }))
 
 		expect(screen.getByDisplayValue('applied.example.com')).toBeTruthy()

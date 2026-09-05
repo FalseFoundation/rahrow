@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3N0VH0WRYVNQNGJ65NR6
 title: Open connection item actions by researched long press and context menu
-status: todo
+status: done
 priority: high
 risk: medium
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - cross-platform-hardening
   - long-press

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { deriveConnectionLibrary } from './profile-library-model.ts'
 import {
 	createProfileScaleFixture,
+	createProviderRealisticScaleFixture,
 	PROFILE_SCALE_COUNTS,
 	PROVIDER_REALISTIC_PROFILE_COUNT,
 } from './profile-scale-fixtures.ts'
@@ -40,5 +41,28 @@ describe('deterministic profile scale fixtures', () => {
 		expect(result.visibleProfiles.map(({ id }) => id)).toEqual(['fixture-09999'])
 		expect(result.orphanedSubscriptionIds).toEqual([])
 		expect(profiles[0]).toBe(originalFirst)
+	})
+
+	it('models a provider-shaped collection with deterministic uneven ownership', () => {
+		const fixture = createProviderRealisticScaleFixture()
+
+		expect(fixture.profiles).toHaveLength(PROVIDER_REALISTIC_PROFILE_COUNT)
+		expect(fixture.subscriptions.map(({ id }) => id)).toEqual([
+			'provider-primary',
+			'provider-secondary',
+			'provider-small',
+		])
+		expect(
+			fixture.profiles.reduce<Record<string, number>>((counts, profile) => {
+				const owner = profile.metadata?.subscriptionId ?? 'standalone'
+				counts[owner] = (counts[owner] ?? 0) + 1
+				return counts
+			}, {}),
+		).toEqual({
+			'provider-primary': 1_600,
+			'provider-secondary': 600,
+			'provider-small': 160,
+			standalone: 24,
+		})
 	})
 })

@@ -41,6 +41,15 @@
 	font-family: var(--font-mono);
 }
 
+.jsonDiff {
+	@apply rounded-lg border border-border bg-muted/40 p-3 text-sm;
+}
+
+.jsonDiff ul {
+	@apply mt-2 list-inside list-disc space-y-1 text-xs text-muted-foreground;
+	font-family: var(--font-mono);
+}
+
 @media (max-width: 28rem) {
 	.endpointRow {
 		@apply grid-cols-1;

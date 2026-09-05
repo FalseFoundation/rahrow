@@ -19,6 +19,7 @@ export function Profiles() {
 				profileStore={runtime.profileStore}
 				registry={runtime.registry}
 				settingsStore={runtime.settingsStore}
+				rawEngineDocuments={runtime.rawEngineDocuments}
 				smartConnect={runtime.smartConnect}
 				qrPreview={runtime.renderQrCameraPreview?.()}
 				subscriptions={subscriptions.state.subscriptions}

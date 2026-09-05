@@ -73,6 +73,10 @@ export interface ProfileMetadata {
 		| 'file'
 	readonly tags?: readonly string[]
 	readonly subscriptionId?: string
+	readonly extensions?: {
+		readonly uriQuery?: Readonly<Record<string, readonly string[]>>
+		readonly vmessJson?: Readonly<Record<string, string>>
+	}
 }
 
 export interface ConnectionProfile {

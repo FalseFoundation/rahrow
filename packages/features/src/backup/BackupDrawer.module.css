@@ -36,20 +36,8 @@
 .radioChoice:has([data-checked]) {
 	@apply border-primary/45 text-primary;
 }
-.connectionSelection {
-	@apply flex flex-col gap-1 rounded-lg border border-border p-3;
-}
-.connectionSelection legend {
-	@apply px-1 text-sm font-semibold;
-}
-.checkboxRow {
-	@apply flex min-h-10 items-center gap-3 rounded-md px-2 text-sm hover:bg-muted/50;
-}
 .passwordFields {
 	@apply grid gap-4;
-}
-.warning {
-	@apply rounded-lg border border-destructive/30 bg-destructive/8 p-3 text-sm text-destructive;
 }
 .review {
 	@apply flex flex-col gap-5;

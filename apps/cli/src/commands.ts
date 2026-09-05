@@ -481,9 +481,26 @@ async function runRestart(
 	args: readonly string[],
 	context: CliContext,
 ): Promise<number> {
-	await context.connectionController.disconnect()
+	const profile = await profileFromArgsOrSettings(args, context)
+	const settings = await context.settingsStore.read()
+	const requestedMode = optionValue(args, '--mode') ?? settings.connectionMode
+	if (requestedMode !== 'proxy') {
+		throw new Error(
+			'CLI cannot register an OS VPN/TUN connection. Use --mode proxy for the explicit local-proxy fallback.',
+		)
+	}
+	const connection = await context.connectionController.reconfigure({
+		profile,
+		localPort: settings.localPort,
+	})
+	await context.settingsStore.write({
+		...settings,
+		activeProfileId: profile.id,
+		connectionMode: 'proxy',
+	})
+	context.io.stdout(formatJson(connection))
 
-	return runConnect(args, context)
+	return 0
 }
 
 async function runStatus(
@@ -532,8 +549,24 @@ async function runProfiles(
 
 	if (subcommand === 'list') {
 		const profiles = await context.profileStore.list()
-		context.io.stdout(formatJson(profiles.map(profileSummary)))
+		const lockedIds = protectedSubscriptionIds(await readSubscriptions(context))
+		context.io.stdout(
+			formatJson(profiles.map((profile) => profileSummary(profile, lockedIds))),
+		)
 
+		return 0
+	}
+
+	if (subcommand === 'show') {
+		if (!id) {
+			return error(context, 'rahrow profiles show: missing profile id')
+		}
+		const profile = await context.profileStore.get(id)
+		if (!profile) {
+			return error(context, `rahrow profiles show: profile not found: ${id}`)
+		}
+		const lockedIds = protectedSubscriptionIds(await readSubscriptions(context))
+		context.io.stdout(formatJson(profileSummary(profile, lockedIds)))
 		return 0
 	}
 
@@ -819,8 +852,27 @@ async function runSubscription(
 	const [subcommand = 'list', first, second, ...rest] = args
 
 	if (subcommand === 'list') {
-		context.io.stdout(formatJson(await readSubscriptions(context)))
+		context.io.stdout(
+			formatJson((await readSubscriptions(context)).map(subscriptionSummary)),
+		)
 
+		return 0
+	}
+
+	if (subcommand === 'show') {
+		if (!first) {
+			return error(context, 'rahrow subscription show: missing subscription id')
+		}
+		const subscription = (await readSubscriptions(context)).find(
+			(candidate) => candidate.id === first,
+		)
+		if (!subscription) {
+			return error(
+				context,
+				`rahrow subscription show: subscription not found: ${first}`,
+			)
+		}
+		context.io.stdout(formatJson(subscriptionSummary(subscription)))
 		return 0
 	}
 
@@ -1134,11 +1186,26 @@ async function readUntrustedInput(
 	}
 }
 
-function profileSummary(profile: ConnectionProfile) {
+function profileSummary(
+	profile: ConnectionProfile,
+	lockedSubscriptionIds: ReadonlySet<string>,
+) {
+	const subscriptionId = profile.metadata?.subscriptionId
+	const locked = isProfileProtectedByLock(profile, lockedSubscriptionIds)
 	return {
 		id: profile.id,
 		protocol: profile.protocol,
 		...(profile.metadata?.name ? { name: profile.metadata.name } : {}),
+		...(subscriptionId ? { subscriptionId } : {}),
+		locked,
+		...(locked ? { lockSource: 'subscription' as const } : {}),
+	}
+}
+
+function subscriptionSummary(subscription: CliSubscription) {
+	return {
+		...subscription,
+		locked: subscription.locked === true,
 	}
 }
 

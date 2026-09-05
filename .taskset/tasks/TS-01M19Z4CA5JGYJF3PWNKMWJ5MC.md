@@ -1,11 +1,11 @@
 ---
 id: TS-01M19Z4CA5JGYJF3PWNKMWJ5MC
 title: Scale connection collections with virtualization and paced interactions
-status: doing
+status: done
 priority: high
 risk: medium
 createdAt: 2026-08-30 18:32 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 17:11 UTC
 labels:
   - performance
   - tanstack

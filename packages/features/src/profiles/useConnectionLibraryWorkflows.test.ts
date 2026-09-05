@@ -115,4 +115,81 @@ describe('useConnectionLibraryWorkflows', () => {
 		expect(onRemoveSubscription).toHaveBeenCalledWith('source')
 		expect(result.current.deleteOpen).toBe(false)
 	})
+
+	it('keeps the destructive workflow open with recovery state when removal fails', async () => {
+		const subscription = { id: 'source', url: 'https://example.com' }
+		const onRemoveSubscription = vi.fn().mockRejectedValue(new Error('offline'))
+		const { result } = renderHook(() =>
+			useConnectionLibraryWorkflows({
+				actions: actions(),
+				registry: { serialize: ({ id }) => id },
+				subscriptions: [subscription],
+				onAddSubscription: vi.fn(),
+				onRefreshSubscription: vi.fn(),
+				onRefreshSubscriptions: vi.fn(),
+				onRemoveSubscription,
+				onUpdateSubscription: vi.fn(),
+				openShare: vi.fn(),
+				onProfileActivated: vi.fn(),
+			}),
+		)
+
+		act(() => {
+			result.current.openActions({
+				kind: 'subscription',
+				subscription,
+				profiles: [profile],
+			})
+			result.current.requestDelete()
+		})
+		await act(() => result.current.confirmDelete())
+
+		expect(result.current.drawer).toBe('actions')
+		expect(result.current.deleteOpen).toBe(true)
+		expect(result.current.mutationPending).toBe(false)
+		expect(result.current.mutationError).toBeTruthy()
+	})
+
+	it('deduplicates repeated destructive confirmation while removal is pending', async () => {
+		let resolveRemoval: (() => void) | undefined
+		const removal = new Promise<void>((resolve) => {
+			resolveRemoval = resolve
+		})
+		const subscription = { id: 'source', url: 'https://example.com' }
+		const onRemoveSubscription = vi.fn(() => removal)
+		const { result } = renderHook(() =>
+			useConnectionLibraryWorkflows({
+				actions: actions(),
+				registry: { serialize: ({ id }) => id },
+				subscriptions: [subscription],
+				onAddSubscription: vi.fn(),
+				onRefreshSubscription: vi.fn(),
+				onRefreshSubscriptions: vi.fn(),
+				onRemoveSubscription,
+				onUpdateSubscription: vi.fn(),
+				openShare: vi.fn(),
+				onProfileActivated: vi.fn(),
+			}),
+		)
+
+		act(() => {
+			result.current.openActions({
+				kind: 'subscription',
+				subscription,
+				profiles: [profile],
+			})
+			result.current.requestDelete()
+		})
+		let first: Promise<void> | undefined
+		act(() => {
+			first = result.current.confirmDelete()
+			void result.current.confirmDelete()
+		})
+		expect(result.current.mutationPending).toBe(true)
+		expect(onRemoveSubscription).toHaveBeenCalledOnce()
+
+		resolveRemoval?.()
+		await act(() => first)
+		expect(result.current.deleteOpen).toBe(false)
+	})
 })

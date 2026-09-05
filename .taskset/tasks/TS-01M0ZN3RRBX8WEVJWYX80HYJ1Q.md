@@ -1,15 +1,15 @@
 ---
 id: TS-01M0ZN3RRBX8WEVJWYX80HYJ1Q
-title: Verify scaffold fidelity, accessibility, and shared-app parity
+title: Verify RahRow interface accessibility and shared-app parity
 status: doing
 priority: high
 risk: medium
 createdAt: 2026-08-26 18:25 UTC
-updatedAt: 2026-09-02 03:51 UTC
+updatedAt: 2026-09-02 16:47 UTC
 labels:
   - ui-refresh
-  - scaffold-fidelity
   - shadcn
+  - accessibility
 dependsOn:
   - TS-01M0ZN3QFR42WZNC7DR8KCP0MK
   - TS-01M0ZN3QQ07972A767SFGRG3NA
@@ -23,11 +23,10 @@ directories:
   - packages/ui
   - apps/desktop
   - apps/mobile
-  - apps/demo
   - tests
 projects:
   - rahrow-uiux
   - rahrow-phase-06-verification-and-release-gates
 ---
 
-Add focused behavior and architecture tests plus a visual review at representative mobile and desktop widths. Prove both apps import the same AppShell and CSS Modules; reject demo imports, lucide-react, raw Tailwind utility soup in feature TSX, app-local product styles, custom overlay markup, and duplicated screens. Exercise keyboard navigation, focus restoration, reduced motion, safe areas, RTL, light/dark themes, connected/error/loading/empty states, unsupported native capabilities, and destructive confirmations. Use the scaffold only as a visual oracle until acceptance, then decide explicitly whether to delete or archive @rahrow/scaffold-demo. Acceptance: targeted package tests/typechecks/builds, root architecture checks, git diff --check, and visual comparison all pass.
+Add focused behavior and architecture tests plus visual review at representative mobile and desktop widths. Prove both apps import the same AppShell and CSS Modules; reject lucide-react, raw Tailwind utility soup in feature TSX, app-local product styles, custom overlay markup, and duplicated screens. Exercise keyboard navigation, focus restoration, reduced motion, safe areas, RTL, light/dark themes, connected/error/loading/empty states, unsupported native capabilities, and destructive confirmations. Acceptance: targeted package tests, typechecks, builds, root architecture checks, git diff --check, and visual review against the documented RahRow design system all pass.

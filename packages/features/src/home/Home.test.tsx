@@ -387,6 +387,21 @@ describe('Home network identity', () => {
 		expect(container.textContent).not.toContain('0 ms')
 	})
 
+	it('renders the decorative ripple outside the power backlight boundary', () => {
+		useHome.mockReturnValue(connectedState())
+		render(<Home />)
+
+		const button = screen.getByRole('button', { name: 'Disconnect' })
+		const filteredLayer = button.closest('div[style*="filter"]')
+		const backlight = filteredLayer?.parentElement
+		const ripple = backlight?.previousElementSibling
+
+		expect(backlight).toBeTruthy()
+		expect(ripple).toBeTruthy()
+		expect(ripple?.className).toContain('powerRipple')
+		expect(backlight?.contains(ripple ?? null)).toBe(false)
+	})
+
 	it('disables Connect and shows the selected mode capability reason', () => {
 		const current = connectedState()
 		useHome.mockReturnValue({

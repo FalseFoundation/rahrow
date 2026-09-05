@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RBRP9C8HHCXB6GYMMGY0
 title: Hide Connections collection actions until content exists
-status: todo
+status: done
 priority: medium
 risk: low
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:49 UTC
 labels:
   - connections
   - empty-state

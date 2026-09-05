@@ -100,6 +100,7 @@ export function ConnectionImportDrawer({
 		setUrlError(undefined)
 		try {
 			await onImportUrl()
+			onValueChange('')
 		} catch {
 			setUrlError({
 				title: t('import.errors.addTitle'),

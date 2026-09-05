@@ -84,7 +84,7 @@ describe('SmartConnectStatus', () => {
 					enabled: true,
 					isLoading: false,
 					status: 'success',
-					outcome: 'connected',
+					outcome: 'selected',
 					probed: 4,
 					winnerLatencyMs: 12,
 					nextRunAt: '2026-09-02T00:05:00.000Z',
@@ -93,7 +93,7 @@ describe('SmartConnectStatus', () => {
 			/>,
 		)
 
-		expect(screen.getByText('Fastest connection active')).toBeDefined()
+		expect(screen.getByText('Fastest connection selected')).toBeDefined()
 		expect(screen.getByText(/4 checked/)).toBeDefined()
 		expect(screen.getByText(/12 ms/)).toBeDefined()
 		expect(screen.getByText(/Next check/)).toBeDefined()

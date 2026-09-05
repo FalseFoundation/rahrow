@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RCEM53ZCMBZ7BDC9FMCQ
 title: Move the power-control ripple outside its backlight
-status: todo
+status: done
 priority: medium
 risk: medium
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 16:48 UTC
 labels:
   - home
   - power-control

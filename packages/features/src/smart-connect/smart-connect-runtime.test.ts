@@ -47,8 +47,10 @@ describe('createSmartConnectRuntime', () => {
 
 		expect(listener).toHaveBeenCalledOnce()
 		expect(listener).toHaveBeenCalledWith(
-			expect.objectContaining({ outcome: 'connected' }),
+			expect.objectContaining({ outcome: 'selected' }),
 		)
+		expect(connection.connect).not.toHaveBeenCalled()
+		expect(connection.disconnect).not.toHaveBeenCalled()
 		await expect(settingsStore.read()).resolves.toMatchObject({
 			activeProfileId: profile.id,
 		})
@@ -99,7 +101,7 @@ describe('createSmartConnectRuntime', () => {
 		})
 	})
 
-	it('forwards the selected engine and preflights it before connecting', async () => {
+	it('selects while disconnected without preflighting or powering on the engine', async () => {
 		const profileStore = new JsonProfileStore(new MemoryDocumentStore())
 		await profileStore.save(profile)
 		const settingsStore = new JsonSettingsStore(new MemoryDocumentStore())
@@ -122,12 +124,65 @@ describe('createSmartConnectRuntime', () => {
 			},
 		})
 
-		await expect(runtime.orchestrator.run()).rejects.toThrow('unsupported mode')
+		await expect(runtime.orchestrator.run()).resolves.toMatchObject({
+			outcome: 'selected',
+			winner: { profileId: profile.id, latencyMs: 12 },
+		})
+		expect(canConnect).not.toHaveBeenCalled()
+		expect(connect).not.toHaveBeenCalled()
+		await expect(settingsStore.read()).resolves.toMatchObject({
+			activeProfileId: profile.id,
+		})
+	})
+
+	it('uses the shared connection lifecycle to switch an already active session', async () => {
+		const current: ConnectionProfile = { ...profile, id: 'current' }
+		const profileStore = new JsonProfileStore(new MemoryDocumentStore())
+		await profileStore.replaceAll([current, profile])
+		const settingsStore = new JsonSettingsStore(new MemoryDocumentStore())
+		await settingsStore.write({
+			connectionMode: 'proxy',
+			engineId: 'xray',
+			localPort: 12080,
+		})
+		const canConnect = vi.fn<NonNullable<ConnectionPort['canConnect']>>()
+		const connect = vi.fn<ConnectionPort['connect']>()
+		const disconnect = vi.fn<ConnectionPort['disconnect']>()
+		const runtime = createSmartConnectRuntime({
+			profileStore,
+			settingsStore,
+			connection: {
+				canConnect,
+				connect,
+				disconnect,
+				status: vi.fn().mockResolvedValue({
+					state: 'connected',
+					mode: 'vpn',
+					engineId: 'sing-box',
+					profileId: current.id,
+					profile: current,
+				}),
+				test: vi.fn(async (candidate) => ({
+					reachable: true,
+					latencyMs: candidate.id === profile.id ? 12 : 40,
+				})),
+			},
+		})
+
+		await expect(runtime.orchestrator.run()).resolves.toMatchObject({
+			outcome: 'connected',
+			winner: { profileId: profile.id, latencyMs: 12 },
+		})
 		expect(canConnect).toHaveBeenCalledWith(profile, {
 			mode: 'proxy',
 			engineId: 'xray',
 			localPort: 12080,
 		})
-		expect(connect).not.toHaveBeenCalled()
+		expect(disconnect).toHaveBeenCalledOnce()
+		expect(connect).toHaveBeenCalledWith(profile, {
+			mode: 'proxy',
+			engineId: 'xray',
+			localPort: 12080,
+		})
 	})
 })

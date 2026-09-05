@@ -16,11 +16,7 @@ interface SourceFile {
 }
 
 const REPO_ROOT = process.cwd()
-const CONFIGURED_WORKSPACE_PACKAGES = [
-	'apps/**',
-	'!apps/demo',
-	'packages/**',
-] as const
+const CONFIGURED_WORKSPACE_PACKAGES = ['apps/**', 'packages/**'] as const
 const ACTIVE_WORKSPACE_PATHS = [
 	'apps/cli',
 	'apps/desktop',

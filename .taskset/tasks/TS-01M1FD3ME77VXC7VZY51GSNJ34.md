@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3ME77VXC7VZY51GSNJ34
 title: Complete About RahRow support, ownership, and open-source links
-status: doing
+status: done
 priority: high
 risk: medium
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-02 17:14 UTC
 labels:
   - cross-platform-hardening
   - about

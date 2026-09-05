@@ -1,3 +1,4 @@
+import type { ResetScope } from '@rahrow/core/settings/reset-orchestrator.ts'
 import type { Settings } from '@rahrow/core/storage/json-store.ts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -58,18 +59,32 @@ export function useSettings() {
 	const [pendingAction, setPendingAction] = useState<PendingAction | null>(null)
 	const loadLock = useRef(false)
 	const actionLock = useRef(false)
+	const hasUsableSettings = useRef(false)
+	const mutationRevision = useRef(0)
+	const translate = useRef(t)
+	translate.current = t
 	const engineIds = runtime.availableEngines?.map((engine) => engine.id) ?? [
 		runtime.engine.id,
 	]
 	const appVersion = runtime.buildMetadata?.version?.trim() || undefined
+	const restoreVisibleSettings = useCallback((settings: Settings) => {
+		setLocalPort(String(settings.localPort ?? DEFAULT_SETTINGS.localPort))
+		setEngineId(settings.engineId ?? DEFAULT_SETTINGS.engineId)
+		setRoutingMode(settings.routingMode ?? DEFAULT_SETTINGS.routingMode)
+		setTheme(settings.theme ?? DEFAULT_SETTINGS.theme)
+		setLanguage(resolveAppLocale(settings.language).language)
+		setConnectionMode(settings.connectionMode ?? DEFAULT_SETTINGS.connectionMode)
+		setLaunchAtStartup(settings.launchAtStartup ?? false)
+	}, [])
 
 	const load = useCallback(async () => {
 		if (loadLock.current) return false
 		loadLock.current = true
-		setIsLoading(true)
+		const revisionAtStart = mutationRevision.current
+		if (!hasUsableSettings.current) setIsLoading(true)
 		setLoadError(undefined)
 		setFailure(undefined)
-		setMessage(t('settings.status.loading'))
+		setMessage(translate.current('settings.status.loading'))
 
 		try {
 			const [settings, vpnStatus, systemProxyStatus, autostartStatus] =
@@ -79,12 +94,8 @@ export function useSettings() {
 					readCapabilityStatus(runtime.capabilities.systemProxy),
 					readCapabilityStatus(runtime.capabilities.autostart),
 				])
-			setLocalPort(String(settings.localPort ?? 10808))
-			setEngineId(settings.engineId ?? DEFAULT_SETTINGS.engineId)
-			setRoutingMode(settings.routingMode ?? DEFAULT_SETTINGS.routingMode)
-			setTheme(settings.theme ?? DEFAULT_SETTINGS.theme)
-			setLanguage(resolveAppLocale(settings.language).language)
-			setConnectionMode(settings.connectionMode ?? DEFAULT_SETTINGS.connectionMode)
+			if (revisionAtStart !== mutationRevision.current) return false
+			restoreVisibleSettings(settings)
 			setVpnSupported(vpnStatus !== undefined && vpnStatus.supported !== false)
 			setSystemProxySupported(systemProxyStatus?.supported === true)
 			setAutostartSupported(autostartStatus?.supported === true)
@@ -93,10 +104,11 @@ export function useSettings() {
 					supported: autostartStatus?.supported === true,
 				}),
 			)
-			setMessage(t('settings.status.loaded'))
+			hasUsableSettings.current = true
+			setMessage(translate.current('settings.status.loaded'))
 			return true
 		} catch {
-			const nextError = t('settings.errors.load')
+			const nextError = translate.current('settings.errors.load')
 			setLoadError(nextError)
 			setMessage(nextError)
 			return false
@@ -104,7 +116,7 @@ export function useSettings() {
 			loadLock.current = false
 			setIsLoading(false)
 		}
-	}, [runtime, t])
+	}, [restoreVisibleSettings, runtime.capabilities, runtime.settingsStore])
 
 	useEffect(() => {
 		void load()
@@ -140,18 +152,21 @@ export function useSettings() {
 		async (overrides: SettingsOverrides, action: PendingAction) => {
 			if (isLoading || loadError || actionLock.current) return false
 			actionLock.current = true
+			mutationRevision.current += 1
 			setPendingAction(action)
 			setFailure(undefined)
 			setMessage(
-				t(
+				translate.current(
 					action === 'reset'
 						? 'settings.status.resetting'
 						: 'settings.status.saving',
 				),
 			)
 
+			let current: Settings | undefined
+			let nativeAutostartChanged = false
 			try {
-				const current = await runtime.settingsStore.read()
+				current = await runtime.settingsStore.read()
 				const nextLocalPort = overrides.localPort ?? localPort
 				const nextEngineId = overrides.engineId ?? engineId
 				const nextRoutingMode = overrides.routingMode ?? routingMode
@@ -167,15 +182,17 @@ export function useSettings() {
 				})
 
 				if (!Number.isFinite(port) || port < 1 || port > 65535) {
-					throw new Error(t('settings.errors.invalidPort'))
+					throw new Error(translate.current('settings.errors.invalidPort'))
 				}
 
-				if (autostartSupported) {
+				const previousAutostart = current.launchAtStartup === true
+				if (autostartSupported && persistedAutostart !== previousAutostart) {
 					if (persistedAutostart) {
 						await runtime.capabilities.autostart?.enable()
 					} else {
 						await runtime.capabilities.autostart?.disable()
 					}
+					nativeAutostartChanged = true
 				}
 
 				await runtime.settingsStore.write({
@@ -200,12 +217,38 @@ export function useSettings() {
 						: `Settings saved with ${nextEngineId} in ${nextConnectionMode} mode`,
 				)
 				setMessage(
-					t(action === 'reset' ? 'settings.status.reset' : 'settings.status.saved'),
+					translate.current(
+						action === 'reset' ? 'settings.status.reset' : 'settings.status.saved',
+					),
 				)
 				return true
 			} catch (error) {
+				if (current) {
+					restoreVisibleSettings(current)
+					if (nativeAutostartChanged) {
+						try {
+							if (current.launchAtStartup === true) {
+								await runtime.capabilities.autostart?.enable()
+							} else {
+								await runtime.capabilities.autostart?.disable()
+							}
+						} catch (rollbackError) {
+							logger.warn(
+								{
+									action: 'settings.autostart.rollback',
+									outcome: 'failure',
+									errorType:
+										rollbackError instanceof Error
+											? rollbackError.name
+											: typeof rollbackError,
+								},
+								'Autostart rollback failed after settings persistence failure',
+							)
+						}
+					}
+				}
 				const verb = action === 'reset' ? 'reset' : 'save'
-				const nextFailure = t(
+				const nextFailure = translate.current(
 					action === 'reset' ? 'settings.errors.reset' : 'settings.errors.save',
 				)
 				logger.warn(
@@ -234,10 +277,10 @@ export function useSettings() {
 			localPort,
 			connectionMode,
 			logger,
+			restoreVisibleSettings,
 			routingMode,
 			runtime,
 			theme,
-			t,
 		],
 	)
 
@@ -246,19 +289,49 @@ export function useSettings() {
 		[persist],
 	)
 
-	const reset = useCallback(async () => {
-		const didReset = await persist(DEFAULT_SETTINGS, 'reset')
-		if (!didReset) return false
+	const reset = useCallback(
+		async (scope: ResetScope = 'settings') => {
+			if (!runtime.reset) {
+				if (scope !== 'settings') return false
+				const didReset = await persist(DEFAULT_SETTINGS, 'reset')
+				if (!didReset) return false
+				restoreVisibleSettings({
+					...DEFAULT_SETTINGS,
+					localPort: Number(DEFAULT_SETTINGS.localPort),
+				})
+				return true
+			}
 
-		setLocalPort(DEFAULT_SETTINGS.localPort)
-		setEngineId(DEFAULT_SETTINGS.engineId)
-		setRoutingMode(DEFAULT_SETTINGS.routingMode)
-		setTheme(DEFAULT_SETTINGS.theme)
-		setLanguage(DEFAULT_SETTINGS.language)
-		setConnectionMode(DEFAULT_SETTINGS.connectionMode)
-		setLaunchAtStartup(DEFAULT_SETTINGS.launchAtStartup)
-		return true
-	}, [persist])
+			if (isLoading || loadError || actionLock.current) return false
+			actionLock.current = true
+			mutationRevision.current += 1
+			setPendingAction('reset')
+			setFailure(undefined)
+			setMessage(translate.current('settings.status.resetting'))
+			try {
+				const outcome = await runtime.reset.reset(scope)
+				if (outcome.status !== 'completed') {
+					const nextFailure = `${translate.current('settings.errors.reset')} ${outcome.recovery}`
+					setFailure(nextFailure)
+					setMessage(nextFailure)
+					return false
+				}
+				const current = await runtime.settingsStore.read()
+				restoreVisibleSettings(current)
+				setMessage(translate.current('settings.status.reset'))
+				return true
+			} catch {
+				const nextFailure = translate.current('settings.errors.reset')
+				setFailure(nextFailure)
+				setMessage(nextFailure)
+				return false
+			} finally {
+				actionLock.current = false
+				setPendingAction(null)
+			}
+		},
+		[isLoading, loadError, persist, restoreVisibleSettings, runtime],
+	)
 
 	return {
 		state: {
