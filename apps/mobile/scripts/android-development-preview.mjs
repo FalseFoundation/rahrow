@@ -8,7 +8,7 @@ import {
 	rmSync,
 	writeFileSync,
 } from 'node:fs'
-import { dirname, join, posix, relative, resolve } from 'node:path'
+import { basename, dirname, join, posix, readdirSync, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const scriptRoot = dirname(fileURLToPath(import.meta.url))
@@ -228,6 +228,27 @@ export function validateAndroidProjectWiring(projectText, pins) {
 	return true
 }
 
+export function validateAndroidAbiPackaging(projectText) {
+	if (!/splits\s*\{[\s\S]*?\babi\s*\{[\s\S]*?\benable\s+true/.test(projectText))
+		throw new Error('Android must split native libraries into per-ABI APKs')
+	if (!projectText.includes('universalApk false'))
+		throw new Error('Android must not build a universal APK that embeds every ABI')
+	return true
+}
+
+/** ABI tokens in an APK filename. `x86` must not match inside `x86_64`. */
+export function packagedAbisFromApkName(apkName, knownAbis) {
+	const name = basename(apkName)
+	return [...knownAbis]
+		.toSorted((left, right) => right.length - left.length)
+		.filter((abi) => {
+			const index = name.indexOf(abi)
+			if (index < 0) return false
+			const after = name[index + abi.length]
+			return after === undefined || after === '-' || after === '.'
+		})
+}
+
 export function validateAndroidManifestContract(manifestText) {
 	for (const permission of [
 		'android.permission.ACCESS_NETWORK_STATE',
@@ -269,13 +290,30 @@ export function filterAndroidPreviewPlugins(plugins) {
 	return plugins.filter(({ pkg }) => pkg !== '@capacitor-community/admob')
 }
 
-export function assertApkContents(entries, manifest) {
+export function assertApkContents(entries, manifest, packagedAbis = manifest.abis) {
 	if (!entries.includes('assets/rahrow/native-runtime-manifest.json'))
 		throw new Error('APK lacks its native runtime provenance manifest')
 	if (manifest.firstRunExecutableDownloads !== false)
 		throw new Error('APK runtime manifest must prohibit executable downloads')
+	const requiredAbis =
+		packagedAbis ??
+		[
+			...new Set(
+				[...(manifest.engines ?? []), ...(manifest.tunnelProviders ?? [])].flatMap(
+					(component) => Object.keys(component.libraries ?? {}),
+				),
+			),
+		]
+	if (!Array.isArray(requiredAbis) || requiredAbis.length === 0)
+		throw new Error('APK ABI set must be a non-empty list')
+	for (const entry of entries) {
+		const match = entry.match(/^lib\/([^/]+)\//)
+		if (match && !requiredAbis.includes(match[1]))
+			throw new Error(`APK packages unexpected ABI ${match[1]}`)
+	}
 	for (const engine of manifest.engines ?? []) {
 		for (const [abi, libraries] of Object.entries(engine.libraries ?? {})) {
+			if (!requiredAbis.includes(abi)) continue
 			for (const library of libraries) {
 				if (!entries.includes(`lib/${abi}/${library}`))
 					throw new Error(
@@ -286,6 +324,7 @@ export function assertApkContents(entries, manifest) {
 	}
 	for (const provider of manifest.tunnelProviders ?? []) {
 		for (const [abi, libraries] of Object.entries(provider.libraries ?? {})) {
+			if (!requiredAbis.includes(abi)) continue
 			for (const library of libraries) {
 				if (!entries.includes(`lib/${abi}/${library}`))
 					throw new Error(
@@ -405,6 +444,7 @@ function checkProject() {
 		'utf8',
 	)
 	validateAndroidProjectWiring(project, pins)
+	validateAndroidAbiPackaging(project)
 	validateAndroidManifestContract(manifest)
 	return inspectAndroidRuntimes()
 }
@@ -445,7 +485,8 @@ function verifyApk(apkPath) {
 		throw new Error(
 			'APK native runtime provenance is stale or does not match pins',
 		)
-	assertApkContents(entries, embedded)
+	const namedAbis = packagedAbisFromApkName(absoluteApk, expected.abis ?? [])
+	assertApkContents(entries, embedded, namedAbis.length > 0 ? namedAbis : expected.abis)
 	console.log(
 		`Verified self-contained Android APK: ${relative(repositoryRoot, absoluteApk)}`,
 	)
@@ -476,11 +517,20 @@ function buildDebug() {
 	run(gradleWrapper, createAndroidBuildPlan(), {
 		cwd: join(mobileRoot, 'android'),
 	})
-	verifyApk(androidDebugApk)
+	const apkDir = dirname(androidDebugApk)
+	const apks = readdirSync(apkDir)
+		.filter((name) => name.endsWith('.apk') && !name.includes('androidTest'))
+		.toSorted()
+		.map((name) => join(apkDir, name))
+	if (apks.length === 0)
+		throw new Error(`Android debug build produced no APK in ${apkDir}`)
+	for (const apk of apks) verifyApk(apk)
+	const primary =
+		apks.find((apk) => basename(apk).includes('arm64-v8a')) ?? apks[0]
 	console.log(
-		`Installable Android development preview: ${relative(repositoryRoot, androidDebugApk)}`,
+		`Installable Android development preview: ${relative(repositoryRoot, primary)}`,
 	)
-	return androidDebugApk
+	return primary
 }
 
 function usage() {

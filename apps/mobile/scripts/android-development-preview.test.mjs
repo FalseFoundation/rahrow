@@ -6,6 +6,8 @@ import {
 	createAndroidBuildPlan,
 	createAndroidWebBuildPlan,
 	filterAndroidPreviewPlugins,
+	packagedAbisFromApkName,
+	validateAndroidAbiPackaging,
 	validateAndroidManifestContract,
 	validateAndroidProjectWiring,
 	validateAndroidRuntime,
@@ -186,6 +188,37 @@ describe('Android development preview runtime contract', () => {
 		expect(() => assertApkContents(entries.slice(0, -1), manifest)).toThrow(
 			'x86_64',
 		)
+		const arm64Entries = entries.filter(
+			(entry) => !entry.startsWith('lib/') || entry.includes('arm64-v8a'),
+		)
+		expect(assertApkContents(arm64Entries, manifest, ['arm64-v8a'])).toBe(true)
+		expect(() => assertApkContents(entries, manifest, ['arm64-v8a'])).toThrow(
+			'unexpected ABI',
+		)
+	})
+
+	it('reads one ABI from a split APK name without treating x86_64 as x86', () => {
+		expect(packagedAbisFromApkName('app-x86_64-debug.apk', abis)).toEqual([
+			'x86_64',
+		])
+		expect(packagedAbisFromApkName('app-x86-debug.apk', abis)).toEqual(['x86'])
+		expect(packagedAbisFromApkName('app-arm64-v8a-debug.apk', abis)).toEqual([
+			'arm64-v8a',
+		])
+		expect(packagedAbisFromApkName('app-debug.apk', abis)).toEqual([])
+	})
+
+	it('refuses a universal APK that embeds every native ABI', () => {
+		const split = `splits {\n    abi {\n        enable true\n        universalApk false\n    }\n}`
+		expect(validateAndroidAbiPackaging(split)).toBe(true)
+		expect(() =>
+			validateAndroidAbiPackaging('splits { abi { enable false } }'),
+		).toThrow('per-ABI')
+		expect(() =>
+			validateAndroidAbiPackaging(
+				'splits { abi { enable true\n universalApk true } }',
+			),
+		).toThrow('universal')
 	})
 
 	it('requires explicit local AAR dependencies in the Android app', () => {

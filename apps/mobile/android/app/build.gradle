@@ -37,6 +37,17 @@ android {
             useLegacyPackaging = true
         }
     }
+    // libgojni (Xray) and libbox (sing-box) are ~25 MB compressed each. A universal
+    // APK would ship both engines four times (arm64, armv7, x86, x86_64). Each
+    // installable APK carries one ABI only.
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'
+            universalApk false
+        }
+    }
 }
 
 repositories {
