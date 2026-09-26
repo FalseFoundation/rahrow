@@ -143,6 +143,8 @@ describe('Android native plugin contract', () => {
 		expect(tunnel).toContain('System.loadLibrary("hev-socks5-tunnel")')
 		expect(tunnel).toContain('TProxyStartService(config.absolutePath, tunnel.fd)')
 		expect(tunnel).toContain('TProxyStopService()')
+		expect(tunnel).toContain('TProxyGetStats(): LongArray')
+		expect(tunnel).toContain('addDisallowedApplication(service.packageName)')
 		expect(tunnel).toContain('address: 127.0.0.1')
 		expect(service).toContain(
 			'HevSocks5Tunnel(this, socksPort).also { it.start() }',
@@ -158,16 +160,21 @@ describe('Android native plugin contract', () => {
 		expect(buildScript).toContain("join(destination, 'libhev-socks5-tunnel.so')")
 	})
 
-	it('requests Android notification access at VPN activation without blocking the tunnel when denied', () => {
+	it('requests the system VPN consent before notification access at activation', () => {
 		const plugin = read(vpnPluginPath)
 		const manifest = read(manifestPath)
 
 		expect(manifest).toContain('android.permission.POST_NOTIFICATIONS')
 		expect(plugin).toContain('Manifest.permission.POST_NOTIFICATIONS')
 		expect(plugin).toContain('alias = "notifications"')
-		expect(plugin).toContain('requestPermissionForAlias(')
-		expect(plugin).toContain('notificationPermissionHandled')
+		expect(plugin).toContain('VpnService.prepare(')
 		expect(plugin).toContain('continueVpnPreparation(call)')
+		expect(plugin).toContain('maybeRequestNotificationsThenStart(call)')
+		expect(plugin).toContain('notificationPermissionHandled')
+		// VPN consent must run before the optional notification prompt.
+		expect(plugin.indexOf('continueVpnPreparation(call)')).toBeLessThan(
+			plugin.indexOf('maybeRequestNotificationsThenStart(call)'),
+		)
 	})
 
 	it('keeps an active Android tunnel owned by its foreground service after the app is backgrounded', () => {
@@ -182,11 +189,10 @@ describe('Android native plugin contract', () => {
 
 	it('runs the bundled Xray runtime against the Android-owned TUN descriptor', () => {
 		expect(existsSync(xrayProviderPath)).toBe(true)
-		expect(existsSync(xrayBridgePath)).toBe(true)
 
 		const provider = read(engineProviderPath)
 		const xray = read(xrayProviderPath)
-		const bridge = read(xrayBridgePath)
+		const build = read(androidBuildPath)
 
 		expect(provider).toContain('XrayNativeEngineProvider(service)')
 		expect(provider).toContain('libgojni.so')
@@ -195,10 +201,15 @@ describe('Android native plugin contract', () => {
 		expect(xray).toContain('"xray.tun.fd"')
 		expect(xray).toContain('"runXrayFromJson"')
 		expect(xray).toContain('"stopXray"')
-		expect(xray).toContain('LibXray.invoke')
+		expect(xray).toContain('InMemoryDexClassLoader')
+		expect(xray).toContain('rahrow-libxray.dex')
+		expect(xray).toContain('expandGeoipPrivateRules')
+		expect(xray).toContain('geoip:private')
 		expect(xray).toContain('tun?.close()')
-		expect(bridge).toContain('System.loadLibrary("gojni")')
-		expect(bridge).toContain('native String invoke')
+		expect(build).toContain('packageRahrowXrayApi')
+		expect(build).toContain('rahrow-libxray.dex')
+		expect(build).toContain('rahrowXrayAssetsDir')
+		expect(existsSync(xrayBridgePath)).toBe(false)
 	})
 
 	it('keeps VLESS, VMess, and Trojan parsing out of Kotlin', () => {

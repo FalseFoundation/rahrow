@@ -30,6 +30,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    // extractNativeLibs so isolated Xray InMemoryDexClassLoader can resolve libgojni.so
+    // via nativeLibraryDir (APK-embedded natives are invisible to that loader).
+    packaging {
+        jniLibs {
+            useLegacyPackaging = true
+        }
+    }
 }
 
 repositories {
@@ -49,6 +56,8 @@ def rahrowExtractedRuntimeAars = [
 ]
 
 def rahrowNativeLibraries = layout.buildDirectory.dir('generated/rahrowNativeRuntimes')
+def rahrowXrayRuntimeJar = layout.buildDirectory.file('generated/rahrowXrayApi/rahrow-libxray.jar')
+def rahrowXrayAssetsDir = layout.buildDirectory.dir('generated/rahrowXrayAssets')
 def extractRahrowNativeLibraries = tasks.register('extractRahrowNativeLibraries', Sync) {
     from(rahrowExtractedRuntimeAars.collect { zipTree(it) }) {
         include 'jni/**'
@@ -60,7 +69,60 @@ def extractRahrowNativeLibraries = tasks.register('extractRahrowNativeLibraries'
     into rahrowNativeLibraries
 }
 
+// libXray and libbox both ship gomobile go.Seq (loadLibrary gojni vs box). Keep
+// libbox's Seq on the app classpath; ship a d8-compiled libXray dex (with its own
+// Seq) as an asset loaded via InMemoryDexClassLoader in the :vpn_xray process only.
+def packageRahrowXrayApi = tasks.register('packageRahrowXrayApi') {
+	def xrayAar = file('libs/libXray.aar')
+	def outJar = rahrowXrayRuntimeJar.get().asFile
+	def assetsDir = rahrowXrayAssetsDir.get().asFile
+	def buildToolsDir = file("${System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT') ?: "${System.getProperty('user.home')}/Android/Sdk"}/build-tools")
+	inputs.file(xrayAar)
+	outputs.file(outJar)
+	outputs.dir(assetsDir)
+	doLast {
+		def staging = layout.buildDirectory.dir('tmp/rahrowXrayApi').get().asFile
+		delete staging
+		staging.mkdirs()
+		copy {
+			from(zipTree(xrayAar))
+			include 'classes.jar'
+			into staging
+		}
+		def classesDir = new File(staging, 'classes')
+		copy {
+			from(zipTree(new File(staging, 'classes.jar')))
+			exclude 'META-INF/**'
+			into classesDir
+		}
+		outJar.parentFile.mkdirs()
+		ant.jar(destfile: outJar, basedir: classesDir)
+
+		def d8 = buildToolsDir.listFiles()?.findAll { it.isDirectory() }?.toSorted()?.reverse()?.collect { new File(it, 'd8') }?.find { it.isFile() }
+		if (d8 == null) {
+			throw new GradleException("Android build-tools d8 not found under ${buildToolsDir}")
+		}
+		def d8Out = new File(staging, 'd8-out')
+		d8Out.mkdirs()
+		exec {
+			commandLine d8.absolutePath, '--output', d8Out.absolutePath, outJar.absolutePath
+		}
+		def dexFile = new File(d8Out, 'classes.dex')
+		if (!dexFile.isFile()) {
+			throw new GradleException("d8 did not produce classes.dex for libXray")
+		}
+		delete assetsDir
+		assetsDir.mkdirs()
+		copy {
+			from dexFile
+			into assetsDir
+			rename { 'rahrow-libxray.dex' }
+		}
+	}
+}
+
 android.sourceSets.main.jniLibs.srcDir(rahrowNativeLibraries)
+android.sourceSets.main.assets.srcDir(rahrowXrayAssetsDir)
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
@@ -78,7 +140,7 @@ dependencies {
 }
 
 tasks.named('preBuild').configure {
-    dependsOn extractRahrowNativeLibraries
+    dependsOn extractRahrowNativeLibraries, packageRahrowXrayApi
     doFirst {
         def missing = rahrowRuntimeAars.findAll { !it.isFile() }
         if (!missing.isEmpty()) {

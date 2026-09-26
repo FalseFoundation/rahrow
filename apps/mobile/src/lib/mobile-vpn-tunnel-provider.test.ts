@@ -95,7 +95,7 @@ describe('MobileVpnTunnelProvider', () => {
 		expect(plugin.connectInput?.engineConfig).not.toHaveProperty('route')
 	})
 
-	it('keeps Android Xray on its engine-native TUN backend', async () => {
+	it('uses HEV + SOCKS for Android Xray (Happ/v2rayNG path)', async () => {
 		const plugin = new FakeRahRowVpnPlugin(readyDiagnostics('android', true))
 		const provider = new MobileVpnTunnelProvider(
 			new CapacitorMobileVpn(plugin),
@@ -106,9 +106,9 @@ describe('MobileVpnTunnelProvider', () => {
 
 		expect(plugin.connectInput).toMatchObject({
 			engineId: 'xray',
-			tunBackendId: 'engine-native',
+			tunBackendId: 'hev-socks5-tunnel',
 			engineConfig: {
-				inbounds: [{ tag: 'tun-in', protocol: 'tun' }],
+				inbounds: [{ tag: 'socks-in', protocol: 'socks' }],
 			},
 		})
 	})

@@ -31,6 +31,7 @@ internal class HevSocks5Tunnel(
 			.addRoute("::", 0)
 			.addDnsServer("1.1.1.1")
 			.addDnsServer("2606:4700:4700::1111")
+			.addDisallowedApplication(service.packageName)
 			.apply { if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) setMetered(false) }
 			.establish()
 			?: throw IOException("Android could not establish the HEV VPN interface")
@@ -110,4 +111,6 @@ internal object HevSocks5TunnelNative {
 	external fun TProxyStartService(configPath: String, fd: Int): Boolean
 	external fun TProxyStopService(): Boolean
 	external fun TProxyIsRunning(): Boolean
+	/** Upstream traffic counters: txPackets, rxPackets, txBytes, rxBytes. */
+	external fun TProxyGetStats(): LongArray
 }

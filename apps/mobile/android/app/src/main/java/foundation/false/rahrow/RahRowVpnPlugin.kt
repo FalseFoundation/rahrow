@@ -55,8 +55,12 @@ class RahRowVpnPlugin : Plugin() {
 			call.reject("Unsupported TUN backend", "invalid_config")
 			return
 		}
-		if (tunBackendId == "hev-socks5-tunnel" && (engineId != "sing-box" || !HevSocks5Tunnel.isBundled(context))) {
-			call.reject("HEV requires its bundled Android runtime and the sing-box socket-protection adapter", "missing-native-plugin")
+		if (tunBackendId == "hev-socks5-tunnel" && !HevSocks5Tunnel.isBundled(context)) {
+			call.reject("HEV requires its bundled Android runtime", "missing-native-plugin")
+			return
+		}
+		if (tunBackendId == "hev-socks5-tunnel" && engineId !in setOf("sing-box", "xray")) {
+			call.reject("HEV requires a socket-protection adapter for this engine", "missing-native-plugin")
 			return
 		}
 		val current = VpnStatusStore(context).read()
@@ -75,31 +79,24 @@ class RahRowVpnPlugin : Plugin() {
 			.putExtra(RahRowVpnService.EXTRA_ENGINE_CONFIG, engineConfig.toString())
 			.putExtra(RahRowVpnService.EXTRA_TUN_BACKEND_ID, tunBackendId)
 			.putExtra(RahRowVpnService.EXTRA_SOCKS_PORT, socksPort)
-		if (
-			Build.VERSION.SDK_INT >= 33 &&
-			getPermissionState("notifications") != com.getcapacitor.PermissionState.GRANTED
-		) {
-			requestPermissionForAlias("notifications", call, "notificationPermissionHandled")
-			return
-		}
+		// Happ/v2rayNG order: system VPN consent first, then optional notification access.
 		continueVpnPreparation(call)
 	}
 
 	@PermissionCallback
 	private fun notificationPermissionHandled(call: PluginCall) {
-		// Android permits a VPN foreground service to start after notification
-		// access is denied. Continue while the OS keeps its required task-manager
-		// disclosure; the user can grant notification access later in Settings.
-		continueVpnPreparation(call)
+		// Tunnel start does not require notification access. Continue either way so the
+		// OS can still show its required task-manager disclosure for the FGS.
+		startTunnel(call)
 	}
 
 	private fun continueVpnPreparation(call: PluginCall) {
-		val prepare = VpnService.prepare(context)
+		val prepare = VpnService.prepare(activity ?: context)
 		if (prepare != null) {
 			startActivityForResult(call, prepare, "vpnPrepared")
 			return
 		}
-		startTunnel(call)
+		maybeRequestNotificationsThenStart(call)
 	}
 
 	@ActivityCallback
@@ -107,6 +104,17 @@ class RahRowVpnPlugin : Plugin() {
 		if (result.resultCode != Activity.RESULT_OK) {
 			pendingStartIntent = null
 			call.reject("VPN permission was denied", "unsupported_capability")
+			return
+		}
+		maybeRequestNotificationsThenStart(call)
+	}
+
+	private fun maybeRequestNotificationsThenStart(call: PluginCall) {
+		if (
+			Build.VERSION.SDK_INT >= 33 &&
+			getPermissionState("notifications") != com.getcapacitor.PermissionState.GRANTED
+		) {
+			requestPermissionForAlias("notifications", call, "notificationPermissionHandled")
 			return
 		}
 		startTunnel(call)
@@ -154,9 +162,14 @@ class RahRowVpnPlugin : Plugin() {
 	fun diagnostics(call: PluginCall) {
 		val xray = NativeEngineProvider.availability(context, "xray")
 		val singBox = NativeEngineProvider.availability(context, "sing-box")
-		val ready = singBox.available
-		val hevBundled = HevSocks5Tunnel.isBundled(context)
-		val detail = if (ready) "${singBox.detail}; ${xray.detail}" else singBox.detail
+		val ready = xray.available || singBox.available
+		val hevBundled = runCatching { HevSocks5Tunnel.isBundled(context) }.getOrDefault(false)
+		val detail = when {
+			xray.available && singBox.available -> "${xray.detail}; ${singBox.detail}"
+			xray.available -> xray.detail
+			singBox.available -> singBox.detail
+			else -> listOf(xray.detail, singBox.detail).joinToString("; ")
+		}
 		call.resolve(JSObject()
 			.put("platform", "android")
 			.put("nativeReady", ready)
@@ -212,7 +225,8 @@ class RahRowVpnPlugin : Plugin() {
 
 	private fun awaitTunnelStarted(call: PluginCall, statusStore: VpnStatusStore) {
 		thread(name = "rahrow-vpn-start", isDaemon = true) {
-			repeat(200) {
+			// Cold libXray load + SOCKS bind can exceed 10s on emulators.
+			repeat(600) {
 				val status = statusStore.read()
 				if (status.state == "connected") {
 					call.resolve()

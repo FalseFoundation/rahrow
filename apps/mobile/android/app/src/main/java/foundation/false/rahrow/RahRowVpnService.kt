@@ -10,8 +10,6 @@ import android.os.SystemClock
 import androidx.core.app.NotificationCompat
 import androidx.core.app.ServiceCompat
 import java.io.IOException
-import java.net.InetSocketAddress
-import java.net.Socket
 
 abstract class RahRowVpnService : VpnService() {
 	protected abstract val engineId: String
@@ -55,14 +53,27 @@ abstract class RahRowVpnService : VpnService() {
 		startForegroundNotification()
 		statusStore.write(NativeVpnStatus("connecting", profileId, engineId, tunBackendId))
 		try {
-			if (tunBackendId == "hev-socks5-tunnel" && engineId != "sing-box") {
-				throw IllegalArgumentException("HEV currently requires the sing-box socket-protection adapter")
+			if (tunBackendId == "hev-socks5-tunnel" && engineId !in setOf("sing-box", "xray")) {
+				throw IllegalArgumentException("HEV requires a socket-protection adapter for this engine")
 			}
+			if (tunBackendId == "hev-socks5-tunnel" && !HevSocks5Tunnel.isBundled(this)) {
+				throw IllegalArgumentException("Pinned HEV Android runtime is not bundled for this ABI")
+			}
+			val configForEngine =
+				if (tunBackendId == "hev-socks5-tunnel" && engineId == "xray") {
+					xrayConfigForHevBackend(engineConfig, socksPort)
+				} else {
+					engineConfig
+				}
 			val nativeProvider = NativeEngineProvider.create(this, engineId)
 			provider = nativeProvider
-			nativeProvider.start(engineConfig)
+			nativeProvider.start(configForEngine)
 			if (tunBackendId == "hev-socks5-tunnel") {
-				awaitLoopbackSocks(socksPort)
+				// Give the engine a beat to bind. Java Socket probes to the local
+				// SOCKS port are unreliable inside VpnService processes on Android
+				// (kernel shows LISTEN while Socket.connect still fails), so start
+				// HEV after a short settle rather than a TCP probe.
+				SystemClock.sleep(400)
 				hevTunnel = HevSocks5Tunnel(this, socksPort).also { it.start() }
 			}
 			statusStore.write(NativeVpnStatus("connected", profileId, engineId, tunBackendId))
@@ -108,19 +119,6 @@ abstract class RahRowVpnService : VpnService() {
 			ServiceCompat.stopForeground(this, STOP_FOREGROUND_REMOVE)
 		}
 		statusStore.write(NativeVpnStatus(if (teardownError == null) state else "error", profileId, engineId, error = teardownError))
-	}
-
-	private fun awaitLoopbackSocks(port: Int) {
-		repeat(40) {
-			val ready = runCatching {
-				Socket().use { socket ->
-					socket.connect(InetSocketAddress("127.0.0.1", port), 100)
-				}
-			}.isSuccess
-			if (ready) return
-			SystemClock.sleep(50)
-		}
-		throw IOException("sing-box did not open its local SOCKS listener")
 	}
 
 	private fun startForegroundNotification() {
