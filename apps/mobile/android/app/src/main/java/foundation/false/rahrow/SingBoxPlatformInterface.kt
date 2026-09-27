@@ -2,18 +2,22 @@ package foundation.falsefoundation.rahrow
 
 import android.annotation.SuppressLint
 import android.net.ConnectivityManager
+import android.net.DnsResolver
 import android.net.IpPrefix
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.VpnService
 import android.os.Build
+import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import android.os.Process
 import android.system.OsConstants
 import android.util.Base64
 import android.util.Log
 import io.nekohasekai.libbox.ConnectionOwner
+import io.nekohasekai.libbox.ExchangeContext
+import io.nekohasekai.libbox.Func
 import io.nekohasekai.libbox.InterfaceUpdateListener
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.LocalDNSTransport
@@ -23,6 +27,7 @@ import io.nekohasekai.libbox.PlatformInterface
 import io.nekohasekai.libbox.StringIterator
 import io.nekohasekai.libbox.TunOptions
 import io.nekohasekai.libbox.WIFIState
+import java.net.Inet4Address
 import java.net.Inet6Address
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -31,6 +36,9 @@ import java.net.NetworkInterface
 import java.security.KeyStore
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 import io.nekohasekai.libbox.NetworkInterface as LibboxNetworkInterface
 
 internal class SingBoxPlatformInterface(private val service: VpnService) : PlatformInterface {
@@ -47,7 +55,7 @@ internal class SingBoxPlatformInterface(private val service: VpnService) : Platf
 	override fun underNetworkExtension() = false
 	override fun includeAllNetworks() = false
 	override fun clearDNSCache() = Unit
-	override fun localDNSTransport(): LocalDNSTransport? = null
+	override fun localDNSTransport(): LocalDNSTransport = AndroidLocalDns(connectivity)
 	override fun readWIFIState(): WIFIState? = null
 	override fun sendNotification(notification: Notification) = Unit
 
@@ -220,5 +228,90 @@ internal class SingBoxPlatformInterface(private val service: VpnService) : Platf
 
 	companion object {
 		private const val TAG = "RahRowSingBox"
+	}
+}
+
+/**
+ * sing-box 1.13 resolves the proxy hostname through the `local` DNS server.
+ * On Android that server calls this transport. Queries use the physical
+ * network so they do not re-enter the VPN that is still waiting on that name.
+ */
+private class AndroidLocalDns(
+	private val connectivity: ConnectivityManager,
+) : LocalDNSTransport {
+	private val executor = Executors.newSingleThreadExecutor()
+
+	override fun raw() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q
+
+	override fun exchange(ctx: ExchangeContext, message: ByteArray) {
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+			ctx.errnoCode(OsConstants.ENOSYS)
+			return
+		}
+		exchangeOnUnderlyingNetwork(ctx, message)
+	}
+
+	override fun lookup(ctx: ExchangeContext, network: String, domain: String) {
+		val host = domain.trim().trimEnd('.')
+		try {
+			val addresses = InetAddress.getAllByName(host).mapNotNull { address ->
+				val ip = address.hostAddress ?: return@mapNotNull null
+				when (network) {
+					"ip4" -> if (address is Inet4Address) ip else null
+					"ip6" -> if (address is Inet6Address) ip else null
+					else -> ip
+				}
+			}
+			if (addresses.isEmpty()) ctx.errorCode(NXDOMAIN) else ctx.success(addresses.joinToString("\n"))
+		} catch (error: Exception) {
+			ctx.errnoCode(OsConstants.EIO)
+		}
+	}
+
+	@SuppressLint("NewApi")
+	private fun exchangeOnUnderlyingNetwork(ctx: ExchangeContext, message: ByteArray) {
+		val latch = CountDownLatch(1)
+		val signal = CancellationSignal()
+		ctx.onCancel(object : Func {
+			override fun invoke() {
+				signal.cancel()
+			}
+		})
+		DnsResolver.getInstance().rawQuery(
+			underlyingNetwork(),
+			message,
+			DnsResolver.FLAG_EMPTY,
+			executor,
+			signal,
+			object : DnsResolver.Callback<ByteArray> {
+				override fun onAnswer(answer: ByteArray, rcode: Int) {
+					ctx.rawSuccess(answer)
+					latch.countDown()
+				}
+
+				override fun onError(error: DnsResolver.DnsException) {
+					ctx.errnoCode(OsConstants.EIO)
+					latch.countDown()
+				}
+			},
+		)
+		if (!latch.await(DNS_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+			signal.cancel()
+			ctx.errnoCode(OsConstants.ETIMEDOUT)
+		}
+	}
+
+	@Suppress("DEPRECATION")
+	private fun underlyingNetwork(): Network? {
+		return connectivity.allNetworks.firstOrNull { network ->
+			val capabilities = connectivity.getNetworkCapabilities(network) ?: return@firstOrNull false
+			capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+				capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+		}
+	}
+
+	private companion object {
+		const val NXDOMAIN = 3
+		const val DNS_TIMEOUT_SECONDS = 5L
 	}
 }

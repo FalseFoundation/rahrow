@@ -5,10 +5,11 @@ import {
 	existsSync,
 	mkdirSync,
 	readFileSync,
+	readdirSync,
 	rmSync,
 	writeFileSync,
 } from 'node:fs'
-import { basename, dirname, join, posix, readdirSync, relative, resolve } from 'node:path'
+import { basename, dirname, join, posix, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const scriptRoot = dirname(fileURLToPath(import.meta.url))

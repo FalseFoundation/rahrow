@@ -196,9 +196,13 @@ describe('SingBoxConfigBuilder', () => {
 				stack: 'mixed',
 			},
 		])
+		expect(config.dns).toEqual({
+			servers: [{ type: 'local', tag: 'dns-direct' }],
+		})
 		expect(config.route).toEqual({
 			auto_detect_interface: true,
 			final: 'proxy',
+			default_domain_resolver: 'dns-direct',
 		})
 	})
 })

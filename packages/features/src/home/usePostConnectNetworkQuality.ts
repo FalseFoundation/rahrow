@@ -20,6 +20,7 @@ export function usePostConnectNetworkQuality(input: {
 	readonly connectionKey: string
 	readonly mode?: ConnectionMode
 	readonly localPort?: number
+	readonly egressPath?: 'captured' | 'local-proxy'
 	readonly probe?: NetworkQualityProbe
 }): PostConnectNetworkQualityState {
 	const [state, setState] = useState<PostConnectNetworkQualityState>(IDLE_STATE)
@@ -37,7 +38,7 @@ export function usePostConnectNetworkQuality(input: {
 		const controller = new AbortController()
 		let active = true
 		const proxyUrl =
-			input.mode === 'proxy' &&
+			(input.mode === 'proxy' || input.egressPath === 'local-proxy') &&
 			Number.isInteger(input.localPort) &&
 			(input.localPort ?? 0) > 0 &&
 			(input.localPort ?? 0) <= 65_535
@@ -66,6 +67,7 @@ export function usePostConnectNetworkQuality(input: {
 	}, [
 		input.connectionKey,
 		input.connectionState,
+		input.egressPath,
 		input.localPort,
 		input.mode,
 		input.probe,

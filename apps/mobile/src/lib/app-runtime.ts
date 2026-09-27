@@ -255,6 +255,7 @@ export function createMobileRuntime(
 		egressIdentity:
 			options.egressIdentity ??
 			createMobileEgressIdentity(globalThis.fetch, routedRequest),
+		egressPath: platform === 'android' ? 'local-proxy' : 'captured',
 		networkQuality:
 			options.networkQuality ??
 			createCloudflareNetworkQualityProbe({ routedRequest }),

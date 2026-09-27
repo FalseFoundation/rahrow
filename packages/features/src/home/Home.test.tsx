@@ -135,6 +135,44 @@ describe('Home network identity', () => {
 		expect(screen.queryByText('DEVICE · LAN')).toBeNull()
 		expect(screen.queryByText('192.168.1.20')).toBeNull()
 		expect(screen.queryByText(/RAHROW\s*·\s*SELECTED/i)).toBeNull()
+		expect(screen.queryByText('CURRENT · IP')).toBeNull()
+	})
+
+	it('shows the device address beside the tunnel exit', () => {
+		const current = connectedState()
+		useHome.mockReturnValue({
+			...current,
+			state: {
+				...current.state,
+				egressIdentity: {
+					status: 'available' as const,
+					observation: {
+						ip: '203.0.113.20',
+						countryCode: 'DE',
+						provider: 'cloudflare' as const,
+					},
+					current: {
+						status: 'available' as const,
+						observation: {
+							ip: '93.117.45.179',
+							countryCode: 'IR',
+							provider: 'cloudflare' as const,
+						},
+					},
+				},
+			},
+		})
+
+		render(<Home />)
+
+		expect(screen.getByText('EXIT · IP')).toBeTruthy()
+		expect(screen.getByText('203.0.113.20')).toBeTruthy()
+		expect(screen.getByText(/Germany · Observed through Cloudflare/)).toBeTruthy()
+		expect(screen.getByText('CURRENT · IP')).toBeTruthy()
+		expect(screen.getByText('93.117.45.179')).toBeTruthy()
+		expect(
+			screen.getByText(/Iran · This device, on the network outside the tunnel/),
+		).toBeTruthy()
 	})
 
 	it('labels observation failure without treating the connection as failed', () => {

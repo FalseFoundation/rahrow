@@ -151,6 +151,12 @@ export interface AppRuntime {
 	}
 	readonly smartConnect?: SmartConnectRuntime
 	readonly egressIdentity?: EgressIdentity
+	/**
+	 * `local-proxy` means this app is outside the VPN and the tunnel is reached
+	 * through the local SOCKS listener. `captured` means the platform routes
+	 * this app's own traffic through the tunnel.
+	 */
+	readonly egressPath?: 'captured' | 'local-proxy'
 	readonly networkQuality?: NetworkQualityProbe
 	readonly capabilities: AppCapabilities
 	readonly diagnostics: DiagnosticsPort

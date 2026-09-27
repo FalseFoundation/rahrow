@@ -55,11 +55,18 @@ export function Home() {
 	const profileName = selected ? state.profileLabel(selected) : ''
 	const protocol = selected?.protocol.toUpperCase() ?? '—'
 	const latency = state.latency ? presentLatency(state.latency) : null
+	const locale = i18n.resolvedLanguage ?? i18n.language ?? 'en'
 	const egressCountry =
 		state.egressIdentity.status === 'available'
+			? countryPresentation(state.egressIdentity.observation.countryCode, locale)
+			: null
+	const currentCountry =
+		state.egressIdentity.status !== 'disconnected' &&
+		state.egressIdentity.status !== 'loading' &&
+		state.egressIdentity.current?.status === 'available'
 			? countryPresentation(
-					state.egressIdentity.observation.countryCode,
-					i18n.resolvedLanguage ?? i18n.language ?? 'en',
+					state.egressIdentity.current.observation.countryCode,
+					locale,
 				)
 			: null
 	const display = homeDisplay({
@@ -355,35 +362,68 @@ export function Home() {
 						{display.showRoute ? (
 							<Card variant='glass' className={styles.identityRoute}>
 								<CardContent className={styles.identityContent}>
-									<div className={styles.identityEgress}>
-										<span>{t('home.route.egress')}</span>
-										<strong data-selectable dir='ltr' role='status'>
-											{state.egressIdentity.status === 'available'
-												? state.egressIdentity.observation.ip
-												: state.egressIdentity.status === 'loading'
-													? t('home.route.checking')
-													: t('home.route.unavailable')}
-										</strong>
-										<small>
-											{state.egressIdentity.status === 'available' ? (
-												<>
-													{egressCountry ? (
+									<div className={styles.identityAddresses}>
+										<div className={styles.identityEgress}>
+											<span>{t('home.route.egress')}</span>
+											<strong data-selectable dir='ltr' role='status'>
+												{state.egressIdentity.status === 'available'
+													? state.egressIdentity.observation.ip
+													: state.egressIdentity.status === 'loading'
+														? t('home.route.checking')
+														: t('home.route.unavailable')}
+											</strong>
+											<small>
+												{state.egressIdentity.status === 'available' ? (
+													<>
+														{egressCountry ? (
+															<>
+																<span aria-hidden='true'>{egressCountry.flag}</span>{' '}
+																{egressCountry.name} ·{' '}
+															</>
+														) : null}
+														{state.egressIdentity.observation.provider ===
+														'cloudflare'
+															? t('home.route.observedCloudflare')
+															: t('home.route.observedIpify')}
+													</>
+												) : state.egressIdentity.status === 'loading' ? (
+													t('home.route.checkingHint')
+												) : (
+													t('home.route.unavailableHint')
+												)}
+											</small>
+										</div>
+										{state.egressIdentity.status !== 'disconnected' &&
+										state.egressIdentity.status !== 'loading' &&
+										state.egressIdentity.current ? (
+											<div className={styles.identityEgress}>
+												<span>{t('home.route.current')}</span>
+												<strong data-selectable dir='ltr' role='status'>
+													{state.egressIdentity.current.status === 'available'
+														? state.egressIdentity.current.observation.ip
+														: t('home.route.unavailable')}
+												</strong>
+												<small>
+													{state.egressIdentity.current.status === 'available' ? (
 														<>
-															<span aria-hidden='true'>{egressCountry.flag}</span>{' '}
-															{egressCountry.name} ·{' '}
+															{currentCountry ? (
+																<>
+																	<span aria-hidden='true'>
+																		{currentCountry.flag}
+																	</span>{' '}
+																	{currentCountry.name} ·{' '}
+																</>
+															) : null}
+															{t('home.route.currentHint')}
 														</>
-													) : null}
-													{state.egressIdentity.observation.provider === 'cloudflare'
-														? t('home.route.observedCloudflare')
-														: t('home.route.observedIpify')}
-												</>
-											) : state.egressIdentity.status === 'loading' ? (
-												t('home.route.checkingHint')
-											) : (
-												t('home.route.unavailableHint')
-											)}
-										</small>
-										{state.networkQuality.status === 'testing' ? (
+													) : (
+														t('home.route.unavailableHint')
+													)}
+												</small>
+											</div>
+										) : null}
+									</div>
+									{state.networkQuality.status === 'testing' ? (
 											<small className={styles.networkQuality} role='status'>
 												{t('home.route.qualityTesting')}
 											</small>
@@ -408,7 +448,6 @@ export function Home() {
 												{t('home.route.qualityUnavailable')}
 											</small>
 										) : null}
-									</div>
 								</CardContent>
 							</Card>
 						) : null}

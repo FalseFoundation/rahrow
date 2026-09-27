@@ -50,7 +50,7 @@ export function createCloudflareNetworkQualityProbe(
 	return {
 		async test(testOptions = {}) {
 			if (
-				testOptions.mode === 'proxy' &&
+				(testOptions.mode === 'proxy' || Boolean(testOptions.proxyUrl?.trim())) &&
 				(!options.routedRequest || !testOptions.proxyUrl?.trim())
 			) {
 				return unavailableResult()
@@ -120,7 +120,7 @@ async function requestStatus(input: {
 	readonly request: typeof globalThis.fetch
 	readonly routedRequest?: EgressIdentityRequester
 }): Promise<boolean> {
-	if (input.mode === 'proxy') {
+	if (input.mode === 'proxy' || input.proxyUrl?.trim()) {
 		const response = await input.routedRequest?.({
 			url: input.url,
 			mode: 'proxy',
@@ -144,7 +144,7 @@ async function requestDownloadBytes(input: {
 	readonly request: typeof globalThis.fetch
 	readonly routedRequest?: EgressIdentityRequester
 }): Promise<number> {
-	if (input.mode === 'proxy') {
+	if (input.mode === 'proxy' || input.proxyUrl?.trim()) {
 		const response = await input.routedRequest?.({
 			url: CLOUDFLARE_DOWNLOAD_TEST_URL,
 			mode: 'proxy',

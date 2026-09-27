@@ -39,21 +39,65 @@ describe('usePostConnectEgressIdentity', () => {
 			proxyUrl: 'socks5://127.0.0.1:12080',
 			signal: expect.any(AbortSignal),
 		})
+		expect(observe).toHaveBeenCalledWith({
+			mode: 'vpn',
+			signal: expect.any(AbortSignal),
+		})
+	})
+
+	it('measures the device address directly and the exit address through SOCKS on Android VPN', async () => {
+		const observe = vi.fn(
+			async (input: {
+				readonly mode: string
+				readonly proxyUrl?: string
+			}): Promise<EgressIdentityObservation> =>
+				input.proxyUrl
+					? { ip: '203.0.113.41', countryCode: 'DE', provider: 'cloudflare' }
+					: { ip: '93.117.45.179', countryCode: 'IR', provider: 'cloudflare' },
+		)
+		const identity: EgressIdentity = { observe }
+		const { result } = renderHook(() =>
+			usePostConnectEgressIdentity({
+				connectionState: 'connected',
+				connectionKey: 'profile-a:vpn:xray',
+				mode: 'vpn',
+				localPort: 10808,
+				egressPath: 'local-proxy',
+				identity,
+			}),
+		)
+
+		await waitFor(() => expect(result.current.status).toBe('available'))
+		expect(result.current).toMatchObject({
+			observation: { ip: '203.0.113.41', countryCode: 'DE' },
+			current: {
+				status: 'available',
+				observation: { ip: '93.117.45.179', countryCode: 'IR' },
+			},
+		})
+		expect(observe).toHaveBeenCalledWith({
+			mode: 'vpn',
+			proxyUrl: 'socks5://127.0.0.1:10808',
+			signal: expect.any(AbortSignal),
+		})
+		expect(observe).toHaveBeenCalledWith({
+			mode: 'vpn',
+			signal: expect.any(AbortSignal),
+		})
 	})
 
 	it('aborts and discards an older connection generation after a route change', async () => {
-		const pending = new Map<
-			string,
-			{
-				readonly signal: AbortSignal | undefined
-				readonly resolve: (value: EgressIdentityObservation) => void
-			}
-		>()
+		const pending: {
+			readonly key: string
+			readonly signal: AbortSignal | undefined
+			readonly resolve: (value: EgressIdentityObservation) => void
+		}[] = []
 		const identity: EgressIdentity = {
 			observe: vi.fn(
 				(input) =>
 					new Promise<EgressIdentityObservation>((resolve) => {
-						pending.set(input.proxyUrl ?? 'vpn', {
+						pending.push({
+							key: input.proxyUrl ?? 'direct',
 							signal: input.signal,
 							resolve,
 						})
@@ -76,24 +120,25 @@ describe('usePostConnectEgressIdentity', () => {
 				},
 			},
 		)
-		await waitFor(() => expect(pending.size).toBe(1))
+		await waitFor(() => expect(pending).toHaveLength(2))
 
 		rerender({
 			connectionKey: 'profile-b:proxy:sing-box',
 			localPort: 10809,
 		})
-		await waitFor(() => expect(pending.size).toBe(2))
-		expect(pending.get('socks5://127.0.0.1:10808')?.signal?.aborted).toBe(true)
+		await waitFor(() => expect(pending).toHaveLength(4))
+		expect(
+			pending.find((entry) => entry.key === 'socks5://127.0.0.1:10808')?.signal
+				?.aborted,
+		).toBe(true)
 
 		act(() => {
-			pending.get('socks5://127.0.0.1:10808')?.resolve({
-				ip: '198.51.100.1',
-				provider: 'ipify',
-			})
-			pending.get('socks5://127.0.0.1:10809')?.resolve({
-				ip: '203.0.113.2',
-				provider: 'ipify',
-			})
+			for (const entry of pending) {
+				entry.resolve({
+					ip: entry.key === 'socks5://127.0.0.1:10809' ? '203.0.113.2' : '198.51.100.1',
+					provider: 'ipify',
+				})
+			}
 		})
 		await waitFor(() => expect(result.current.status).toBe('available'))
 		expect(result.current).toMatchObject({

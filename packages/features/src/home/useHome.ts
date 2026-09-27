@@ -70,6 +70,7 @@ export function useHome() {
 		connectionKey: `${selectedProfileId}:${connectionMode}:${runtime.engine.id}:${localPort}`,
 		mode: connectionMode,
 		localPort,
+		egressPath: runtime.egressPath,
 		identity: runtime.egressIdentity,
 	})
 	const networkQuality = usePostConnectNetworkQuality({
@@ -77,6 +78,7 @@ export function useHome() {
 		connectionKey: `${selectedProfileId}:${connectionMode}:${runtime.engine.id}:${localPort}`,
 		mode: connectionMode,
 		localPort,
+		egressPath: runtime.egressPath,
 		probe: runtime.networkQuality,
 	})
 	const smartConnect = useSmartConnect(runtime.smartConnect)

@@ -38,4 +38,27 @@ describe('mobile egress identity', () => {
 		)
 		expect(fetcher).not.toHaveBeenCalled()
 	})
+
+	it('measures a VPN exit through the local SOCKS listener when a proxy URL is provided', async () => {
+		const fetcher = vi.fn()
+		const routedRequest = vi.fn(async () => ({
+			status: 200,
+			body: 'ip=203.0.113.41\nloc=DE\n',
+		}))
+		const identity = createMobileEgressIdentity(fetcher, routedRequest)
+
+		await expect(
+			identity.observe({
+				mode: 'vpn',
+				proxyUrl: 'socks5://127.0.0.1:10808',
+			}),
+		).resolves.toMatchObject({ ip: '203.0.113.41', countryCode: 'DE' })
+		expect(routedRequest).toHaveBeenCalledWith(
+			expect.objectContaining({
+				mode: 'proxy',
+				proxyUrl: 'socks5://127.0.0.1:10808',
+			}),
+		)
+		expect(fetcher).not.toHaveBeenCalled()
+	})
 })

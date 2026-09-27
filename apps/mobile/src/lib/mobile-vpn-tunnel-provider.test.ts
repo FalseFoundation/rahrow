@@ -92,7 +92,14 @@ describe('MobileVpnTunnelProvider', () => {
 				],
 			},
 		})
-		expect(plugin.connectInput?.engineConfig).not.toHaveProperty('route')
+		expect(plugin.connectInput?.engineConfig).toMatchObject({
+			dns: { servers: [{ type: 'local', tag: 'dns-direct' }] },
+			route: {
+				auto_detect_interface: true,
+				final: 'proxy',
+				default_domain_resolver: 'dns-direct',
+			},
+		})
 	})
 
 	it('uses HEV + SOCKS for Android Xray (Happ/v2rayNG path)', async () => {

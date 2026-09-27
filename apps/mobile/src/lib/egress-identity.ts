@@ -12,11 +12,18 @@ export function createMobileEgressIdentity(
 	routedRequest?: EgressIdentityRequester,
 ): EgressIdentity {
 	const request: EgressIdentityRequester = async (input) => {
-		if (input.mode === 'proxy') {
+		// Android VPN excludes this app from the tunnel, so a WebView fetch
+		// reports the device address. A proxy URL means the caller wants the
+		// address observed through the local SOCKS listener.
+		if (input.proxyUrl?.trim()) {
 			if (!routedRequest) {
 				throw new Error('Mobile proxy-routed egress observation is unavailable')
 			}
-			return await routedRequest(input)
+			return await routedRequest({
+				...input,
+				mode: 'proxy',
+				proxyUrl: input.proxyUrl,
+			})
 		}
 
 		const response = await fetcher(input.url, {

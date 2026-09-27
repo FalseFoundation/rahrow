@@ -32,11 +32,17 @@ export interface SingBoxLatencyProbe {
 
 export interface SingBoxConfig {
 	readonly log: { readonly level: 'warn' }
+	readonly dns: {
+		readonly servers: readonly [
+			{ readonly type: 'local'; readonly tag: 'dns-direct' },
+		]
+	}
 	readonly inbounds: readonly SingBoxInbound[]
 	readonly outbounds: readonly SingBoxOutbound[]
-	readonly route?: {
+	readonly route: {
 		readonly auto_detect_interface: true
 		readonly final: 'proxy'
+		readonly default_domain_resolver: 'dns-direct'
 	}
 }
 
@@ -79,6 +85,7 @@ export class SingBoxConfigBuilder {
 
 		return {
 			log: { level: 'warn' },
+			dns: { servers: [{ type: 'local', tag: 'dns-direct' }] },
 			inbounds: [
 				vpn
 					? {
@@ -102,11 +109,11 @@ export class SingBoxConfigBuilder {
 				{ type: 'direct', tag: 'direct' },
 				{ type: 'block', tag: 'block' },
 			],
-			...(vpn
-				? {
-						route: { auto_detect_interface: true as const, final: 'proxy' as const },
-					}
-				: {}),
+			route: {
+				auto_detect_interface: true,
+				final: 'proxy',
+				default_domain_resolver: 'dns-direct',
+			},
 		}
 	}
 

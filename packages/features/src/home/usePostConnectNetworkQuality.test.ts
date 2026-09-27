@@ -62,6 +62,33 @@ describe('usePostConnectNetworkQuality', () => {
 		)
 	})
 
+	it('routes an Android VPN check through the local SOCKS listener', async () => {
+		const test = vi.fn(async () => ({
+			provider: 'cloudflare' as const,
+			reachable: true,
+			latencyMs: 42,
+		}))
+		const probe: NetworkQualityProbe = { test }
+		const { result } = renderHook(() =>
+			usePostConnectNetworkQuality({
+				connectionState: 'connected',
+				connectionKey: 'profile-1:vpn:10808',
+				mode: 'vpn',
+				localPort: 10808,
+				egressPath: 'local-proxy',
+				probe,
+			}),
+		)
+
+		await waitFor(() => expect(result.current.status).toBe('complete'))
+		expect(test).toHaveBeenCalledWith(
+			expect.objectContaining({
+				mode: 'vpn',
+				proxyUrl: 'socks5://127.0.0.1:10808',
+			}),
+		)
+	})
+
 	it('cancels an in-flight check when the connection ends', async () => {
 		let signal: AbortSignal | undefined
 		const probe: NetworkQualityProbe = {
