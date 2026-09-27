@@ -297,8 +297,96 @@ describe('createDesktopRuntime', () => {
 
 		await expect(
 			runtime.connection.connect(profile, { mode: 'vpn', localPort: 12080 }),
-		).rejects.toThrow('VPN provider reported disconnected')
+		).rejects.toThrow('no registered OS tunnel provider')
 		expect(native.startedConfigs).toEqual([])
+	})
+
+	it('routes the TUN device into the engine SOCKS listener in VPN mode', async () => {
+		const native = new FakeNativeCommands()
+		const tunnelCalls: string[] = []
+		let tunnelRunning = false
+		const runtime = createDesktopRuntime({
+			native,
+			platformNative: {
+				...fakePlatformNative,
+				async diagnostics() {
+					return {
+						capabilities: [
+							{
+								capability: 'vpn-tunnel',
+								supported: true,
+								enabled: tunnelRunning,
+							},
+						],
+					}
+				},
+				async startTunnel(input) {
+					expect(native.running).toBe(true)
+					tunnelCalls.push(
+						`start:${input.socksPort}:${input.serverHost}:${input.serverPort}`,
+					)
+					tunnelRunning = true
+				},
+				async stopTunnel() {
+					tunnelCalls.push(`stop:engine-running=${native.running}`)
+					tunnelRunning = false
+				},
+			},
+			profileDocument: new MemoryDocumentStore(),
+			settingsDocument: new MemoryDocumentStore(),
+			subscriptionDocument: new MemoryDocumentStore(),
+		})
+
+		await runtime.settingsStore.write({ engineId: 'xray' })
+		await runtime.connection.connect(profile, { mode: 'vpn', localPort: 12080 })
+
+		expect(native.startedConfigs[0]?.inbounds[0]).toMatchObject({
+			listen: '127.0.0.1',
+			port: 12080,
+			protocol: 'socks',
+		})
+		expect(tunnelCalls).toEqual(['start:12080:example.com:443'])
+		await expect(runtime.connection.status()).resolves.toMatchObject({
+			state: 'connected',
+			mode: 'vpn',
+			engineId: 'xray',
+			profileId: 'home-profile',
+		})
+
+		await runtime.connection.disconnect()
+
+		expect(tunnelCalls).toEqual([
+			'start:12080:example.com:443',
+			'stop:engine-running=true',
+		])
+		expect(native.running).toBe(false)
+		await expect(runtime.connection.status()).resolves.toMatchObject({
+			state: 'disconnected',
+		})
+	})
+
+	it('stops the engine when the TUN device fails to start', async () => {
+		const native = new FakeNativeCommands()
+		const runtime = createDesktopRuntime({
+			native,
+			platformNative: {
+				...fakePlatformNative,
+				async startTunnel() {
+					throw new Error('Tunnel authorization was cancelled.')
+				},
+				async stopTunnel() {},
+			},
+			profileDocument: new MemoryDocumentStore(),
+			settingsDocument: new MemoryDocumentStore(),
+			subscriptionDocument: new MemoryDocumentStore(),
+		})
+
+		await runtime.settingsStore.write({ engineId: 'xray' })
+		await expect(
+			runtime.connection.connect(profile, { mode: 'vpn', localPort: 12080 }),
+		).rejects.toThrow('Tunnel authorization was cancelled.')
+		expect(native.startedConfigs).toHaveLength(1)
+		expect(native.running).toBe(false)
 	})
 
 	it('uses system proxy only as an explicit fallback and restores it on disconnect', async () => {

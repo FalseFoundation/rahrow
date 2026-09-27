@@ -121,10 +121,13 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let hide = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&show, &hide, &quit])?;
-    let icon = fallback_tray_icon();
+
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.set_icon(app_icon());
+    }
 
     TrayIconBuilder::with_id(TRAY_ID)
-        .icon(icon)
+        .icon(app_icon())
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id().as_ref() {
@@ -586,6 +589,10 @@ fn macos_plist(exe: &std::path::Path) -> String {
 
 fn current_exe() -> Result<PathBuf, DesktopCommandError> {
     env::current_exe().map_err(|error| command_error("desktop_command_failed", error.to_string()))
+}
+
+fn app_icon() -> Image<'static> {
+    Image::from_bytes(include_bytes!("../icons/icon.png")).unwrap_or_else(|_| fallback_tray_icon())
 }
 
 fn fallback_tray_icon() -> Image<'static> {

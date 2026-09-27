@@ -1,0 +1,18 @@
+{
+	"bundle": {
+		"linux": {
+			"deb": {
+				"depends": ["pkexec | policykit-1"],
+				"files": {
+					"/usr/share/polkit-1/actions/foundation.false.rahrow.tun.policy": "polkit/foundation.false.rahrow.tun.policy"
+				}
+			},
+			"rpm": {
+				"depends": ["polkit"],
+				"files": {
+					"/usr/share/polkit-1/actions/foundation.false.rahrow.tun.policy": "polkit/foundation.false.rahrow.tun.policy"
+				}
+			}
+		}
+	}
+}

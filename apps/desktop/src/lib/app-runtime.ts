@@ -120,7 +120,7 @@ export function createDesktopRuntime(
 	)
 	const networkIdentity = options.networkIdentity ?? platform.networkIdentity
 	const tunnel = new VpnTunnelCoordinator(
-		new DesktopVpnTunnelProvider(platform.vpn),
+		new DesktopVpnTunnelProvider(platform.vpn, stack.commands, platform.tunnel),
 	)
 	const advertising =
 		options.advertising === null
@@ -195,6 +195,7 @@ export function createDesktopRuntime(
 		egressIdentity:
 			options.egressIdentity ??
 			createDesktopEgressIdentity(globalThis.fetch, routedRequest),
+		egressPath: 'local-proxy',
 		networkQuality:
 			options.networkQuality ??
 			createCloudflareNetworkQualityProbe({ routedRequest }),
@@ -432,6 +433,12 @@ function createDesktopConnectionPort(
 		},
 		async connect(profile: ConnectionProfile, options) {
 			if (options.mode === 'vpn') {
+				// System proxy and TUN fight over the same flows; clear leftover
+				// proxy mode (including Happ) before owning the tunnel.
+				const proxyStatus = await platform.systemProxy.status()
+				if (proxyStatus.enabled) {
+					await platform.systemProxy.disable()
+				}
 				const engineId = options.engineId ?? (await selectEngine())
 				await tunnel.connect({
 					profile,

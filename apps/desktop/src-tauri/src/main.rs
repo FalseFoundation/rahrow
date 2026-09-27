@@ -2,6 +2,7 @@
 
 mod native;
 mod network_identity;
+mod tun;
 mod vpn_ipc;
 
 use serde::Serialize;
@@ -10,6 +11,7 @@ use std::{
     collections::VecDeque,
     env, fs,
     io::{BufRead, BufReader, Read},
+    net::{IpAddr, ToSocketAddrs},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{Arc, Mutex},
@@ -24,6 +26,7 @@ use native::{
     rahrow_tcp_probe, rahrow_tray_hide, rahrow_tray_show, rahrow_tray_status, setup_tray,
     system_proxy_status, tray_status,
 };
+use tun::{rahrow_tun_start, rahrow_tun_stop, TunRuntimeState};
 
 #[derive(Default)]
 struct XrayRuntimeState {
@@ -397,7 +400,8 @@ fn start_xray_process(
     }
 
     let binary = xray_binary_path()?;
-    let config_path = write_xray_config(config)?;
+    terminate_orphaned_engines();
+    let config_path = write_xray_config(&pin_proxy_servers(config))?;
 
     let mut command = Command::new(&binary);
     command
@@ -560,11 +564,15 @@ async fn rahrow_desktop_diagnostics(
     app: tauri::AppHandle,
     state: State<'_, Mutex<XrayRuntimeState>>,
     sing_box_state: State<'_, Mutex<SingBoxRuntimeState>>,
+    tun_state: State<'_, Mutex<TunRuntimeState>>,
 ) -> Result<DesktopDiagnostics, DesktopCommandError> {
     let mut state = lock_state(&state)?;
     clear_exited_xray(&mut state);
     let mut sing_box_state = lock_sing_box_state(&sing_box_state)?;
     clear_exited_sing_box(&mut sing_box_state);
+    let mut tun_state = tun_state
+        .lock()
+        .map_err(|error| command_error("desktop_command_failed", error.to_string()))?;
 
     Ok(DesktopDiagnostics {
         capabilities: vec![
@@ -582,12 +590,7 @@ async fn rahrow_desktop_diagnostics(
                 sing_box_state.last_error.as_deref(),
                 sing_box_binary_path(),
             ),
-            NativeCapabilityStatus {
-                capability: "vpn-tunnel",
-                supported: false,
-                enabled: Some(false),
-                detail: Some(desktop_vpn_provider_detail().to_string()),
-            },
+            tun::capability_status(&mut tun_state),
             hev_tunnel_backend_capability(),
             system_proxy_status(),
             tray_status(&app),
@@ -597,6 +600,7 @@ async fn rahrow_desktop_diagnostics(
         output: output_snapshot(&state.output)
             .into_iter()
             .chain(output_snapshot(&sing_box_state.output))
+            .chain(output_snapshot(&tun_state.output))
             .collect(),
     })
 }
@@ -662,7 +666,9 @@ fn start_sing_box_process(
     }
 
     let binary = sing_box_binary_path()?;
-    let config_path = write_sing_box_config(config)?;
+    terminate_orphaned_engines();
+    let pinned = pin_proxy_servers(config);
+    let config_path = write_sing_box_config(&pinned)?;
 
     let mut child = Command::new(&binary)
         .arg("run")
@@ -713,6 +719,177 @@ fn sing_box_binary_path() -> Result<String, DesktopCommandError> {
         "sing-box sidecar was not found. Set RAHROW_SING_BOX_BINARY to an explicit executable path or bundle the pinned artifact from engines/sing-box/runtime.json. Production builds do not search PATH."
             .to_string(),
     ))
+}
+
+/// Engine configs are named `rahrow-<engine>-<owner pid>-<suffix>.json`. An
+/// engine whose owner is gone (crash, dev rebuild) still holds the local
+/// port, and every new connect then fails to bind it.
+fn orphaned_engine_owner(arg: &str) -> Option<u32> {
+    let name = Path::new(arg).file_name()?.to_str()?;
+    let rest = name
+        .strip_prefix("rahrow-sing-box-")
+        .or_else(|| name.strip_prefix("rahrow-xray-"))?;
+    if !name.ends_with(".json") {
+        return None;
+    }
+    rest.split('-').next()?.parse().ok()
+}
+
+#[cfg(unix)]
+fn terminate_orphaned_engines() {
+    let own_pid = std::process::id();
+    let Ok(entries) = fs::read_dir("/proc") else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let Some(pid) = entry.file_name().to_str().and_then(|pid| pid.parse::<i32>().ok()) else {
+            continue;
+        };
+        let Ok(cmdline) = fs::read(entry.path().join("cmdline")) else {
+            continue;
+        };
+        let owner = cmdline
+            .split(|byte| *byte == 0)
+            .find_map(|arg| orphaned_engine_owner(&String::from_utf8_lossy(arg)));
+        let Some(owner) = owner else {
+            continue;
+        };
+        if owner == own_pid || Path::new(&format!("/proc/{owner}")).exists() {
+            continue;
+        }
+        let _ = Command::new("kill").arg(pid.to_string()).status();
+        let deadline = std::time::Instant::now() + Duration::from_secs(3);
+        while entry.path().exists() && std::time::Instant::now() < deadline {
+            thread::sleep(Duration::from_millis(50));
+        }
+    }
+}
+
+#[cfg(not(unix))]
+fn terminate_orphaned_engines() {}
+
+/// Resolve proxy hostnames before the tunnel owns system DNS. Once the TUN
+/// points systemd-resolved at itself, a hostname server lookup deadlocks:
+/// the engine asks DNS, DNS enters the tunnel, and the tunnel needs the
+/// engine to reach its own server.
+fn pin_proxy_servers(config: &Value) -> Value {
+    pin_proxy_servers_with(config, |host| {
+        (host, 0)
+            .to_socket_addrs()
+            .ok()?
+            .map(|address| address.ip())
+            .find(IpAddr::is_ipv4)
+    })
+}
+
+/// Swaps server hostnames for IPs. Engines derive the TLS SNI and the
+/// WebSocket Host from the server address when those are unset, so the
+/// original hostname is written into them first.
+fn pin_proxy_servers_with(config: &Value, resolve: impl Fn(&str) -> Option<IpAddr>) -> Value {
+    let mut config = config.clone();
+    let Some(outbounds) = config.get_mut("outbounds").and_then(Value::as_array_mut) else {
+        return config;
+    };
+    for outbound in outbounds {
+        if let Some(host) = pin_address(outbound, "server", &resolve) {
+            keep_sing_box_host(outbound, &host);
+            continue;
+        }
+        let mut pinned_host = None;
+        for list in ["vnext", "servers"] {
+            let Some(entries) = outbound
+                .get_mut("settings")
+                .and_then(|settings| settings.get_mut(list))
+                .and_then(Value::as_array_mut)
+            else {
+                continue;
+            };
+            for entry in entries {
+                if let Some(host) = pin_address(entry, "address", &resolve) {
+                    pinned_host.get_or_insert(host);
+                }
+            }
+        }
+        if let Some(host) = pinned_host {
+            keep_xray_host(outbound, &host);
+        }
+    }
+    config
+}
+
+fn pin_address(
+    object: &mut Value,
+    key: &str,
+    resolve: &impl Fn(&str) -> Option<IpAddr>,
+) -> Option<String> {
+    let host = object.get(key)?.as_str()?.to_string();
+    if host.parse::<IpAddr>().is_ok() {
+        return None;
+    }
+    let ip = resolve(&host)?;
+    object[key] = Value::String(ip.to_string());
+    Some(host)
+}
+
+fn set_if_missing(object: &mut Value, key: &str, host: &str) {
+    let missing = object
+        .get(key)
+        .and_then(Value::as_str)
+        .map_or(true, str::is_empty);
+    if missing && object.is_object() {
+        object[key] = Value::String(host.to_string());
+    }
+}
+
+fn keep_sing_box_host(outbound: &mut Value, host: &str) {
+    if let Some(tls) = outbound.get_mut("tls") {
+        if tls.get("enabled").and_then(Value::as_bool) == Some(true) {
+            set_if_missing(tls, "server_name", host);
+        }
+    }
+    let Some(transport) = outbound.get_mut("transport") else {
+        return;
+    };
+    match transport.get("type").and_then(Value::as_str) {
+        Some("ws") => {
+            if transport.get("headers").is_none() {
+                transport["headers"] = serde_json::json!({});
+            }
+            set_if_missing(&mut transport["headers"], "Host", host);
+        }
+        Some("httpupgrade") | Some("http") => set_if_missing(transport, "host", host),
+        _ => {}
+    }
+}
+
+fn keep_xray_host(outbound: &mut Value, host: &str) {
+    let Some(stream) = outbound.get_mut("streamSettings") else {
+        return;
+    };
+    if stream.get("security").and_then(Value::as_str) == Some("tls") {
+        if stream.get("tlsSettings").is_none() {
+            stream["tlsSettings"] = serde_json::json!({});
+        }
+        set_if_missing(&mut stream["tlsSettings"], "serverName", host);
+    }
+    let settings_key = match stream.get("network").and_then(Value::as_str) {
+        Some("ws") => "wsSettings",
+        Some("httpupgrade") => "httpupgradeSettings",
+        Some("xhttp") | Some("splithttp") => "xhttpSettings",
+        _ => return,
+    };
+    let header_host = stream
+        .get(settings_key)
+        .and_then(|settings| settings.get("headers"))
+        .and_then(|headers| headers.get("Host"))
+        .is_some();
+    if header_host {
+        return;
+    }
+    if stream.get(settings_key).is_none() {
+        stream[settings_key] = serde_json::json!({});
+    }
+    set_if_missing(&mut stream[settings_key], "host", host);
 }
 
 fn write_sing_box_config(config: &Value) -> Result<PathBuf, DesktopCommandError> {
@@ -1156,10 +1333,13 @@ pub(crate) fn command_error(code: &'static str, message: String) -> DesktopComma
 }
 
 fn main() {
+    tun::run_helper_if_requested();
+
     tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .manage(Mutex::new(XrayRuntimeState::default()))
         .manage(Mutex::new(SingBoxRuntimeState::default()))
+        .manage(Mutex::new(TunRuntimeState::default()))
         .setup(|app| {
             if let Err(error) = setup_tray(app) {
                 eprintln!("RahRow tray is unavailable: {error}");
@@ -1187,6 +1367,8 @@ fn main() {
             rahrow_system_proxy_enable,
             rahrow_system_proxy_disable,
             rahrow_system_proxy_status,
+            rahrow_tun_start,
+            rahrow_tun_stop,
             rahrow_desktop_diagnostics
         ])
         .run(tauri::generate_context!())
@@ -1198,6 +1380,7 @@ mod tests {
     use super::{
         append_engine_output, background_execution_capability, command_error, config_uses_tun,
         desktop_vpn_provider_unavailable, engine_runtime_capability, engine_sidecar_file_names_for,
+        orphaned_engine_owner, pin_proxy_servers_with,
         hev_tunnel_backend_capability, output_snapshot, read_limited_subscription,
         redact_engine_output, valid_loopback_socks_url, validate_routed_http_input,
         validate_subscription_authorization, EngineOutputState, MAX_ENGINE_OUTPUT_LINES,
@@ -1219,6 +1402,80 @@ mod tests {
                 "sing-box.exe".to_string()
             ]
         );
+    }
+
+    #[test]
+    fn engine_configs_name_their_owning_app_process() {
+        assert_eq!(
+            orphaned_engine_owner("/tmp/rahrow-sing-box-282588-1790534579393.json"),
+            Some(282588)
+        );
+        assert_eq!(orphaned_engine_owner("/tmp/rahrow-xray-42-7.json"), Some(42));
+        assert_eq!(orphaned_engine_owner("/run/user/1000/rahrow-tun-42-7.json"), None);
+        assert_eq!(orphaned_engine_owner("run"), None);
+    }
+
+    #[test]
+    fn pins_proxy_hostnames_so_the_tunnel_cannot_deadlock_dns() {
+        let pinned = pin_proxy_servers_with(
+            &json!({
+                "outbounds": [
+                    { "type": "shadowsocks", "server": "edge.example", "server_port": 443 },
+                    { "type": "shadowsocks", "server": "203.0.113.10", "server_port": 443 },
+                    {
+                        "type": "trojan",
+                        "server": "edge.example",
+                        "tls": { "enabled": true },
+                        "transport": { "type": "ws", "path": "/ws" }
+                    },
+                    { "type": "direct" }
+                ]
+            }),
+            fake_resolver,
+        );
+        assert_eq!(pinned["outbounds"][0]["server"], "198.51.100.4");
+        assert_eq!(pinned["outbounds"][1]["server"], "203.0.113.10");
+        assert_eq!(pinned["outbounds"][2]["server"], "198.51.100.4");
+        assert_eq!(pinned["outbounds"][2]["tls"]["server_name"], "edge.example");
+        assert_eq!(pinned["outbounds"][2]["transport"]["headers"]["Host"], "edge.example");
+        assert!(pinned["outbounds"][3].get("server").is_none());
+    }
+
+    fn fake_resolver(host: &str) -> Option<std::net::IpAddr> {
+        (host == "edge.example").then(|| "198.51.100.4".parse().unwrap())
+    }
+
+    #[test]
+    fn pins_xray_server_addresses_and_keeps_tls_names() {
+        let pinned = pin_proxy_servers_with(
+            &json!({
+                "outbounds": [
+                    {
+                        "protocol": "vless",
+                        "settings": { "vnext": [{ "address": "edge.example", "port": 443 }] },
+                        "streamSettings": { "network": "ws", "security": "tls", "wsSettings": { "path": "/ws" } }
+                    },
+                    {
+                        "protocol": "trojan",
+                        "settings": { "servers": [{ "address": "edge.example", "port": 443 }] },
+                        "streamSettings": {
+                            "network": "tcp",
+                            "security": "tls",
+                            "tlsSettings": { "serverName": "sni.example" }
+                        }
+                    },
+                    { "protocol": "freedom", "tag": "direct" }
+                ]
+            }),
+            fake_resolver,
+        );
+        let vless = &pinned["outbounds"][0];
+        assert_eq!(vless["settings"]["vnext"][0]["address"], "198.51.100.4");
+        assert_eq!(vless["streamSettings"]["tlsSettings"]["serverName"], "edge.example");
+        assert_eq!(vless["streamSettings"]["wsSettings"]["host"], "edge.example");
+        let trojan = &pinned["outbounds"][1];
+        assert_eq!(trojan["settings"]["servers"][0]["address"], "198.51.100.4");
+        assert_eq!(trojan["streamSettings"]["tlsSettings"]["serverName"], "sni.example");
     }
 
     #[test]

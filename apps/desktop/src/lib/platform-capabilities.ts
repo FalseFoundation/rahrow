@@ -83,7 +83,21 @@ export interface DesktopNativePlatformCommands {
 	}): Promise<void>
 	disableSystemProxy(): Promise<void>
 	statusSystemProxy(): Promise<DesktopNativeCapabilityStatus>
+	startTunnel?(input: DesktopTunnelStartInput): Promise<void>
+	stopTunnel?(): Promise<void>
 	diagnostics(): Promise<DesktopNativeDiagnostics>
+}
+
+/** The native TUN forwards every captured flow to the engine's loopback SOCKS listener. */
+export interface DesktopTunnelStartInput {
+	readonly socksPort: number
+	readonly serverHost: string
+	readonly serverPort: number
+}
+
+export interface DesktopTunnel {
+	start(input: DesktopTunnelStartInput): Promise<void>
+	stop(): Promise<void>
 }
 
 export interface DesktopPlatformCapabilities {
@@ -99,6 +113,7 @@ export interface DesktopPlatformCapabilities {
 	readonly tray: DesktopTray
 	readonly systemProxy: DesktopSystemProxy
 	readonly vpn: Vpn
+	readonly tunnel?: DesktopTunnel
 	readonly diagnostics: DesktopNativeDiagnosticsProvider
 	readonly networkIdentity?: NetworkIdentity
 }
@@ -462,6 +477,14 @@ export function createDesktopPlatformCapabilities(
 						unsupportedStatus('sing-box-sidecar'),
 					],
 				}),
+		...(native?.startTunnel && native.stopTunnel
+			? {
+					tunnel: {
+						start: native.startTunnel.bind(native),
+						stop: native.stopTunnel.bind(native),
+					},
+				}
+			: {}),
 		...(native?.networkIdentity
 			? { networkIdentity: new TauriDesktopNetworkIdentity(native) }
 			: {}),
@@ -522,6 +545,12 @@ export function createTauriDesktopNativePlatformCommands(): DesktopNativePlatfor
 		},
 		statusSystemProxy() {
 			return invoke<DesktopNativeCapabilityStatus>('rahrow_system_proxy_status')
+		},
+		startTunnel(input) {
+			return invoke('rahrow_tun_start', { input })
+		},
+		stopTunnel() {
+			return invoke('rahrow_tun_stop')
 		},
 		diagnostics() {
 			return invoke<DesktopNativeDiagnostics>('rahrow_desktop_diagnostics')
