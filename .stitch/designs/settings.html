@@ -1,0 +1,231 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_tab" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"surface-dim": "#131313", "surface-container-low": "#1b1b1b", "on-primary-fixed-variant": "#454747", "on-tertiary-fixed": "#1a1c1c", "on-tertiary-container": "#636565", "on-primary-fixed": "#1a1c1c", "primary-container": "#e2e2e2", secondary: "#c7c6cb", "primary-fixed-dim": "#c6c6c7", background: "#131313", "on-primary-container": "#636565", "surface-container-high": "#2a2a2a", "tertiary-fixed-dim": "#c6c6c7", "on-tertiary": "#2f3131", "secondary-fixed-dim": "#c7c6cb", primary: "#ffffff", "surface-variant": "#353535", "on-surface": "#e2e2e2", "on-error-container": "#ffdad6", outline: "#8e9192", tertiary: "#ffffff", "primary-fixed": "#e2e2e2", surface: "#131313", "on-secondary-fixed": "#1a1b1f", "inverse-on-surface": "#303030", "on-secondary-container": "#b5b4ba", "on-background": "#e2e2e2", "surface-bright": "#393939", "on-surface-variant": "#c4c7c8", "tertiary-container": "#e2e2e2", "surface-container": "#1f1f1f", "secondary-fixed": "#e3e2e7", "on-secondary": "#2f3034", "error-container": "#93000a", "on-tertiary-fixed-variant": "#454747", "surface-container-highest": "#353535", "tertiary-fixed": "#e2e2e2", "secondary-container": "#46464b", "surface-tint": "#c6c6c7", "on-secondary-fixed-variant": "#46464b", "on-primary": "#2f3131", "on-error": "#690005", "inverse-surface": "#e2e2e2", "surface-container-lowest": "#0e0e0e", "inverse-primary": "#5d5f5f", error: "#ffb4ab", "outline-variant": "#444748"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, spacing: {"space-xs": "0.25rem", "space-md": "1rem", "space-xl": "2.25rem", "space-lg": "1.5rem", margin: "1.5rem", "space-sm": "0.5rem", gutter: "1rem", "gutter-mobile": "0.75rem", "margin-mobile": "1rem"}, fontFamily: {"body-md": ["Inter"], "body-sm": ["Inter"], "label-md": ["Inter"], "display-lg": ["Inter"], "headline-lg-mobile": ["Inter"], "body-lg": ["Inter"], "headline-lg": ["Inter"], "title-md": ["Inter"], caption: ["Inter"], "headline-sm": ["Inter"], "headline-md": ["Inter"], headline: ["Inter"], display: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {"body-md": ["15px", {lineHeight: "20px", letterSpacing: "-0.005em", fontWeight: "400"}], "body-sm": ["13px", {lineHeight: "18px", letterSpacing: "0em", fontWeight: "400"}], "label-md": ["12px", {lineHeight: "16px", letterSpacing: "0.01em", fontWeight: "500"}], "display-lg": ["40px", {lineHeight: "48px", letterSpacing: "-0.022em", fontWeight: "700"}], "headline-lg-mobile": ["28px", {lineHeight: "34px", letterSpacing: "-0.018em", fontWeight: "700"}], "body-lg": ["17px", {lineHeight: "24px", letterSpacing: "-0.008em", fontWeight: "400"}], "headline-lg": ["34px", {lineHeight: "41px", letterSpacing: "-0.02em", fontWeight: "700"}], "title-md": ["17px", {lineHeight: "22px", letterSpacing: "-0.01em", fontWeight: "600"}], caption: ["11px", {lineHeight: "13px", letterSpacing: "0.015em", fontWeight: "500"}], "headline-sm": ["20px", {lineHeight: "25px", letterSpacing: "-0.012em", fontWeight: "600"}], "headline-md": ["24px", {lineHeight: "30px", letterSpacing: "-0.015em", fontWeight: "600"}]}}}};</script><style>@layer base{html,body{width:100%;margin:0;padding:0;background-color:#131313;color:#e2e2e2;}body{overscroll-behavior-y:none;-webkit-tap-highlight-color:transparent;}.pb-safe{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 1.25rem);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body-md text-on-surface min-h-screen flex flex-col antialiased selection:bg-primary selection:text-surface"><header class="fixed top-0 w-full z-50 pt-safe bg-surface/70 backdrop-blur-2xl"><div class="h-16 px-margin flex items-center justify-between"><div class="flex items-center gap-space-sm"><div class="w-10 h-10 rounded-full bg-surface-container-high/80 backdrop-blur-xl flex items-center justify-center shadow-[0_1px_8px_rgba(0,0,0,0.2)]"><span class="material-symbols-outlined text-primary text-[22px]">tune</span></div><span class="font-title-md text-title-md text-primary tracking-tight font-semibold text-[20px]">Settings</span></div><button class="w-10 h-10 rounded-full bg-surface-container-high/80 backdrop-blur-xl flex items-center justify-center text-on-surface-variant hover:text-on-surface transition-colors shadow-sm" type="button" aria-label="Search settings"><span class="material-symbols-outlined text-[20px]">search</span></button></div></header><main class="flex-1 w-full bg-surface pt-16 pb-28"><div class="flex flex-col w-full px-margin-mobile pb-space-xl gap-space-lg"><!-- SECTION 1: CONNECTION -->
+<div class="flex flex-col gap-space-xs">
+  <div class="px-space-sm flex items-center gap-1.5 text-on-surface-variant">
+    <span class="material-symbols-outlined text-[16px]">link</span>
+    <span class="font-caption text-caption uppercase tracking-wider font-semibold text-[11px]">CONNECTION</span>
+  </div>
+  <div class="w-full rounded-2xl bg-surface-container/60 backdrop-blur-2xl shadow-xl overflow-hidden flex flex-col divide-y divide-outline-variant/20">
+    <!-- Item: Connection Mode -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">alt_route</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Connection mode</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">VPN/TUN · routes device traffic</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: Engine -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">settings_ethernet</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Engine</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">sing-box</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: Routing -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">hub</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Routing</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">Rule</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: System proxy -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">desktop_windows</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">System proxy</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate font-mono">SOCKS · 127.0.0.1:10808</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 2: APP -->
+<div class="flex flex-col gap-space-xs">
+  <div class="px-space-sm flex items-center gap-1.5 text-on-surface-variant">
+    <span class="material-symbols-outlined text-[16px]">settings</span>
+    <span class="font-caption text-caption uppercase tracking-wider font-semibold text-[11px]">APP</span>
+  </div>
+  <div class="w-full rounded-2xl bg-surface-container/60 backdrop-blur-2xl shadow-xl overflow-hidden flex flex-col divide-y divide-outline-variant/20">
+    <!-- Item: Launch at startup (iOS Toggle) -->
+    <div class="w-full flex items-center justify-between p-space-md">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">rocket_launch</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Launch at startup</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">Open RahRow when you sign in</span>
+        </div>
+      </div>
+      <button class="w-12 h-7 rounded-full bg-primary p-0.5 flex items-center justify-end transition-colors duration-200 shrink-0" id="startup-toggle" onclick="toggleStartup()" type="button">
+        <div class="w-6 h-6 rounded-full bg-surface-container-lowest shadow-md transform transition-transform duration-200"></div>
+      </button>
+    </div>
+    <!-- Item: Language -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">translate</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Language</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">English</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: Appearance -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">dark_mode</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Appearance</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">System</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: Backup -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">folder_zip</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Backup</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">Import or export RahRow data.</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: Diagnostics -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">terminal</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface truncate font-medium">Diagnostics</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">Check runtime health and application logs</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: Reset Settings -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-error-container/20 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-error-container/30 flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-error text-[18px]">restart_alt</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-error font-medium truncate">Reset settings</span>
+          <span class="font-caption text-caption text-error/60 truncate">Restore app defaults</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-error/60 text-[18px] shrink-0">chevron_right</span>
+    </div>
+  </div>
+</div>
+
+<!-- SECTION 3: ABOUT -->
+<div class="flex flex-col gap-space-xs">
+  <div class="px-space-sm flex items-center gap-1.5 text-on-surface-variant">
+    <span class="material-symbols-outlined text-[16px]">info</span>
+    <span class="font-caption text-caption uppercase tracking-wider font-semibold text-[11px]">ABOUT</span>
+  </div>
+  <div class="w-full rounded-2xl bg-surface-container/60 backdrop-blur-2xl shadow-xl overflow-hidden flex flex-col divide-y divide-outline-variant/20">
+    <!-- Item: About RahRow -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">shield</span>
+        </div>
+        <div class="flex flex-col min-w-0 pr-2">
+          <span class="font-body-md text-body-md text-on-surface font-medium truncate">About RahRow</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate">A VPN and proxy client with support for multiple engines.</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+    <!-- Item: Version -->
+    <div class="w-full flex items-center justify-between p-space-md active:bg-surface-container-highest/40 transition-colors cursor-pointer" role="button">
+      <div class="flex items-center gap-space-sm min-w-0">
+        <div class="w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center shrink-0">
+          <span class="material-symbols-outlined text-primary text-[18px]">verified</span>
+        </div>
+        <div class="flex flex-col min-w-0">
+          <span class="font-body-md text-body-md text-on-surface font-medium truncate">Version</span>
+          <span class="font-caption text-caption text-on-surface-variant truncate font-mono">v1.4.2 (Not provided by this build)</span>
+        </div>
+      </div>
+      <span class="material-symbols-outlined text-on-surface-variant text-[18px] shrink-0">chevron_right</span>
+    </div>
+  </div>
+</div>
+
+<!-- Micro Footer Specular Brand Tag -->
+<div class="flex flex-col items-center justify-center pt-space-xs text-center">
+  <div class="w-5 h-5 rounded-full bg-surface-container-highest flex items-center justify-center mb-1">
+    <span class="material-symbols-outlined text-on-surface-variant text-[14px]">bolt</span>
+  </div>
+  <span class="font-caption text-caption text-on-surface-variant tracking-wider uppercase">RahRow Secure Systems</span>
+</div></div>
+<script>
+  function setRouting(btn, mode) {
+    const parent = btn.parentElement;
+    parent.querySelectorAll('.routing-opt').forEach(opt => {
+      opt.className = 'px-space-sm py-1 rounded-full font-label-md text-label-md text-on-surface-variant transition-all duration-200 routing-opt';
+    });
+    btn.className = 'px-space-sm py-1 rounded-full font-label-md text-label-md bg-surface-container-highest text-primary shadow-sm font-semibold transition-all duration-200 routing-opt';
+  }
+
+  let startupActive = true;
+  function toggleStartup() {
+    const toggle = document.getElementById('startup-toggle');
+    const knob = toggle.querySelector('div');
+    startupActive = !startupActive;
+    if (startupActive) {
+      toggle.className = 'w-12 h-7 rounded-full bg-primary p-0.5 flex items-center justify-end transition-colors duration-200';
+      knob.className = 'w-6 h-6 rounded-full bg-surface-container-lowest shadow-md transform transition-transform duration-200';
+    } else {
+      toggle.className = 'w-12 h-7 rounded-full bg-surface-container-highest p-0.5 flex items-center justify-start transition-colors duration-200';
+      knob.className = 'w-6 h-6 rounded-full bg-on-surface-variant shadow-md transform transition-transform duration-200';
+    }
+  }
+</script></main><nav class="fixed bottom-0 w-full z-50 pb-safe pointer-events-none px-margin" data-active-classes="text-primary bg-surface-container-highest/60"><div class="max-w-xs mx-auto pointer-events-auto h-16 rounded-full bg-surface-container-low/75 backdrop-blur-2xl shadow-[0_16px_48px_rgba(0,0,0,0.6),0_2px_8px_rgba(0,0,0,0.3)] flex items-center justify-around px-space-xs"><a class="flex-1 flex flex-col items-center justify-center h-12 rounded-full text-on-surface-variant hover:text-on-surface transition-colors" data-path="home" href="#"><span class="material-symbols-outlined text-[22px]">vpn_key</span><span class="font-caption text-caption mt-0.5">Home</span></a><a class="flex-1 flex flex-col items-center justify-center h-12 rounded-full text-on-surface-variant hover:text-on-surface transition-colors" data-path="connections" href="#"><span class="material-symbols-outlined text-[22px]">hub</span><span class="font-caption text-caption mt-0.5">Connections</span></a><a aria-current="page" class="flex-1 flex flex-col items-center justify-center h-12 rounded-full transition-colors text-primary bg-surface-container-highest/60" data-path="settings" href="#"><span class="material-symbols-outlined text-[22px]">tune</span><span class="font-caption text-caption mt-0.5">Settings</span></a></div></nav>
+
+</body></html>

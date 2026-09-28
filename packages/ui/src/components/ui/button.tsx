@@ -18,13 +18,13 @@ const buttonVariants = cva(
 					'border-destructive/40 bg-destructive/10 text-destructive hover:border-destructive/60 hover:bg-destructive/20 focus-visible:border-destructive focus-visible:ring-destructive/20 dark:border-destructive/50 dark:bg-destructive/20 dark:hover:bg-destructive/30 dark:focus-visible:ring-destructive/40',
 				link: 'text-primary underline-offset-4 hover:underline',
 				status:
-					'border-foreground/15 bg-foreground/5 text-primary hover:bg-foreground/10 data-[connected=true]:border-[var(--connection-primary)] data-[connected=true]:bg-[var(--connection-primary)] data-[connected=true]:text-[var(--connection-primary-foreground)]',
+					'border-foreground/15 bg-foreground/5 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] hover:bg-foreground/10 data-[connected=true]:border-transparent data-[connected=true]:bg-primary data-[connected=true]:text-primary-foreground data-[connected=true]:shadow-[0_16px_40px_rgba(0,0,0,0.45)]',
 				toolbar:
-					'bg-transparent text-muted-foreground hover:bg-glass hover:text-foreground data-[active=true]:bg-glass data-[active=true]:text-primary',
+					'bg-foreground/6 text-foreground backdrop-blur-xl hover:bg-foreground/10 data-[active=true]:bg-foreground/8 data-[active=true]:text-primary',
 				navigation:
-					'bg-transparent text-dim hover:bg-glass hover:text-foreground data-[active=true]:bg-foreground/6 data-[active=true]:text-primary',
+					'bg-transparent text-dim hover:bg-foreground/8 hover:text-foreground data-[active=true]:bg-foreground/12 data-[active=true]:text-primary',
 				surface:
-					'border-border bg-glass text-muted-foreground hover:bg-accent hover:text-foreground',
+					'border-border bg-glass text-foreground shadow-[0_8px_32px_rgba(0,0,0,0.28)] backdrop-blur-2xl hover:bg-accent hover:text-foreground',
 			},
 			size: {
 				default:
@@ -39,7 +39,7 @@ const buttonVariants = cva(
 				'control-xl':
 					"size-26 rounded-full [&_svg:not([class*='size-'])]:size-10.5",
 				square: 'size-9 rounded-full',
-				tab: 'h-full flex-1 flex-col gap-1 rounded-2xl px-2 text-10',
+				tab: 'h-full flex-1 flex-col gap-0.5 rounded-full px-2 text-10',
 			},
 		},
 		defaultVariants: {

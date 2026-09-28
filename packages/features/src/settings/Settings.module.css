@@ -10,7 +10,7 @@
 	@apply font-sans text-19 tracking-normal;
 }
 .content {
-	@apply flex flex-col gap-7 pt-6.75;
+	@apply flex flex-col gap-6 pt-3;
 }
 .search {
 	@apply mb-8.5 h-10.5 rounded-md border-transparent bg-glass;
@@ -25,10 +25,13 @@
 	@apply size-6.5 rounded-xs text-primary;
 }
 .rows {
-	@apply block;
+	@apply block overflow-hidden rounded-3xl border border-border bg-glass shadow-[0_8px_32px_rgba(0,0,0,0.28)] backdrop-blur-xl;
 }
 .rows [data-slot="item"] {
-	@apply min-h-14 border-b border-border px-0.5 py-2;
+	@apply min-h-16 border-b border-border px-3 py-2.5;
+}
+.rows [data-slot="item-media"] {
+	@apply size-9 rounded-full bg-foreground/8;
 }
 .rows [data-slot="item"]:last-child {
 	@apply border-b-0;

@@ -1,0 +1,335 @@
+<!DOCTYPE html><html class="dark" lang="en"><head><meta charset="utf-8"><meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" name="viewport"><meta content="mobile_stack" name="shell-type"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = {darkMode: "class", theme: {extend: {colors: {"error-container": "#93000a", "primary-fixed": "#e2e2e2", "on-tertiary-fixed": "#1a1c1c", "primary-fixed-dim": "#c6c6c7", tertiary: "#ffffff", "surface-container": "#1f1f1f", "tertiary-container": "#e2e2e2", "surface-variant": "#353535", "on-surface-variant": "#c4c7c8", "surface-container-highest": "#353535", background: "#131313", "on-tertiary-fixed-variant": "#454747", "on-primary-fixed-variant": "#454747", "surface-container-lowest": "#0e0e0e", "primary-container": "#e2e2e2", "on-primary-container": "#636565", error: "#ffb4ab", "secondary-fixed-dim": "#c7c6cb", "surface-dim": "#131313", "on-secondary": "#2f3034", "outline-variant": "#444748", primary: "#ffffff", "surface-container-high": "#2a2a2a", "on-primary-fixed": "#1a1c1c", "on-surface": "#e2e2e2", "secondary-container": "#46464b", "surface-tint": "#c6c6c7", surface: "#131313", "surface-bright": "#393939", "on-tertiary": "#2f3131", "on-error": "#690005", "surface-container-low": "#1b1b1b", "on-primary": "#2f3131", "tertiary-fixed": "#e2e2e2", "inverse-on-surface": "#303030", secondary: "#c7c6cb", "on-tertiary-container": "#636565", "on-error-container": "#ffdad6", "tertiary-fixed-dim": "#c6c6c7", "secondary-fixed": "#e3e2e7", "on-secondary-fixed-variant": "#46464b", outline: "#8e9192", "on-secondary-fixed": "#1a1b1f", "on-secondary-container": "#b5b4ba", "on-background": "#e2e2e2", "inverse-surface": "#e2e2e2", "inverse-primary": "#5d5f5f"}, borderRadius: {DEFAULT: "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px"}, fontFamily: {headline: ["Inter"], display: ["Inter"], body: ["Inter"], label: ["Inter"]}, fontSize: {}}}};</script><style>@layer base{html,body{width:100%;margin:0;padding:0;}body{overscroll-behavior-y:none;background-color:#131313;}.pb-safe{padding-bottom:env(safe-area-inset-bottom,0px);}.pt-safe{padding-top:env(safe-area-inset-top,0px);}}::-webkit-scrollbar{display:none;}</style><style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head><body class="bg-surface font-body text-on-surface min-h-screen flex flex-col antialiased selection:bg-surface-bright"><main class="flex-1 flex flex-col relative w-full pb-safe bg-surface"><div class="flex flex-col w-full relative select-none">
+<!-- Recessed Background Simulation (Ghosted Connections List) -->
+<div class="w-full px-4 pt-3 pb-8 space-y-3 opacity-25 filter blur-[2px] pointer-events-none transition-all">
+<div class="bg-surface-container-low rounded-2xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-sm font-semibold">🇫🇷</div>
+<div>
+<p class="text-sm font-medium text-on-surface">فرانسه - پاریس (همراه اول)</p>
+<p class="text-xs text-on-surface-variant">fr-paris.rahrow.net:8443</p>
+</div>
+</div>
+<span class="text-xs font-mono text-on-surface-variant">112 ms</span>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-sm font-semibold">🇳🇱</div>
+<div>
+<p class="text-sm font-medium text-on-surface">هلند - آمستردام (ایرانسل)</p>
+<p class="text-xs text-on-surface-variant">nl-ams.node-hub.org:443</p>
+</div>
+</div>
+<span class="text-xs font-mono text-on-surface-variant">74 ms</span>
+</div>
+<div class="bg-surface-container-low rounded-2xl p-4 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface-container flex items-center justify-center text-sm font-semibold">🇹🇷</div>
+<div>
+<p class="text-sm font-medium text-on-surface">ترکیه - استانبول (مخابرات)</p>
+<p class="text-xs text-on-surface-variant">tr-ist.turboedge.io:2053</p>
+</div>
+</div>
+<span class="text-xs font-mono text-on-surface-variant">61 ms</span>
+</div>
+</div>
+<!-- Deep Scrim Overlay -->
+<div class="fixed inset-0 bg-surface-container-lowest/80 backdrop-blur-md z-10 pointer-events-none"></div>
+<!-- Liquid Glass Bottom Sheet Modal -->
+<div class="relative z-20 mt-[-100px] flex flex-col w-full bg-surface-container/90 backdrop-blur-2xl rounded-t-3xl shadow-2xl transition-transform duration-300 ease-out" id="inspector-sheet">
+<!-- Top Micro Pull Indicator -->
+<div class="w-full flex items-center justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
+<div class="w-11 h-1.5 rounded-full bg-surface-variant/80 transition-opacity"></div>
+</div>
+<!-- Sheet Header Section -->
+<div class="px-5 pt-3 pb-4 flex items-start justify-between gap-3">
+<div class="flex items-center gap-3 min-w-0">
+<div class="w-12 h-12 rounded-2xl bg-surface-container-high/80 backdrop-blur-sm flex items-center justify-center text-2xl shadow-inner shrink-0 select-none">
+          🇩🇪
+        </div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2">
+<h2 class="text-base font-semibold text-on-surface tracking-tight truncate font-headline" dir="rtl">
+              آلمان ( همه اپراتورها )
+            </h2>
+<span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold tracking-wider uppercase bg-surface-container-highest text-primary shrink-0">
+              TROJAN
+            </span>
+</div>
+<p class="text-xs text-on-surface-variant font-mono truncate mt-0.5" dir="ltr">
+            gote.thugiping.com:443
+          </p>
+</div>
+</div>
+<!-- Close Sheet Button -->
+<button class="w-9 h-9 rounded-full bg-surface-container-high text-on-surface-variant hover:text-primary active:scale-90 transition-all flex items-center justify-center shrink-0" id="close-drawer-btn">
+<span class="material-symbols-outlined text-[19px]">close</span>
+</button>
+</div>
+<!-- Quick Action Bar -->
+<div class="px-5 pb-5">
+<div class="grid grid-cols-4 gap-2 bg-surface-container-lowest/60 p-1.5 rounded-2xl backdrop-blur-xl">
+<!-- Duplicate -->
+<button class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-surface-container-high/40 hover:bg-surface-container-high/80 active:scale-95 transition-all text-on-surface" id="btn-duplicate">
+<span class="material-symbols-outlined text-[20px] text-primary">content_copy</span>
+<span class="text-[11px] font-medium mt-1 font-label">Duplicate</span>
+</button>
+<!-- Share QR -->
+<button class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-surface-container-high/40 hover:bg-surface-container-high/80 active:scale-95 transition-all text-on-surface" id="btn-share-qr">
+<span class="material-symbols-outlined text-[20px] text-primary">qr_code_scanner</span>
+<span class="text-[11px] font-medium mt-1 font-label">Share QR</span>
+</button>
+<!-- Edit -->
+<button class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-surface-container-high/40 hover:bg-surface-container-high/80 active:scale-95 transition-all text-on-surface" id="btn-edit">
+<span class="material-symbols-outlined text-[20px] text-primary">tune</span>
+<span class="text-[11px] font-medium mt-1 font-label">Edit</span>
+</button>
+<!-- Delete -->
+<button class="flex flex-col items-center justify-center py-2.5 px-1 rounded-xl bg-error-container/20 hover:bg-error-container/30 active:scale-95 transition-all text-error" id="btn-delete">
+<span class="material-symbols-outlined text-[20px] text-error">delete_outline</span>
+<span class="text-[11px] font-medium mt-1 font-label">Delete</span>
+</button>
+</div>
+</div>
+<!-- Real-Time Metrics & Diagnostics Group -->
+<div class="px-5 pb-4">
+<div class="flex items-center justify-between mb-2 px-0.5">
+<span class="text-xs font-semibold uppercase tracking-wider text-on-surface-variant font-label">Live Telemetry</span>
+<div class="flex items-center gap-1.5">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+</span>
+<span class="text-[11px] font-mono text-on-surface">Stable</span>
+</div>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<!-- Metric 1: Latency -->
+<div class="bg-surface-container-low/90 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="text-[11px] font-medium font-label">RTT Latency</span>
+<span class="material-symbols-outlined text-[15px]">speed</span>
+</div>
+<div class="mt-2.5">
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold font-mono tracking-tight text-primary" id="latency-val">48</span>
+<span class="text-[10px] font-mono text-on-surface-variant">ms</span>
+</div>
+<div class="flex items-center gap-1 mt-0.5">
+<div class="w-1.5 h-1.5 rounded-full bg-primary"></div>
+<span class="text-[10px] text-on-surface-variant font-medium">Optimal</span>
+</div>
+</div>
+</div>
+<!-- Metric 2: Protocol & Security -->
+<div class="bg-surface-container-low/90 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="text-[11px] font-medium font-label">Cipher suite</span>
+<span class="material-symbols-outlined text-[15px]">lock</span>
+</div>
+<div class="mt-2.5">
+<p class="text-sm font-semibold font-mono tracking-tight text-primary truncate">TLS 1.3</p>
+<p class="text-[10px] text-on-surface-variant font-medium mt-0.5 truncate">AES-GCM-128</p>
+</div>
+</div>
+<!-- Metric 3: Handshake -->
+<div class="bg-surface-container-low/90 rounded-2xl p-3 flex flex-col justify-between backdrop-blur-md">
+<div class="flex items-center justify-between text-on-surface-variant">
+<span class="text-[11px] font-medium font-label">TCP Shake</span>
+<span class="material-symbols-outlined text-[15px]">sensors</span>
+</div>
+<div class="mt-2.5">
+<div class="flex items-baseline gap-1">
+<span class="text-lg font-bold font-mono tracking-tight text-primary" id="handshake-val">64</span>
+<span class="text-[10px] font-mono text-on-surface-variant">ms</span>
+</div>
+<p class="text-[10px] text-on-surface-variant font-medium mt-0.5">SYN/ACK Direct</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Configuration Table Details -->
+<div class="px-5 pb-5">
+<div class="bg-surface-container-low/90 rounded-2xl p-1 backdrop-blur-md">
+<!-- Row 1: Host Address -->
+<div class="flex items-center justify-between py-2.5 px-3 hover:bg-surface-container-high/40 rounded-xl transition-colors">
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">dns</span>
+<span class="text-xs font-medium font-label">Host Address</span>
+</div>
+<button class="flex items-center gap-1.5 text-on-surface hover:text-primary active:scale-95 transition-transform group" id="copy-host-btn">
+<span class="font-mono text-xs font-medium tracking-tight">gote.thugiping.com</span>
+<span class="material-symbols-outlined text-[14px] text-on-surface-variant group-hover:text-primary" id="copy-icon">content_copy</span>
+</button>
+</div>
+<!-- Row 2: Port -->
+<div class="flex items-center justify-between py-2.5 px-3 hover:bg-surface-container-high/40 rounded-xl transition-colors">
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">lan</span>
+<span class="text-xs font-medium font-label">Port</span>
+</div>
+<span class="font-mono text-xs font-semibold text-primary px-2 py-0.5 rounded-lg bg-surface-container-highest">443</span>
+</div>
+<!-- Row 3: Engine -->
+<div class="flex items-center justify-between py-2.5 px-3 hover:bg-surface-container-high/40 rounded-xl transition-colors">
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">memory</span>
+<span class="text-xs font-medium font-label">Routing Engine</span>
+</div>
+<span class="font-mono text-xs text-on-surface font-medium">sing-box v1.11</span>
+</div>
+<!-- Row 4: Transport -->
+<div class="flex items-center justify-between py-2.5 px-3 hover:bg-surface-container-high/40 rounded-xl transition-colors">
+<div class="flex items-center gap-2.5 text-on-surface-variant">
+<span class="material-symbols-outlined text-[17px]">sync_alt</span>
+<span class="text-xs font-medium font-label">Transport</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-mono text-on-surface">TCP</span>
+<span class="text-xs text-on-surface-variant">/</span>
+<span class="text-xs font-mono text-primary font-medium">Reality</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Action Footers -->
+<div class="px-5 pb-6 pt-1 flex flex-col gap-2.5">
+<!-- High Contrast Primary Action -->
+<button class="w-full h-13 py-3.5 px-5 rounded-full bg-primary text-on-primary font-semibold text-sm flex items-center justify-center gap-2 active:scale-[0.98] transition-all shadow-lg shadow-surface-container-lowest/50" id="test-latency-btn">
+<span class="material-symbols-outlined text-[20px]" id="test-icon">science</span>
+<span class="font-label" id="test-label">Test Latency</span>
+</button>
+<!-- Secondary Ghost Action -->
+<button class="w-full py-2 px-4 rounded-full text-on-surface-variant hover:text-primary active:scale-95 transition-all text-xs font-medium flex items-center justify-center gap-1.5" id="inspect-json-btn">
+<span class="material-symbols-outlined text-[16px]">data_object</span>
+<span class="font-label">Inspect Full Config (JSON)</span>
+</button>
+</div>
+<!-- Micro Floating Dynamic Toast -->
+<div class="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-surface-bright text-on-surface text-xs font-medium opacity-0 pointer-events-none transition-all duration-200 flex items-center gap-1.5 shadow-xl" id="toast-pill">
+<span class="material-symbols-outlined text-[16px] text-primary">check_circle</span>
+<span id="toast-text" class="">Host copied to clipboard</span>
+</div>
+</div>
+</div>
+<script>
+  (function() {
+    const copyHostBtn = document.getElementById('copy-host-btn');
+    const toastPill = document.getElementById('toast-pill');
+    const toastText = document.getElementById('toast-text');
+    const testLatencyBtn = document.getElementById('test-latency-btn');
+    const testIcon = document.getElementById('test-icon');
+    const testLabel = document.getElementById('test-label');
+    const latencyVal = document.getElementById('latency-val');
+    const handshakeVal = document.getElementById('handshake-val');
+    const closeBtn = document.getElementById('close-drawer-btn');
+    const inspectorSheet = document.getElementById('inspector-sheet');
+
+    function triggerToast(message) {
+      if (!toastPill) return;
+      toastText.textContent = message;
+      toastPill.classList.remove('opacity-0', '-translate-y-2');
+      toastPill.classList.add('opacity-100', 'translate-y-0');
+      
+      setTimeout(() => {
+        toastPill.classList.remove('opacity-100', 'translate-y-0');
+        toastPill.classList.add('opacity-0', '-translate-y-2');
+      }, 2000);
+    }
+
+    if (copyHostBtn) {
+      copyHostBtn.addEventListener('click', () => {
+        triggerToast('Host copied to clipboard');
+      });
+    }
+
+    const duplicateBtn = document.getElementById('btn-duplicate');
+    if (duplicateBtn) {
+      duplicateBtn.addEventListener('click', () => {
+        triggerToast('Configuration duplicated');
+      });
+    }
+
+    const shareQrBtn = document.getElementById('btn-share-qr');
+    if (shareQrBtn) {
+      shareQrBtn.addEventListener('click', () => {
+        triggerToast('QR code ready to share');
+      });
+    }
+
+    const editBtn = document.getElementById('btn-edit');
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
+        triggerToast('Opening node editor...');
+      });
+    }
+
+    const deleteBtn = document.getElementById('btn-delete');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', () => {
+        triggerToast('Hold to confirm delete');
+      });
+    }
+
+    const inspectJsonBtn = document.getElementById('inspect-json-btn');
+    if (inspectJsonBtn) {
+      inspectJsonBtn.addEventListener('click', () => {
+        triggerToast('Loading JSON manifest...');
+      });
+    }
+
+    let isPinging = false;
+    if (testLatencyBtn) {
+      testLatencyBtn.addEventListener('click', () => {
+        if (isPinging) return;
+        isPinging = true;
+
+        testIcon.classList.add('animate-spin');
+        testIcon.textContent = 'autorenew';
+        testLabel.textContent = 'Pinging Socket...';
+        testLatencyBtn.classList.add('opacity-80');
+
+        setTimeout(() => {
+          const newLatency = Math.floor(Math.random() * 15) + 38;
+          const newHandshake = Math.floor(newLatency * 1.3);
+
+          if (latencyVal) latencyVal.textContent = newLatency;
+          if (handshakeVal) handshakeVal.textContent = newHandshake;
+
+          testIcon.classList.remove('animate-spin');
+          testIcon.textContent = 'check';
+          testLabel.textContent = 'Latency: ' + newLatency + 'ms';
+          testLatencyBtn.classList.remove('opacity-80');
+
+          setTimeout(() => {
+            testIcon.textContent = 'science';
+            testLabel.textContent = 'Test Latency';
+            isPinging = false;
+          }, 1800);
+        }, 850);
+      });
+    }
+
+    if (closeBtn && inspectorSheet) {
+      closeBtn.addEventListener('click', () => {
+        inspectorSheet.style.transform = 'translateY(100%)';
+        setTimeout(() => {
+          inspectorSheet.style.transform = 'translateY(0)';
+          triggerToast('Inspector minimized');
+        }, 1200);
+      });
+    }
+  })();
+</script></main>
+
+</body></html>

@@ -24,7 +24,19 @@
 }
 
 .content {
-	@apply pt-6.75;
+	@apply pt-3;
+}
+
+.toolbar {
+	@apply mb-4 grid grid-cols-4 gap-1 rounded-3xl border border-border bg-glass p-1.5 shadow-[0_8px_32px_rgba(0,0,0,0.28)] backdrop-blur-xl;
+}
+
+.tool {
+	@apply h-auto min-h-16 w-auto flex-col gap-1 rounded-2xl px-1 py-2 text-xs font-medium;
+}
+
+.addAction {
+	@apply bg-primary text-primary-foreground hover:bg-primary/90;
 }
 
 .speedTestPanel {
@@ -69,6 +81,10 @@
 
 .drawerBody {
 	@apply flex min-h-0 flex-auto flex-col overflow-hidden;
+}
+
+.drawerScroll {
+	@apply flex min-h-0 flex-auto flex-col overflow-y-auto px-4.5 pt-2 pb-6;
 }
 
 .confirmationHeader {

@@ -19,3 +19,15 @@
 [class~="dark"] .darkLogo {
 	@apply block;
 }
+
+.logo[data-inverted] {
+	@apply rounded-full bg-primary p-1.5;
+}
+
+[class~="dark"] .logo[data-inverted] .lightLogo {
+	@apply block;
+}
+
+[class~="dark"] .logo[data-inverted] .darkLogo {
+	@apply hidden;
+}

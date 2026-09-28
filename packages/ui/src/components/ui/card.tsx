@@ -9,8 +9,10 @@ const cardVariants = cva(
 			variant: {
 				default:
 					'rounded-4xl bg-card py-(--card-spacing) shadow-md ring-1 ring-foreground/5 dark:ring-foreground/10',
-				featured: 'rounded-2xl border border-border bg-glass py-0 shadow-none',
-				glass: 'rounded-lg border border-border bg-glass py-0 shadow-none',
+				featured:
+					'rounded-3xl border border-border bg-glass py-0 shadow-[0_16px_40px_rgba(0,0,0,0.45)] backdrop-blur-2xl',
+				glass:
+					'rounded-2xl border border-border bg-glass py-0 shadow-[0_8px_32px_rgba(0,0,0,0.28)] backdrop-blur-xl',
 				flat: 'rounded-none bg-transparent py-0 shadow-none ring-0',
 			},
 		},

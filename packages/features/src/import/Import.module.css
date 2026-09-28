@@ -4,7 +4,7 @@
 	@apply flex min-w-0 flex-col gap-4;
 }
 .panel {
-	@apply flex flex-col gap-4 rounded-md border border-border bg-card p-4;
+	@apply flex flex-col gap-4 rounded-3xl border border-border bg-glass p-4;
 }
 .content {
 	@apply flex flex-col gap-4;

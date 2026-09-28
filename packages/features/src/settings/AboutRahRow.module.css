@@ -19,7 +19,7 @@
 	@apply mx-auto mt-2 max-w-80 text-xs text-dim;
 }
 .aboutFacts {
-	@apply mt-3 divide-y divide-border rounded-md border border-border bg-glass px-3;
+	@apply mt-3 divide-y divide-border rounded-3xl border border-border bg-glass px-3;
 }
 .aboutFacts > div {
 	@apply flex min-w-0 flex-col gap-1 py-3 text-start;

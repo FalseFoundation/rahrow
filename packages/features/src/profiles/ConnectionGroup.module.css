@@ -1,7 +1,7 @@
 @reference "@rahrow/ui/global.css";
 
 .group {
-	@apply mt-7 shrink-0;
+	@apply mt-4 shrink-0 overflow-hidden rounded-3xl border border-border bg-glass px-3 py-2 shadow-[0_8px_32px_rgba(0,0,0,0.28)] backdrop-blur-xl;
 }
 .group:first-of-type {
 	@apply mt-0;
@@ -10,7 +10,7 @@
 	@apply flex min-w-0 items-center justify-between gap-2;
 }
 .stickySurface {
-	@apply bg-background py-1.5;
+	@apply bg-transparent py-1.5;
 }
 .groupSummary {
 	@apply pt-2;
