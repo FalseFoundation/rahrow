@@ -1,3 +1,4 @@
+import { connectionModeChoices } from '@rahrow/core/platform/connection-capability-matrix.ts'
 import type { ResetScope } from '@rahrow/core/settings/reset-orchestrator.ts'
 import type { Settings } from '@rahrow/core/storage/json-store.ts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -67,6 +68,26 @@ export function useSettings() {
 		runtime.engine.id,
 	]
 	const appVersion = runtime.buildMetadata?.version?.trim() || undefined
+	const connectionModes = useMemo(() => {
+		if (!runtime.platform) {
+			return (['vpn', 'proxy'] as const).filter((mode) =>
+				mode === 'vpn' ? vpnSupported : systemProxySupported,
+			)
+		}
+		return connectionModeChoices({
+			platform: runtime.platform,
+			engineId,
+			runtimeBundled: engineIds.includes(engineId),
+			engineAdapterAvailable: engineIds.includes(engineId),
+			buildEnabled: true,
+			architectureSupported: true,
+			nativeProviderAvailable: vpnSupported,
+			systemProxyAvailable: systemProxySupported,
+			permissionGranted: true,
+		})
+			.filter((choice) => choice.status === 'available')
+			.map((choice) => choice.mode)
+	}, [engineId, engineIds, runtime.platform, systemProxySupported, vpnSupported])
 	const restoreVisibleSettings = useCallback((settings: Settings) => {
 		setLocalPort(String(settings.localPort ?? DEFAULT_SETTINGS.localPort))
 		setEngineId(settings.engineId ?? DEFAULT_SETTINGS.engineId)
@@ -341,6 +362,7 @@ export function useSettings() {
 			theme,
 			language,
 			connectionMode,
+			connectionModes,
 			launchAtStartup,
 			vpnSupported,
 			systemProxySupported,

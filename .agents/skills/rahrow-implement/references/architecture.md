@@ -158,6 +158,16 @@ Treat Xray as an external runtime:
 - CLI: Node-managed process.
 - Mobile: Capacitor to native VPN implementation to Xray runtime.
 
+Xray's native `tun` inbound is the engine-facing TUN contract. Desktop may use
+`autoSystemRoutingTable` and `autoOutboundsInterface` only where the platform
+adapter restores routing safely. Mobile Network Extension/VpnService providers
+own the tunnel descriptor and pass it to Xray as `xray.tun.fd`; Xray must not
+open an unrelated tunnel. An adapter that cannot prove descriptor injection,
+socket exclusion, route and DNS cleanup, packaged-runtime availability, and
+device lifecycle behavior is unavailable and fails closed. Android therefore
+keeps its temporary sing-box-only product capability gate until the dedicated
+Xray adapter passes packaged-runtime and installed-device verification.
+
 Do not embed Go into Rust or create FFI unless real mobile/OS requirements force it.
 
 ## Product protocol target

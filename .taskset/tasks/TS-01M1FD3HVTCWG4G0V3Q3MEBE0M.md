@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3HVTCWG4G0V3Q3MEBE0M
 title: Keep Android VPN connected state truthful until native teardown completes
-status: todo
+status: blocked
 priority: urgent
 risk: high
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-14 00:48 UTC
 labels:
   - cross-platform-hardening
   - android
@@ -34,12 +34,14 @@ projects:
 
 With sing-box in Android VPN mode, pressing power off makes RahRow look disconnected while Android still reports the VPN connected.
 
-## Work
+## Completed repository work
 
-Trace JS command, Capacitor bridge, VpnService stop request, sing-box service close, TUN descriptor closure, foreground-service lifecycle, status store, callbacks, timeout, revoke, crash, and UI observer. Never write or render disconnected until the OS tunnel is confirmed down and the provider acknowledges engine/TUN teardown. A missing stop target, timeout, or native exception is an error/recovery state, not success.
+- [x] Persist Disconnecting before requesting service shutdown and wait for foreground-service teardown acknowledgment.
+- [x] Treat missing stop targets, provider-process loss, native cleanup failures, and bounded stop timeouts as Error while preserving profile, engine, and TUN-backend identity.
+- [x] Snapshot native ownership and continue cleanup through HEV, provider/TUN, process-lock, and foreground-notification failures.
+- [x] Publish Disconnected only after cleanup succeeds.
+- [x] Cover the bridge contract, native failure containment, cleanup continuation, and stop-failure identity in focused Vitest and Android JVM tests.
 
-Make stop idempotent and safe during connecting/reconnecting, app background, service recreation, permission revoke, engine crash, and repeated taps. If teardown is delayed, keep Disconnecting visible with bounded progress and recovery guidance.
+## Blocker
 
-## Acceptance
-
-Tests reproduce the reported device sequence and assert Android VPN state, routes, DNS, TUN FD, engine process, notification, and RahRow state converge. Cover sing-box and Xray providers, API levels/ABIs, rapid connect-disconnect, force-stop/crash/reboot, and timeout/error paths on installed devices.
+Installed-device acceptance requires adb plus Android API/ABI targets, neither of which is available in this environment. This is excluded by the no-new-installations constraint. Before unblocking, exercise sing-box and Xray with rapid taps, force-stop, crash, reboot, revoke, and assert route/DNS/TUN/notification cleanup.

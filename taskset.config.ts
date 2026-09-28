@@ -1,9 +1,15 @@
 import { defineConfig } from '@taskset/cli'
 
 export default defineConfig({
-	schemaVersion: 1,
 	project: {
 		name: 'rahrow',
 	},
-	tasks: {},
+	tasks: {
+		defaults: {
+			status: 'todo',
+			labels: [],
+		},
+		statuses: ['todo', 'doing', 'blocked', 'done', 'canceled'],
+		priorities: ['low', 'medium', 'high', 'urgent'],
+	},
 })

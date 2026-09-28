@@ -17,6 +17,7 @@ import type {
 	SystemProxy,
 	Vpn,
 } from '@rahrow/core/platform/capabilities.ts'
+import type { ConnectionPlatform } from '@rahrow/core/platform/connection-capability-matrix.ts'
 import type { EgressIdentity } from '@rahrow/core/platform/egress-identity.ts'
 import type { ConnectionProfile } from '@rahrow/core/profile/connection-profile.ts'
 import type { RawEngineDocumentAdapter } from '@rahrow/core/profile/raw-engine-document.ts'
@@ -120,6 +121,7 @@ export interface AppCapabilities {
 }
 
 export interface AppRuntime {
+	readonly platform?: ConnectionPlatform
 	readonly buildMetadata?: {
 		readonly version?: string
 		readonly build?: string

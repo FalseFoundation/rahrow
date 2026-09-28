@@ -15,12 +15,12 @@
 		"cleanup": "rm -rf dist .turbo node_modules"
 	},
 	"dependencies": {
-		"zod": "^4.4.3"
+		"zod": "^4.5.4"
 	},
 	"devDependencies": {
 		"@rahrow/tooling": "workspace:*",
 		"typescript": "^7.0.2",
-		"vitest": "^4.1.11"
+		"vitest": "^5.0.0"
 	},
 	"files": [
 		"src"

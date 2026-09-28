@@ -15,6 +15,7 @@ import android.os.Process
 import android.system.OsConstants
 import android.util.Base64
 import android.util.Log
+import androidx.annotation.RequiresApi
 import io.nekohasekai.libbox.ConnectionOwner
 import io.nekohasekai.libbox.ExchangeContext
 import io.nekohasekai.libbox.Func
@@ -203,6 +204,7 @@ internal class SingBoxPlatformInterface(private val service: VpnService) : Platf
 		while (iterator.hasNext()) iterator.next().let { builder.addRoute(it.address(), it.prefix()) }
 	}
 
+	@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 	private fun excludeRoutes(builder: VpnService.Builder, iterator: io.nekohasekai.libbox.RoutePrefixIterator) {
 		while (iterator.hasNext()) iterator.next().let {
 			builder.excludeRoute(IpPrefix(InetAddress.getByName(it.address()), it.prefix()))

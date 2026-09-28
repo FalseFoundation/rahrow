@@ -59,7 +59,9 @@ Only repository-level tools:
 // Root package.json
 {
   "devDependencies": {
-    "turbo": "latest"
+    "turbo": "latest",
+    "husky": "^8.0.0",
+    "lint-staged": "^15.0.0"
   }
 }
 ```

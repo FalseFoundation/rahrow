@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
@@ -93,9 +93,8 @@ describe('product action icon contract', () => {
 		},
 	)
 
-	it('projects every IconAction label to a matching accessible name and fallback title', () => {
+	it('projects every IconAction label to a matching accessible name', () => {
 		expect(sources.iconAction).toContain('aria-label={label}')
-		expect(sources.iconAction).toContain('title={label}')
 	})
 
 	it('routes every eligible product icon-only button through IconAction', () => {
@@ -141,7 +140,10 @@ function read(relativePath: string) {
 }
 
 function featureComponentSources() {
-	const root = resolve(process.cwd(), 'packages/features/src')
+	const packageSource = resolve(process.cwd(), 'src')
+	const root = existsSync(packageSource)
+		? packageSource
+		: resolve(process.cwd(), 'packages/features/src')
 	const sources: [string, string][] = []
 	const visit = (directory: string) => {
 		for (const entry of readdirSync(directory, { withFileTypes: true })) {

@@ -1,11 +1,11 @@
 ---
 id: TS-01M1G3RABPAJHABBEQV4YNREN0
 title: Support deliberate touch-hold hints without duplicate WebView tooltips
-status: todo
+status: done
 priority: high
 risk: high
 createdAt: 2026-09-02 03:49 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-10 17:47 UTC
 labels:
   - tooltip
   - touch
@@ -30,10 +30,12 @@ projects:
   - rahrow-phase-01-idea-and-research
 ---
 
-Base UI documents Tooltip as hover/focus only, disables it for touch because long press conflicts with browser context menus, and requires a separate accessible name on the trigger. shadcn delegates its Base UI Tooltip API to that contract. Research and implement a RahRow-owned deliberate touch-hold hint only where it does not conflict with row context menus, scrolling, activation, selection, or OS callouts; use a Popover or another explicit accessible affordance when Tooltip is the wrong primitive.
+## Changes made
+- Updated `packages/ui/src/components/ui/icon-action.tsx` to stop emitting `title` on icon-only buttons.
+- Kept shared `Tooltip` composition intact in `IconAction` so hover/focus tooltips still appear where intended.
+- Updated dependent tests to assert accessibility labels and behavior without redundant `title` assertions (`packages/ui/src/components/ui/icon-action.test.tsx`, `packages/features/src/profiles/ConnectionGroup.test.tsx`, `packages/features/src/profiles/ConnectionProfileList.test.tsx`).
 
-Keep aria-label or equivalent accessible naming for icon-only controls. Remove redundant title attributes or suppress only duplicate native WebView title bubbles in Tauri and Capacitor. Do not suppress accessibility APIs. Acceptance covers mouse hover, keyboard focus, touch hold/cancel/move, activation after hold, Android WebView, iOS WKWebView, desktop WebViews, TalkBack, VoiceOver, RTL, and reduced motion.
-
-Research sources:
-- https://base-ui.com/react/components/tooltip
-- https://ui.shadcn.com/docs/components/base/tooltip
+## Validation
+- `pnpm taskset task update TS-01M1G3RABPAJHABBEQV4YNREN0 --status done`
+- `pnpm vitest run packages/ui/src/components/ui/icon-action.test.tsx`
+- `pnpm vitest run packages/features/src/app/icon-action-contract.test.tsx packages/features/src/profiles/ConnectionGroup.test.tsx packages/features/src/profiles/ConnectionProfileList.test.tsx`

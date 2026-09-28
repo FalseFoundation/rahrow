@@ -39,8 +39,6 @@ These rules are **always enforced**. Each links to a file with Incorrect/Correct
 - **No manual `dark:` color overrides.** Use semantic tokens (`bg-background`, `text-muted-foreground`).
 - **Use `cn()` for conditional classes.** Don't write manual template literal ternaries.
 - **No manual `z-index` on overlay components.** Dialog, Sheet, Popover, etc. handle their own stacking.
-- **Muted/secondary label text uses `Marker`.** Don't use raw `<p className="text-muted-foreground">`. Use `<Marker>` with `<MarkerContent>` for standalone status/annotation lines.
-- **Streaming/loading text uses shimmer `Marker`.** For "is typing" / "is thinking" indicators, compose `<Marker><Spinner data-icon="inline-start" /><MarkerContent className="shimmer">…</MarkerContent></Marker>`. Never use custom `animate-pulse` dots.
 
 ### Forms & Inputs → [forms.md](./rules/forms.md)
 
@@ -66,7 +64,9 @@ These rules are **always enforced**. Each links to a file with Incorrect/Correct
 - **Use existing components before custom markup.** Check if a component exists before writing a styled `div`.
 - **Callouts use `Alert`.** Don't build custom styled divs.
 - **Empty states use `Empty`.** Don't build custom empty state markup.
-- **Toast via `sonner`.** Use `toast()` from `sonner`.
+- **Toast follows the project base.** Use `toast` from the `toast` component for
+  Base UI projects. Use `toast()` from `sonner` for Radix and React Aria
+  projects.
 - **Use `Separator`** instead of `<hr>` or `<div className="border-t">`.
 - **Use `Skeleton`** for loading placeholders. No custom `animate-pulse` divs.
 - **Use `Badge`** instead of custom styled spans.
@@ -76,8 +76,6 @@ These rules are **always enforced**. Each links to a file with Incorrect/Correct
 - **Icons in `Button` use `data-icon`.** `data-icon="inline-start"` or `data-icon="inline-end"` on the icon.
 - **No sizing classes on icons inside components.** Components handle icon sizing via CSS. No `size-4` or `w-4 h-4`.
 - **Pass icons as objects, not string keys.** `icon={CheckIcon}`, not a string lookup.
-- **Use hugeicons for all project icons.** Import from `@hugeicons/core-free-icons` and render via `<HugeiconsIcon icon={FooIcon} strokeWidth={1.5} />`. Never hand-roll custom SVGs or use a different icon library. The project `iconLibrary` is `hugeicons`.
-- **No custom SVGs.** If a suitable hugeicon exists, use it. Decorative/brand glyphs that have no icon equivalent are the only exception; document the reason in a comment.
 
 ### Chat & Messaging → [chat.md](./rules/chat.md)
 
@@ -139,7 +137,7 @@ These are the most common patterns that differentiate correct shadcn/ui code. Fo
 | Data display               | `Table`, `Card`, `Badge`, `Avatar`                                                                  |
 | Navigation                 | `Sidebar`, `NavigationMenu`, `Breadcrumb`, `Tabs`, `Pagination`                                     |
 | Overlays                   | `Dialog` (modal), `Sheet` (side panel), `Drawer` (bottom sheet), `AlertDialog` (confirmation)       |
-| Feedback                   | `sonner` (toast), `Alert`, `Progress`, `Skeleton`, `Spinner`                                        |
+| Feedback                   | `toast` (Base UI), `sonner` (Radix/Aria), `Alert`, `Progress`, `Skeleton`, `Spinner`                 |
 | Command palette            | `Command` inside `Dialog`                                                                           |
 | Charts                     | `Chart` (wraps Recharts)                                                                            |
 | Layout                     | `Card`, `Separator`, `Resizable`, `ScrollArea`, `Accordion`, `Collapsible`                          |

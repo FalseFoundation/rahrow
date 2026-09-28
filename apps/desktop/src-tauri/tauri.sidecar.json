@@ -1,7 +1,11 @@
 {
 	"bundle": {
 		"active": true,
-		"externalBin": ["binaries/xray", "binaries/sing-box"],
+		"externalBin": [
+			"binaries/xray",
+			"binaries/sing-box",
+			"binaries/rahrow"
+		],
 		"resources": {
 			"binaries/geoip.dat": "geoip.dat",
 			"binaries/geosite.dat": "geosite.dat",

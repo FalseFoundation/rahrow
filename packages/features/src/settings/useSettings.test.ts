@@ -457,4 +457,56 @@ describe('useSettings', () => {
 			]),
 		)
 	})
+
+	it('derives mobile mode choices from the shared capability matrix', async () => {
+		const runtime = createRuntime({
+			platform: 'android',
+			availableEngines: [
+				idleEngine.manifest,
+				{ ...idleEngine.manifest, id: 'sing-box' },
+			],
+			settingsStore: new JsonSettingsStore(
+				new MemoryDocumentStore(
+					JSON.stringify({ engineId: 'sing-box', connectionMode: 'vpn' }),
+				),
+			),
+			capabilities: {
+				clipboard: {
+					async read() {
+						return ''
+					},
+					async write() {},
+				},
+				qrEncoder: {
+					async encode(value) {
+						return value
+					},
+				},
+				vpn: {
+					async connect() {},
+					async disconnect() {},
+					async status() {
+						return { connected: false, supported: true }
+					},
+				},
+				systemProxy: {
+					async enable() {},
+					async disable() {},
+					async status() {
+						return { enabled: false, supported: true }
+					},
+				},
+			},
+		})
+		const { result } = renderHook(() => useSettings(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+
+		await waitFor(() =>
+			expect(result.current.state.connectionModes).toEqual(['vpn']),
+		)
+		act(() => result.current.actions.setEngineId('xray'))
+		expect(result.current.state.connectionModes).toEqual([])
+	})
 })

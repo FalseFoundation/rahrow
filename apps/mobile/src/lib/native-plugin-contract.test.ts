@@ -16,6 +16,7 @@ const xrayProviderPath = join(javaRoot, 'XrayNativeEngineProvider.kt')
 const xrayBridgePath = join(androidApp, 'java/libXray/LibXray.java')
 const singBoxPlatformPath = join(javaRoot, 'SingBoxPlatformInterface.kt')
 const processLockPath = join(javaRoot, 'VpnProcessLock.kt')
+const failureBoundaryPath = join(javaRoot, 'NativeVpnFailureBoundary.kt')
 const androidBuildPath = join(mobileRoot, 'android/app/build.gradle')
 const hevBuildScriptPath = join(mobileRoot, 'scripts/build-hev-tunnel.mjs')
 const networkIdentityPath = join(javaRoot, 'NetworkIdentity.kt')
@@ -149,7 +150,7 @@ describe('Android native plugin contract', () => {
 		expect(service).toContain(
 			'HevSocks5Tunnel(this, socksPort).also { it.start() }',
 		)
-		expect(service).toContain('hevTunnel?.close()')
+		expect(service).toContain('currentHevTunnel?.close()')
 		expect(plugin).toContain('HevSocks5Tunnel.isBundled(context)')
 		expect(plugin).toContain('.put("hev-socks5-tunnel", hevBundled)')
 		expect(build).toContain("file('libs/hev-socks5-tunnel.aar')")
@@ -181,9 +182,11 @@ describe('Android native plugin contract', () => {
 		const service = read(vpnServicePath)
 
 		expect(service).toContain('startForegroundNotification()')
-		expect(service).toContain('return START_REDELIVER_INTENT')
 		expect(service).toContain(
-			'ServiceCompat.stopForeground(this, STOP_FOREGROUND_REMOVE)',
+			'return if (started) START_REDELIVER_INTENT else START_NOT_STICKY',
+		)
+		expect(service).toContain(
+			'ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)',
 		)
 	})
 
@@ -237,10 +240,16 @@ describe('Android native plugin contract', () => {
 		const service = read(vpnServicePath)
 		const provider = read(engineProviderPath)
 		const platform = read(singBoxPlatformPath)
+		const failureBoundary = read(failureBoundaryPath)
 
 		expect(existsSync(processLockPath)).toBe(true)
+		expect(existsSync(failureBoundaryPath)).toBe(true)
 		expect(service).toContain('VpnProcessLock.acquire')
-		expect(service).toContain('processLock?.close()')
+		expect(service).toContain('currentProcessLock?.close()')
+		expect(service).toContain('runNativeVpnStart')
+		expect(service).toContain('runNativeVpnCleanup')
+		expect(failureBoundary).toContain('catch (error: Throwable)')
+		expect(failureBoundary).toContain('error.rethrowIfFatal()')
 		expect(provider).toContain('closeService()')
 		expect(platform).toContain('tun?.close()')
 		expect(plugin).toContain('awaitTunnelStarted')
@@ -250,6 +259,9 @@ describe('Android native plugin contract', () => {
 		expect(plugin).toContain('context.startService(')
 		expect(plugin).toContain('.put("engineId", status.engineId)')
 		expect(plugin).toContain('awaitTunnelStopped')
+		expect(plugin).toContain('nativeVpnStopFailure(current, message)')
+		expect(plugin).toContain('stop target is unavailable')
+		expect(plugin).toContain('stop timed out')
 		expect(plugin).toContain('stopTunnelService(status.engineId)')
 		expect(plugin).not.toContain(
 			'VpnStatusStore(context).write(NativeVpnStatus("disconnected"))',

@@ -244,22 +244,21 @@ export function Home() {
 											data-active={connected || connecting}
 											data-connected={connected}
 										>
-											<Button
-												variant='status'
-												size='control-xl'
-												data-connected={connected}
-												disabled={
-													state.isPending || (!state.canConnect && !state.canDisconnect)
-												}
-												onClick={() => void toggleConnection()}
-												aria-label={connectionActionLabel}
-												title={connectionActionLabel}
-												aria-describedby={
-													!connected && state.connectUnavailableReason
-														? 'home-connect-unavailable'
-														: undefined
-												}
-											>
+														<Button
+														variant='status'
+														size='control-xl'
+														data-connected={connected}
+														disabled={
+															state.isPending || (!state.canConnect && !state.canDisconnect)
+														}
+										onClick={() => void toggleConnection()}
+										aria-label={connectionActionLabel}
+										aria-describedby={
+											!connected && state.connectUnavailableReason
+												? 'home-connect-unavailable'
+												: undefined
+										}
+									>
 												{state.isPending && state.pendingAction !== 'test' ? (
 													<Spinner />
 												) : (

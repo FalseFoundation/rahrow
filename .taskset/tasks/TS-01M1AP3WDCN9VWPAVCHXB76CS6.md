@@ -1,11 +1,11 @@
 ---
 id: TS-01M1AP3WDCN9VWPAVCHXB76CS6
 title: Expose capability-gated TUN and system-proxy connection modes
-status: todo
+status: done
 priority: urgent
 risk: high
 createdAt: 2026-08-31 01:14 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-14 00:50 UTC
 labels:
   - connection-mode
   - vpn

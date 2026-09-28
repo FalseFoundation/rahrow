@@ -125,6 +125,7 @@ pnpm add lodash -w  # Only for repo-level tools
 Only these belong in root `package.json`:
 
 - `turbo` - The build system
+- `husky`, `lint-staged` - Git hooks
 - Repository-level tooling
 
 ### Internal Dependencies
@@ -227,7 +228,8 @@ packages/
 // GOOD: Root only has repo tools
 {
   "devDependencies": {
-    "turbo": "latest"
+    "turbo": "latest",
+    "husky": "latest"
   }
 }
 ```

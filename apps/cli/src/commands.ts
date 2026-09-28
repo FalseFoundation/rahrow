@@ -17,6 +17,10 @@ import { SmartConnectOrchestrator } from '@rahrow/core/connection/smart-connect.
 import type { Logger } from '@rahrow/core/logging/logger.ts'
 import { createPinoLogger } from '@rahrow/core/logging/pino-logger.ts'
 import { silentLogger } from '@rahrow/core/logging/silent-logger.ts'
+import {
+	connectionCapability,
+	connectionModeChoices,
+} from '@rahrow/core/platform/connection-capability-matrix.ts'
 import { createRahrowAboutManifest } from '@rahrow/core/product/about.ts'
 import {
 	isProfileProtectedByLock,
@@ -436,7 +440,8 @@ async function runConnect(
 	const profile = await profileFromArgsOrSettings(args, context)
 	const settings = await context.settingsStore.read()
 	const requestedMode = optionValue(args, '--mode') ?? settings.connectionMode
-	if (requestedMode !== 'proxy') {
+	const engineId = settings.engineId ?? 'sing-box'
+	if (cliConnectionCapability(engineId, requestedMode).status !== 'available') {
 		throw new Error(
 			'CLI cannot register an OS VPN/TUN connection. Use --mode proxy for the explicit local-proxy fallback.',
 		)
@@ -484,7 +489,8 @@ async function runRestart(
 	const profile = await profileFromArgsOrSettings(args, context)
 	const settings = await context.settingsStore.read()
 	const requestedMode = optionValue(args, '--mode') ?? settings.connectionMode
-	if (requestedMode !== 'proxy') {
+	const engineId = settings.engineId ?? 'sing-box'
+	if (cliConnectionCapability(engineId, requestedMode).status !== 'available') {
 		throw new Error(
 			'CLI cannot register an OS VPN/TUN connection. Use --mode proxy for the explicit local-proxy fallback.',
 		)
@@ -517,10 +523,30 @@ async function runStatus(
 			connectionState:
 				context.connectionController.current?.state ?? 'disconnected',
 			engine: engineStatusSummary(health),
+			connectionModes: connectionModeChoices({
+				platform: 'cli',
+				engineId: engine.id,
+				runtimeBundled: true,
+				engineAdapterAvailable: true,
+				buildEnabled: true,
+				architectureSupported: true,
+			}),
 		}),
 	)
 
 	return 0
+}
+
+function cliConnectionCapability(engineId: string, mode: string | undefined) {
+	return connectionCapability({
+		platform: 'cli',
+		engineId,
+		mode: mode === 'proxy' ? 'proxy' : 'vpn',
+		runtimeBundled: true,
+		engineAdapterAvailable: true,
+		buildEnabled: true,
+		architectureSupported: true,
+	})
 }
 
 async function runTest(

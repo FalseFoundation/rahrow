@@ -1,11 +1,11 @@
 ---
 id: TS-01M1AK5GVR8HKWXESSFRA8H6N9
 title: Codify and verify Xray native TUN support
-status: todo
+status: done
 priority: high
 risk: medium
 createdAt: 2026-08-31 00:23 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-14 00:48 UTC
 labels:
   - vpn
   - architecture

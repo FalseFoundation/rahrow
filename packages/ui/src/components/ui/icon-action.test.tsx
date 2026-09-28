@@ -12,7 +12,6 @@ describe('IconAction', () => {
 
 		expect(markup).toContain('<button')
 		expect(markup).toContain('aria-label="Refresh connections"')
-		expect(markup).toContain('title="Refresh connections"')
 		expect(markup).toContain('data-slot="tooltip-trigger"')
 		expect(markup).toContain('[@media(pointer:coarse)]:min-h-11')
 	})

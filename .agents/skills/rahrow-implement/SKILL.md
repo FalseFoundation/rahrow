@@ -36,6 +36,10 @@ The target is a small local application first:
 - Desktop uses React + Vite + Tauri 2 with minimal Rust at the native edge.
 - Mobile uses React + Vite + Capacitor with native Android/iOS VPN integrations only at the platform edge.
 - Xray is an engine adapter/runtime, not the domain model.
+- Xray VPN uses its native `tun` inbound. Desktop may use its system-routing
+  options; mobile providers inject the OS-owned descriptor through
+  `xray.tun.fd`. Keep a platform unavailable until that adapter, packaged
+  runtime, routing cleanup, and installed-device lifecycle are verified.
 
 Optimize for clarity, composability, correctness, and future extension without foundation rewrites.
 
@@ -62,6 +66,9 @@ development previews:
 - If a capability cannot be bundled and operated under this contract on a target
   OS, mark it unavailable and fail closed. Do not silently substitute proxy mode
   for VPN/TUN or advertise a partially external setup as built in.
+- Android must retain the temporary sing-box-only advertised VPN capability
+  until its dedicated Xray file-descriptor adapter passes packaged-runtime and
+  physical-device verification.
 
 ## Non-Negotiables
 

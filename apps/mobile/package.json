@@ -37,11 +37,11 @@
 		"cleanup": "rm -rf dist .turbo node_modules"
 	},
 	"dependencies": {
-		"@capacitor-community/admob": "8.0.0",
-		"@capacitor/android": "^8.5.0",
+		"@capacitor-community/admob": "8.1.0",
+		"@capacitor/android": "^8.5.1",
 		"@capacitor/app": "^8.1.1",
-		"@capacitor/core": "^8.5.0",
-		"@capacitor/ios": "^8.5.0",
+		"@capacitor/core": "^8.5.1",
+		"@capacitor/ios": "^8.5.1",
 		"@capacitor/preferences": "^8.0.1",
 		"@fontsource-variable/geist-mono": "^5.3.0",
 		"@fontsource-variable/manrope": "^5.3.0",
@@ -51,19 +51,19 @@
 		"@rahrow/features": "workspace:*",
 		"@rahrow/tooling": "workspace:*",
 		"@rahrow/ui": "workspace:*",
-		"react": "^19.2.8",
-		"react-dom": "^19.2.8"
+		"react": "^19.3.0",
+		"react-dom": "^19.3.0"
 	},
 	"devDependencies": {
 		"@capacitor/assets": "^3.0.5",
-		"@capacitor/cli": "^8.5.0",
+		"@capacitor/cli": "^8.5.1",
 		"@tailwindcss/postcss": "^4.3.3",
 		"@types/react": "^19.2.18",
-		"@types/react-dom": "^19.2.4",
+		"@types/react-dom": "^19.2.7",
 		"esbuild": "^0.28.2",
-		"postcss": "^8.5.26",
+		"postcss": "^8.5.28",
 		"typescript": "^7.0.2",
 		"vite": "^8.2.2",
-		"vitest": "^4.1.11"
+		"vitest": "^5.0.0"
 	}
 }

@@ -157,7 +157,6 @@ describe('ConnectionProfileList selection', () => {
 			throw new Error('Expected the standalone connection row')
 		}
 		const actions = within(row).getByRole('button', { name: 'More actions' })
-		expect(actions.getAttribute('title')).toBe('More actions')
 		await user.click(actions)
 		expect(onActions).toHaveBeenCalledWith(standalone)
 		expect(onActivate).toHaveBeenCalledTimes(1)

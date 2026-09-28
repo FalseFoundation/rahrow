@@ -1,6 +1,9 @@
 {
 	"bundle": {
 		"resources": {
+			"binaries/rahrow.cmd": "rahrow.cmd"
+		},
+		"resources": {
 			"binaries/wintun.dll": "wintun.dll",
 			"binaries/LICENSE-Wintun": "LICENSE-Wintun"
 		}

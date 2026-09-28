@@ -12,6 +12,7 @@ import {
 	type NetworkQualityProbe,
 } from '@rahrow/core/network/cloudflare-network-quality.ts'
 import type { NetworkIdentity } from '@rahrow/core/platform/capabilities.ts'
+import type { ConnectionPlatform } from '@rahrow/core/platform/connection-capability-matrix.ts'
 import type {
 	EgressIdentity,
 	EgressIdentityRequester,
@@ -68,6 +69,7 @@ import { createDesktopRoutedHttpRequester } from './routed-http.ts'
 import { createDesktopDocumentStore } from './tauri-document-store.ts'
 
 export interface CreateDesktopRuntimeOptions {
+	readonly platform?: Extract<ConnectionPlatform, 'macos' | 'linux' | 'windows'>
 	readonly advertising?: AppRuntime['advertising'] | null
 	readonly advertisingDocument?: StringDocumentStore
 	readonly buildMetadata?: AppRuntime['buildMetadata']
@@ -179,7 +181,9 @@ export function createDesktopRuntime(
 			: {}),
 		clearTransientState: () => logs.clear(),
 	})
+	const desktopPlatform = options.platform ?? detectDesktopPlatform()
 	return {
+		...(desktopPlatform ? { platform: desktopPlatform } : {}),
 		buildMetadata,
 		...(advertising ? { advertising } : {}),
 		profileStore,
@@ -228,6 +232,16 @@ export function createDesktopRuntime(
 		logger,
 		logs,
 	}
+}
+
+function detectDesktopPlatform():
+	| Extract<ConnectionPlatform, 'macos' | 'linux' | 'windows'>
+	| undefined {
+	const agent = globalThis.navigator?.userAgent.toLowerCase() ?? ''
+	if (agent.includes('windows')) return 'windows'
+	if (agent.includes('macintosh') || agent.includes('mac os')) return 'macos'
+	if (agent.includes('linux')) return 'linux'
+	return undefined
 }
 
 function createBuildMetadata(): NonNullable<AppRuntime['buildMetadata']> {

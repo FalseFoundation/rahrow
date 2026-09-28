@@ -79,42 +79,41 @@ private class SingBoxNativeEngineProvider(private val service: VpnService) : Nat
 	private var commandServer: CommandServer? = null
 
 	override fun start(engineConfig: String) {
-		setupLibbox(service)
-		Libbox.checkConfig(engineConfig)
-		val server = CommandServer(object : CommandServerHandler {
-			override fun getSystemProxyStatus() = SystemProxyStatus().apply {
-				available = false
-				enabled = false
-			}
-
-			override fun setSystemProxyEnabled(enabled: Boolean) = Unit
-			override fun serviceReload() = Unit
-			override fun serviceStop() = platform.closeTun()
-			override fun writeDebugMessage(message: String?) {
-				if (!message.isNullOrBlank()) Log.d(TAG, message)
-			}
-		}, platform)
-		commandServer = server
 		try {
+			setupLibbox(service)
+			Libbox.checkConfig(engineConfig)
+			val server = CommandServer(object : CommandServerHandler {
+				override fun getSystemProxyStatus() = SystemProxyStatus().apply {
+					available = false
+					enabled = false
+				}
+
+				override fun setSystemProxyEnabled(enabled: Boolean) = Unit
+				override fun serviceReload() = Unit
+				override fun serviceStop() = platform.closeTun()
+				override fun writeDebugMessage(message: String?) {
+					if (!message.isNullOrBlank()) Log.d(TAG, message)
+				}
+			}, platform)
+			commandServer = server
 			server.start()
 			server.startOrReloadService(engineConfig, OverrideOptions())
-		} catch (error: Exception) {
+		} catch (error: Throwable) {
+			error.rethrowIfFatal()
 			stop()
-			throw IOException(error.message ?: "sing-box failed to start", error)
+			throw IOException(nativeVpnFailureMessage(error, "sing-box failed to start"), error)
 		}
 	}
 
 	override fun stop() {
 		val server = commandServer
 		commandServer = null
-		try {
-			server?.closeService()
-		} catch (error: Exception) {
-			Log.w(TAG, "Failed to close sing-box service", error)
-		} finally {
-			platform.closeTun()
-			server?.close()
-		}
+		val failure = runNativeVpnCleanup(
+			{ server?.closeService() },
+			platform::closeTun,
+			{ server?.close() },
+		)
+		if (failure != null) Log.w(TAG, "Failed to close sing-box service", failure)
 	}
 
 	companion object {

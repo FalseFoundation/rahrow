@@ -35,7 +35,7 @@ function IconAction({
 			<Tooltip disabled={disabled || tooltip == null}>
 				<TooltipTrigger
 					render={
-						<Button {...props} disabled={disabled} aria-label={label} title={label}>
+						<Button {...props} disabled={disabled} aria-label={label}>
 							{children}
 						</Button>
 					}

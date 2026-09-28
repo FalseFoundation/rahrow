@@ -706,6 +706,8 @@ describe('RahRow CLI command framework', () => {
 		expect(stderr).toEqual([])
 		expect(stdout.at(-2)).toContain('"state": "connected"')
 		expect(stdout.at(-1)).toContain('"status": "running"')
+		expect(stdout.at(-1)).toContain('"mode": "proxy"')
+		expect(stdout.at(-1)).not.toContain('"mode": "vpn"')
 		await expect(
 			context.engineRegistry.get('sing-box').status(),
 		).resolves.toMatchObject({ status: 'running' })

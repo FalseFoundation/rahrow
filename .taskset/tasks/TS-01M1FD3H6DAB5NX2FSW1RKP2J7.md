@@ -1,11 +1,11 @@
 ---
 id: TS-01M1FD3H6DAB5NX2FSW1RKP2J7
 title: Publish and enforce the engine × mode × platform capability matrix
-status: todo
+status: doing
 priority: urgent
 risk: high
 createdAt: 2026-09-01 21:13 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-09-14 00:49 UTC
 labels:
   - cross-platform-hardening
   - engines
@@ -43,6 +43,17 @@ projects:
 Define one executable matrix for Xray, Xray TUN, sing-box, sing-box TUN, Windows Wintun, and future providers across VPN/TUN and system-proxy modes on Android, iOS, macOS, Linux, Windows, and CLI.
 
 Availability is the intersection of bundled runtime, engine adapter, mode, native provider/driver/extension, ABI/architecture, entitlement/permission, and build flavor. Wintun is a Windows tunnel provider, not a peer engine choice. CLI supports proxy mode wherever its bundled engine can run; VPN/TUN is exposed only where the installed application owns a real OS provider and CLI commands can safely control it.
+
+## Progress
+
+- [x] Added a shared core resolver for engine, platform, mode, bundled runtime, adapter, build, architecture, native provider, system-proxy adapter, and permission inputs.
+- [x] Structurally hides mobile System proxy and CLI VPN/TUN cells.
+- [x] Keeps Android Xray VPN/TUN unavailable until the packaged descriptor adapter is verified.
+- [x] Generates shared Settings mode choices and CLI status diagnostics from the matrix.
+- [x] Added exhaustive core cells/reason tests plus shared Settings and CLI coverage.
+- [ ] Feed signed-build entitlement and installed-runtime evidence into every desktop/mobile app edge.
+- [ ] Make release validation compare advertised cells with installed artifact contents and lifecycle evidence.
+- [ ] Prove traffic, stop, switch, and route/DNS/proxy/process cleanup on installed targets.
 
 ## Acceptance
 

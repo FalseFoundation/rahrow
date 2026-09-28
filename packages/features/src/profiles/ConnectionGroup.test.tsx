@@ -35,7 +35,6 @@ describe('ConnectionGroupHeader', () => {
 		)
 
 		expect(markup).toContain('aria-label="More actions"')
-		expect(markup).toContain('title="More actions"')
 		expect(markup).toContain('aria-label="Collapse group"')
 		expect(markup).not.toContain('aria-label="Private source"')
 	})

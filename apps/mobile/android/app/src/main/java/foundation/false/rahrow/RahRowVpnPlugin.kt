@@ -133,8 +133,9 @@ class RahRowVpnPlugin : Plugin() {
 		statusStore.write(NativeVpnStatus("disconnecting", current.profileId, current.engineId, current.tunBackendId))
 		val stopRequested = stopTunnelService(current.engineId)
 		if (!stopRequested) {
-			statusStore.write(NativeVpnStatus("disconnected"))
-			call.resolve()
+			val message = "Native VPN provider stop target is unavailable"
+			statusStore.write(nativeVpnStopFailure(current, message))
+			call.reject(message, "engine_stop_failed")
 			return
 		}
 		awaitTunnelStopped(call, statusStore)
@@ -144,8 +145,14 @@ class RahRowVpnPlugin : Plugin() {
 	fun status(call: PluginCall) {
 		val statusStore = VpnStatusStore(context)
 		val persisted = statusStore.read()
-		val status = if (persisted.connected && !isVpnProcessRunning(persisted.engineId)) {
-			NativeVpnStatus("disconnected").also(statusStore::write)
+		val status = if (
+			(persisted.state == "connected" || persisted.state == "disconnecting") &&
+			!isVpnProcessRunning(persisted.engineId)
+		) {
+			nativeVpnStopFailure(
+				persisted,
+				"Native VPN provider process ended before tunnel teardown was acknowledged",
+			).also(statusStore::write)
 		} else {
 			persisted
 		}
@@ -258,7 +265,10 @@ class RahRowVpnPlugin : Plugin() {
 				}
 				Thread.sleep(50)
 			}
-			call.reject("Native VPN provider stop timed out", "engine_stop_failed")
+			val current = statusStore.read()
+			val message = "Native VPN provider stop timed out"
+			statusStore.write(nativeVpnStopFailure(current, message))
+			call.reject(message, "engine_stop_failed")
 		}
 	}
 

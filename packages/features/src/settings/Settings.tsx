@@ -401,9 +401,7 @@ export function Settings() {
 								<Choice
 									label={t('settings.connection.mode')}
 									value={state.connectionMode}
-									values={(['vpn', 'proxy'] as const).filter((mode) =>
-										mode === 'vpn' ? state.vpnSupported : state.systemProxySupported,
-									)}
+									values={state.connectionModes}
 									optionLabel={(value) => t(`settings.options.${value}`)}
 									onChange={(connectionMode) => {
 										actions.setConnectionMode(connectionMode)

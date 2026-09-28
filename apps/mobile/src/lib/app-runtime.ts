@@ -238,6 +238,7 @@ export function createMobileRuntime(
 		clearTransientState: () => logs.clear(),
 	})
 	return {
+		...(platform === 'android' || platform === 'ios' ? { platform } : {}),
 		buildMetadata,
 		...(advertising ? { advertising } : {}),
 		profileStore,

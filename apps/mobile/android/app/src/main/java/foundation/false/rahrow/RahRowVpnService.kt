@@ -77,12 +77,11 @@ abstract class RahRowVpnService : VpnService() {
 				hevTunnel = HevSocks5Tunnel(this, socksPort).also { it.start() }
 			}
 			statusStore.write(NativeVpnStatus("connected", profileId, engineId, tunBackendId))
-		} catch (error: Exception) {
-			stopTunnel("error", profileId, error.message ?: "Native VPN provider failed")
+		}, onFailure = { error ->
+			stopTunnel("error", profileId, nativeVpnFailureMessage(error, "Native VPN provider failed"))
 			stopSelf()
-			return START_NOT_STICKY
-		}
-		return START_REDELIVER_INTENT
+		})
+		return if (started) START_REDELIVER_INTENT else START_NOT_STICKY
 	}
 
 	override fun onDestroy() {
@@ -102,21 +101,17 @@ abstract class RahRowVpnService : VpnService() {
 	}
 
 	private fun stopTunnel(state: String, profileId: String? = null, error: String? = null) {
-		var teardownError = error
-		try {
-			try {
-				hevTunnel?.close()
-			} finally {
-				hevTunnel = null
-				provider?.close()
-			}
-		} catch (closeError: Exception) {
-			if (teardownError == null) teardownError = closeError.message ?: "Native VPN provider failed to stop"
-		} finally {
-			provider = null
-			processLock?.close()
-			processLock = null
-			ServiceCompat.stopForeground(this, STOP_FOREGROUND_REMOVE)
+		val currentHevTunnel = hevTunnel.also { hevTunnel = null }
+		val currentProvider = provider.also { provider = null }
+		val currentProcessLock = processLock.also { processLock = null }
+		val closeError = runNativeVpnCleanup(
+			{ currentHevTunnel?.close() },
+			{ currentProvider?.close() },
+			{ currentProcessLock?.close() },
+			{ ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE) },
+		)
+		val teardownError = error ?: closeError?.let {
+			nativeVpnFailureMessage(it, "Native VPN provider failed to stop")
 		}
 		statusStore.write(NativeVpnStatus(if (teardownError == null) state else "error", profileId, engineId, error = teardownError))
 	}
