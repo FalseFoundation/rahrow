@@ -6,12 +6,14 @@ import styles from './ProductHeader.module.css'
 export function ProductHeader({
 	title,
 	eyebrow,
+	badge,
 	leading,
 	actions,
 	ref,
 }: {
 	readonly title: string
 	readonly eyebrow?: ReactNode
+	readonly badge?: ReactNode
 	readonly leading?: ReactNode
 	readonly actions?: ReactNode
 	readonly ref?: Ref<HTMLElement>
@@ -23,7 +25,10 @@ export function ProductHeader({
 				{leading}
 				<div className={styles.copy}>
 					{eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
-					<h1 className={styles.title}>{title}</h1>
+					<div className={styles.titleRow}>
+						<h1 className={styles.title}>{title}</h1>
+						{badge ? <span className={styles.badge}>{badge}</span> : null}
+					</div>
 				</div>
 			</div>
 			{actions ? <div className={styles.actions}>{actions}</div> : null}

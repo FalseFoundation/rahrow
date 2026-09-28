@@ -126,8 +126,12 @@ describe('Home network identity', () => {
 		expect(
 			screen.getByText(/Netherlands · Observed through Cloudflare/),
 		).toBeTruthy()
-		expect(screen.getByText('Cloudflare latency · 28 ms')).toBeTruthy()
-		expect(screen.getByText('Download · 8.39 Mbps · 1 MiB sample')).toBeTruthy()
+		expect(screen.getByText('LATENCY')).toBeTruthy()
+		expect(screen.getByText('28 ms')).toBeTruthy()
+		expect(screen.getByText('Round trip')).toBeTruthy()
+		expect(screen.getByText('DOWNLOAD')).toBeTruthy()
+		expect(screen.getByText('8.39 Mbps')).toBeTruthy()
+		expect(screen.getByText('1 MiB sample')).toBeTruthy()
 		expect(screen.queryByText('LOCAL · PROXY')).toBeNull()
 		expect(screen.queryByText('127.0.0.1:10808')).toBeNull()
 		expect(screen.queryByText('Loopback SOCKS listener')).toBeNull()
@@ -402,7 +406,7 @@ describe('Home network identity', () => {
 
 		render(<Home />)
 
-		expect(screen.getByText('LATENCY')).toBeTruthy()
+		expect(screen.getAllByText('LATENCY').length).toBeGreaterThan(0)
 		expect(screen.queryByText('SPEED TEST')).toBeNull()
 		expect(screen.getByText('42 ms').getAttribute('dir')).toBe('ltr')
 	})

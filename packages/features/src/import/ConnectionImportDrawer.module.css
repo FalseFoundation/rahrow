@@ -25,7 +25,7 @@
 	@apply border-t border-border bg-surface px-4.5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))];
 }
 .camera {
-	@apply grid aspect-square w-full place-items-center overflow-hidden rounded-2xl border border-border bg-muted;
+	@apply grid aspect-square w-full place-items-center overflow-hidden rounded-3xl border border-border bg-foreground/5;
 }
 .camera > * {
 	@apply size-full min-h-0;

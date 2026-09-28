@@ -1,11 +1,20 @@
 import type { ResetScope } from '@rahrow/core/settings/reset-orchestrator.ts'
 import {
+	ActivityIcon,
+	AppearanceIcon,
 	ChevronIcon,
 	CloseIcon,
 	ConnectionIcon,
+	GlobeIcon,
 	InfoIcon,
+	PowerIcon,
+	RouteIcon,
 	SearchIcon,
+	ServerIcon,
 	SettingsIcon,
+	ShieldIcon,
+	UploadIcon,
+	WifiIcon,
 } from '@rahrow/ui/components/rahrow-icons.tsx'
 import { useTheme } from '@rahrow/ui/components/theme-provider.tsx'
 import { Button } from '@rahrow/ui/components/ui/button.tsx'
@@ -176,6 +185,7 @@ export function Settings() {
 				>
 					{visibleSettingIds.has('connection-mode') ? (
 						<Setting
+							icon={<WifiIcon />}
 							title={t('settings.connection.mode')}
 							description={
 								state.connectionMode === 'vpn'
@@ -192,6 +202,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('engine') ? (
 						<Setting
+							icon={<ServerIcon />}
 							title={t('settings.connection.engine')}
 							description={state.engineId === 'xray' ? 'Xray Core' : state.engineId}
 							onClick={() => setSheet('engine')}
@@ -200,6 +211,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('routing') ? (
 						<Setting
+							icon={<RouteIcon />}
 							title={t('settings.connection.routing')}
 							description={t(`settings.options.${state.routingMode}`)}
 							onClick={() => setSheet('routing')}
@@ -208,6 +220,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('system-proxy') ? (
 						<Setting
+							icon={<ConnectionIcon />}
 							title={t('settings.connection.proxy')}
 							description={`SOCKS · 127.0.0.1:${state.localPort}`}
 							onClick={() => setSheet('proxy')}
@@ -216,6 +229,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('lan-proxy-sharing') ? (
 						<Setting
+							icon={<WifiIcon />}
 							title={t('settings.connection.lanSharing')}
 							description={t('settings.connection.lanSharingDescription')}
 							accessory={false}
@@ -229,6 +243,7 @@ export function Settings() {
 				>
 					{visibleSettingIds.has('autostart') ? (
 						<Setting
+							icon={<PowerIcon />}
 							title={t('settings.app.autostart')}
 							description={t('settings.app.autostartDescription')}
 						>
@@ -245,6 +260,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('language') ? (
 						<Setting
+							icon={<GlobeIcon />}
 							title={t('settings.language.label')}
 							description={
 								SUPPORTED_APP_LOCALES.find(
@@ -257,6 +273,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('appearance') ? (
 						<Setting
+							icon={<AppearanceIcon />}
 							title={t('settings.app.appearance')}
 							description={t(`settings.options.${state.theme}`)}
 							onClick={() => setSheet('appearance')}
@@ -265,6 +282,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('backup') ? (
 						<Setting
+							icon={<UploadIcon />}
 							title={t('backup.title.menu')}
 							description={t('backup.description.menu')}
 							onClick={() => setBackupOpen(true)}
@@ -273,6 +291,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('diagnostics') ? (
 						<Setting
+							icon={<ActivityIcon />}
 							title={t('settings.app.diagnostics')}
 							description={t('settings.app.diagnosticsDescription')}
 							onClick={() => setSheet('diagnostics')}
@@ -281,6 +300,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('privacy') ? (
 						<Setting
+							icon={<ShieldIcon />}
 							title={t('settings.app.privacy')}
 							description={t('settings.app.privacyDescription')}
 							onClick={() => {
@@ -295,6 +315,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('reset-settings') ? (
 						<Setting
+							icon={<PowerIcon />}
 							title={t('settings.app.reset')}
 							description={t('settings.app.resetDescription')}
 							destructive
@@ -310,6 +331,7 @@ export function Settings() {
 				>
 					{visibleSettingIds.has('about') ? (
 						<Setting
+							icon={<ShieldIcon />}
 							title={t('settings.about.title')}
 							description={t('settings.about.description')}
 							onClick={() => setSheet('about')}
@@ -318,6 +340,7 @@ export function Settings() {
 					) : null}
 					{visibleSettingIds.has('app-version') ? (
 						<Setting
+							icon={<SettingsIcon />}
 							title={t('settings.about.appVersion')}
 							description={appVersion}
 							accessory={false}
@@ -481,7 +504,7 @@ export function Settings() {
 							{t(`settings.reset.scopes.${resetScope}.description`)}
 						</DrawerDescription>
 					</DrawerHeader>
-					<DrawerBody>
+					<DrawerBody className={styles.drawerBodyContent}>
 						<Choice
 							label={t('settings.reset.scopeLabel')}
 							value={resetScope}
@@ -603,6 +626,7 @@ function SettingsSection({
 	)
 }
 function Setting({
+	icon,
 	title,
 	description,
 	children,
@@ -611,6 +635,7 @@ function Setting({
 	destructive = false,
 	accessory = true,
 }: {
+	readonly icon?: React.ReactNode
 	readonly title: string
 	readonly description: string
 	readonly children?: React.ReactNode
@@ -621,6 +646,7 @@ function Setting({
 }) {
 	const content = (
 		<>
+			{icon ? <ItemMedia variant='tile'>{icon}</ItemMedia> : null}
 			<ItemContent>
 				<ItemTitle>{title}</ItemTitle>
 				<ItemDescription>{description}</ItemDescription>

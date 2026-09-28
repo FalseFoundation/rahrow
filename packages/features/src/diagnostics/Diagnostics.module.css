@@ -13,7 +13,7 @@
 	@apply min-h-0 pt-2;
 }
 .runtime {
-	@apply flex flex-col gap-4;
+	@apply flex flex-col gap-4 rounded-3xl border border-border bg-glass p-4;
 }
 .sectionHeading {
 	@apply flex flex-col gap-1;

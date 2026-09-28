@@ -1,7 +1,7 @@
 @reference "@rahrow/ui/global.css";
 
 .summary {
-	@apply mt-2.5 flex w-full basis-full flex-col gap-2.5 rounded-lg border border-border bg-muted/20 px-3 py-2.5 text-xs text-muted-foreground;
+	@apply mt-2.5 flex w-full basis-full flex-col gap-2.5 rounded-2xl border border-border bg-foreground/4 px-3 py-2.5 text-xs text-muted-foreground;
 }
 
 .links {

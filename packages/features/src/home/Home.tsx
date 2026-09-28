@@ -4,6 +4,7 @@ import {
 	GlobeIcon,
 	PowerIcon,
 	ServerIcon,
+	ShieldReadyIcon,
 	ZapIconComponent,
 } from '@rahrow/ui/components/rahrow-icons.tsx'
 import { Backlight } from '@rahrow/ui/components/ui/backlight.tsx'
@@ -118,7 +119,13 @@ export function Home() {
 		<section className={styles.page} aria-label={t('app.screens.home')}>
 			<ProductHeader
 				title={t('app.name')}
-				leading={<BrandLogo className={styles.brandMark} label={t('app.name')} />}
+				leading={
+					<BrandLogo
+						className={styles.brandMark}
+						inverted
+						label={t('app.name')}
+					/>
+				}
 				actions={
 					smartConnect.state.status !== 'unavailable' ? (
 						<IconAction
@@ -261,6 +268,8 @@ export function Home() {
 									>
 												{state.isPending && state.pendingAction !== 'test' ? (
 													<Spinner />
+												) : connected ? (
+													<ShieldReadyIcon strokeWidth={1.5} />
 												) : (
 													<PowerIcon strokeWidth={1.5} />
 												)}
@@ -359,96 +368,107 @@ export function Home() {
 						</Button>
 
 						{display.showRoute ? (
-							<Card variant='glass' className={styles.identityRoute}>
-								<CardContent className={styles.identityContent}>
-									<div className={styles.identityAddresses}>
-										<div className={styles.identityEgress}>
-											<span>{t('home.route.egress')}</span>
+							<div className={styles.metrics}>
+								<article className={styles.metric}>
+									<span>{t('home.route.egress')}</span>
+									<strong data-selectable dir='ltr' role='status'>
+										{state.egressIdentity.status === 'available'
+											? state.egressIdentity.observation.ip
+											: state.egressIdentity.status === 'loading'
+												? t('home.route.checking')
+												: t('home.route.unavailable')}
+									</strong>
+									<small>
+										{state.egressIdentity.status === 'available' ? (
+											<>
+												{egressCountry ? (
+													<>
+														<span aria-hidden='true'>{egressCountry.flag}</span>{' '}
+														{egressCountry.name} ·{' '}
+													</>
+												) : null}
+												{state.egressIdentity.observation.provider === 'cloudflare'
+													? t('home.route.observedCloudflare')
+													: t('home.route.observedIpify')}
+											</>
+										) : state.egressIdentity.status === 'loading' ? (
+											t('home.route.checkingHint')
+										) : (
+											t('home.route.unavailableHint')
+										)}
+									</small>
+								</article>
+								{state.egressIdentity.status !== 'disconnected' &&
+								state.egressIdentity.status !== 'loading' &&
+								state.egressIdentity.current ? (
+									<article className={styles.metric}>
+										<span>{t('home.route.current')}</span>
+										<strong data-selectable dir='ltr' role='status'>
+											{state.egressIdentity.current.status === 'available'
+												? state.egressIdentity.current.observation.ip
+												: t('home.route.unavailable')}
+										</strong>
+										<small>
+											{state.egressIdentity.current.status === 'available' ? (
+												<>
+													{currentCountry ? (
+														<>
+															<span aria-hidden='true'>{currentCountry.flag}</span>{' '}
+															{currentCountry.name} ·{' '}
+														</>
+													) : null}
+													{t('home.route.currentHint')}
+												</>
+											) : (
+												t('home.route.unavailableHint')
+											)}
+										</small>
+									</article>
+								) : null}
+								{state.networkQuality.status === 'testing' ? (
+									<article className={`${styles.metric} ${styles.metricWide}`}>
+										<small className={styles.networkQuality} role='status'>
+											{t('home.route.qualityTesting')}
+										</small>
+									</article>
+								) : state.networkQuality.status === 'complete' &&
+									state.networkQuality.result.reachable ? (
+									<>
+										<article className={styles.metric}>
+											<span>{t('home.route.latency')}</span>
 											<strong data-selectable dir='ltr' role='status'>
-												{state.egressIdentity.status === 'available'
-													? state.egressIdentity.observation.ip
-													: state.egressIdentity.status === 'loading'
-														? t('home.route.checking')
-														: t('home.route.unavailable')}
+												{state.networkQuality.result.latencyMs !== undefined
+													? t('home.route.latencyValue', {
+															latency: state.networkQuality.result.latencyMs,
+														})
+													: t('home.route.unavailable')}
+											</strong>
+											<small>{t('home.route.latencyHint')}</small>
+										</article>
+										<article className={styles.metric}>
+											<span>{t('home.route.download')}</span>
+											<strong data-selectable dir='ltr' role='status'>
+												{state.networkQuality.result.downloadMbps !== undefined
+													? t('home.route.downloadValue', {
+															download: state.networkQuality.result.downloadMbps,
+														})
+													: t('home.route.unavailable')}
 											</strong>
 											<small>
-												{state.egressIdentity.status === 'available' ? (
-													<>
-														{egressCountry ? (
-															<>
-																<span aria-hidden='true'>{egressCountry.flag}</span>{' '}
-																{egressCountry.name} ·{' '}
-															</>
-														) : null}
-														{state.egressIdentity.observation.provider ===
-														'cloudflare'
-															? t('home.route.observedCloudflare')
-															: t('home.route.observedIpify')}
-													</>
-												) : state.egressIdentity.status === 'loading' ? (
-													t('home.route.checkingHint')
-												) : (
-													t('home.route.unavailableHint')
-												)}
+												{state.networkQuality.result.downloadMbps !== undefined
+													? t('home.route.downloadHint')
+													: t('home.route.qualityDownloadUnavailable')}
 											</small>
-										</div>
-										{state.egressIdentity.status !== 'disconnected' &&
-										state.egressIdentity.status !== 'loading' &&
-										state.egressIdentity.current ? (
-											<div className={styles.identityEgress}>
-												<span>{t('home.route.current')}</span>
-												<strong data-selectable dir='ltr' role='status'>
-													{state.egressIdentity.current.status === 'available'
-														? state.egressIdentity.current.observation.ip
-														: t('home.route.unavailable')}
-												</strong>
-												<small>
-													{state.egressIdentity.current.status === 'available' ? (
-														<>
-															{currentCountry ? (
-																<>
-																	<span aria-hidden='true'>
-																		{currentCountry.flag}
-																	</span>{' '}
-																	{currentCountry.name} ·{' '}
-																</>
-															) : null}
-															{t('home.route.currentHint')}
-														</>
-													) : (
-														t('home.route.unavailableHint')
-													)}
-												</small>
-											</div>
-										) : null}
-									</div>
-									{state.networkQuality.status === 'testing' ? (
-											<small className={styles.networkQuality} role='status'>
-												{t('home.route.qualityTesting')}
-											</small>
-										) : state.networkQuality.status === 'complete' &&
-											state.networkQuality.result.reachable ? (
-											<>
-												<small className={styles.networkQuality} role='status'>
-													{t('home.route.qualityLatency', {
-														latency: state.networkQuality.result.latencyMs,
-													})}
-												</small>
-												<small className={styles.networkQuality} role='status'>
-													{state.networkQuality.result.downloadMbps !== undefined
-														? t('home.route.qualityDownload', {
-																download: state.networkQuality.result.downloadMbps,
-															})
-														: t('home.route.qualityDownloadUnavailable')}
-												</small>
-											</>
-										) : state.networkQuality.status === 'complete' ? (
-											<small className={styles.networkQuality} role='status'>
-												{t('home.route.qualityUnavailable')}
-											</small>
-										) : null}
-								</CardContent>
-							</Card>
+										</article>
+									</>
+								) : state.networkQuality.status === 'complete' ? (
+									<article className={`${styles.metric} ${styles.metricWide}`}>
+										<small className={styles.networkQuality} role='status'>
+											{t('home.route.qualityUnavailable')}
+										</small>
+									</article>
+								) : null}
+							</div>
 						) : null}
 					</>
 				)}

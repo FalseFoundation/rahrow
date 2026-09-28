@@ -10,14 +10,14 @@
 	@apply relative isolate transition-colors;
 }
 .profileRow::before {
-	@apply pointer-events-none absolute inset-y-1.5 start-0 w-0.75 scale-y-50 rounded-full bg-foreground opacity-0 transition-[opacity,transform];
+	@apply pointer-events-none absolute inset-y-2 start-0 w-1 scale-y-50 rounded-full bg-primary opacity-0 transition-[opacity,transform];
 	content: "";
 }
 .profileRow:not([data-selected="true"]):hover {
 	@apply bg-accent/60;
 }
 .profileRow[data-selected="true"] {
-	@apply bg-muted/80 text-foreground;
+	@apply rounded-2xl bg-foreground/6 text-foreground;
 }
 .profileRow[data-selected="true"]::before {
 	@apply scale-y-100 opacity-100;

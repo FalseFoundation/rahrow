@@ -10,13 +10,23 @@
 	@apply px-4.5;
 }
 .primaryAction {
-	@apply w-full;
+	@apply h-12 w-full rounded-full text-sm font-semibold;
 }
 .iconActions {
-	@apply mx-auto w-full justify-center;
+	@apply grid w-full grid-cols-4 gap-2;
+}
+.iconActions[data-count='3'] {
+	@apply grid-cols-3;
+}
+.iconActions[data-count='5'] {
+	@apply grid-cols-3;
 }
 .quickAction {
-	@apply flex-1;
+	@apply h-auto w-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-2xl px-1.5 py-2.5 text-center text-xs leading-snug font-medium whitespace-normal;
+	min-height: 4.75rem !important;
+}
+.quickAction span {
+	@apply line-clamp-2 w-full text-balance;
 }
 .choiceList {
 	@apply w-full items-stretch gap-2 px-4.5 pt-3 pb-6;

@@ -214,6 +214,12 @@ export function ProfileManagement({
 			(profiles) => profiles.length > 0,
 		)
 	const hasCollectionContent = hasProfiles || subscriptions.length > 0
+	const nodeCount =
+		library.allOwnership.standalone.length +
+		[...library.allOwnership.bySubscription.values()].reduce(
+			(total, profiles) => total + profiles.length,
+			0,
+		)
 	const lockedSubscriptionIds = useMemo(
 		() => protectedSubscriptionIds(subscriptions),
 		[subscriptions],
@@ -334,12 +340,47 @@ export function ProfileManagement({
 				<ProductHeader
 					ref={productHeaderRef}
 					title={t('app.screens.profiles')}
+					badge={
+						nodeCount > 0
+							? t('profiles.nodeCount', { count: nodeCount })
+							: undefined
+					}
 					actions={
 						<>
-							{hasProfiles && smartConnect ? (
+							{hasProfiles ? (
 								<IconAction
 									variant='toolbar'
 									size='square'
+									disabled={state.isInitialized === false}
+									data-active
+									label={t('profiles.actions.search')}
+									onClick={() => workflows.setSearchOpen(true)}
+								>
+									<SearchIcon />
+								</IconAction>
+							) : null}
+							<IconAction
+								className={styles.addAction}
+								variant='toolbar'
+								size='square'
+								disabled={state.isInitialized === false}
+								data-active
+								label={t('import.addConnection')}
+								onClick={() => workflows.setDrawer('import')}
+							>
+								<AddIcon />
+							</IconAction>
+						</>
+					}
+				/>
+
+				<section className={styles.content}>
+					{hasCollectionContent ? (
+						<div className={styles.toolbar}>
+							{hasProfiles && smartConnect ? (
+								<IconAction
+									className={styles.tool}
+									variant='toolbar'
 									disabled={
 										state.isInitialized === false ||
 										smartConnectControl.state.isLoading ||
@@ -356,71 +397,45 @@ export function ProfileManagement({
 									}
 								>
 									<ZapIconComponent />
+									<span>{t('profiles.toolbar.auto')}</span>
 								</IconAction>
-							) : null}
-							{hasCollectionContent ? (
-								<IconAction
-									variant='toolbar'
-									size='square'
-									disabled={state.isInitialized === false || isLoadingSubscriptions}
-									data-active
-									label={t('profiles.actions.cleanup')}
-									onClick={() => cleanup.actions.openDrawer()}
-								>
-									<CleanActionIcon />
-								</IconAction>
-							) : null}
-							{hasProfiles ? (
-								<>
-									<IconAction
-										variant='toolbar'
-										size='square'
-										disabled={state.isInitialized === false}
-										data-active
-										label={t('profiles.actions.search')}
-										onClick={() => workflows.setSearchOpen(true)}
-									>
-										<SearchIcon />
-									</IconAction>
-									<IconAction
-										variant='toolbar'
-										size='square'
-										disabled={state.isInitialized === false}
-										data-active
-										label={t('profiles.actions.sort')}
-										onClick={() => workflows.setDrawer('sort')}
-									>
-										<FilterIcon />
-									</IconAction>
-								</>
 							) : null}
 							<IconAction
+								className={styles.tool}
 								variant='toolbar'
-								size='square'
-								disabled={state.isInitialized === false}
-								data-active
-								label={t('import.addConnection')}
-								onClick={() => workflows.setDrawer('import')}
+								disabled={state.isInitialized === false || isLoadingSubscriptions}
+								label={t('profiles.actions.cleanup')}
+								onClick={() => cleanup.actions.openDrawer()}
 							>
-								<AddIcon />
+								<CleanActionIcon />
+								<span>{t('profiles.toolbar.clean')}</span>
 							</IconAction>
+							{hasProfiles ? (
+								<IconAction
+									className={styles.tool}
+									variant='toolbar'
+									disabled={state.isInitialized === false}
+									label={t('profiles.actions.sort')}
+									onClick={() => workflows.setDrawer('sort')}
+								>
+									<FilterIcon />
+									<span>{t('profiles.toolbar.sort')}</span>
+								</IconAction>
+							) : null}
 							{rawEngineDocuments ? (
 								<IconAction
+									className={styles.tool}
 									variant='toolbar'
-									size='square'
 									disabled={state.isInitialized === false}
-									data-active
 									label={t('profiles.rawEngine.action')}
 									onClick={() => setRawWorkspaceOpen(true)}
 								>
 									<ServerIcon />
+									<span>{t('profiles.toolbar.engine')}</span>
 								</IconAction>
 							) : null}
-						</>
-					}
-				/>
-
-				<section className={styles.content}>
+						</div>
+					) : null}
 					<SmartConnectStatus {...smartConnectControl} />
 					<SpeedTestProgressPanel onCancel={actions.cancelSpeedTests} />
 					{searchVisible ? (
@@ -721,7 +736,7 @@ export function ProfileManagement({
 								<CloseIcon />
 							</IconAction>
 						</DrawerHeader>
-						<div className={styles.drawerBody}>
+						<div className={styles.drawerScroll}>
 							<RawEngineDocumentWorkspace
 								adapters={rawEngineDocuments.adapters}
 								storeFor={rawEngineDocuments.storeFor}

@@ -9,9 +9,7 @@ import {
 	TestIcon,
 } from '@rahrow/ui/components/rahrow-icons.tsx'
 import { Button } from '@rahrow/ui/components/ui/button.tsx'
-import { ButtonGroup } from '@rahrow/ui/components/ui/button-group.tsx'
 import { DrawerBody, DrawerFooter } from '@rahrow/ui/components/ui/drawer.tsx'
-import { IconAction } from '@rahrow/ui/components/ui/icon-action.tsx'
 import { toast } from '@rahrow/ui/components/ui/sonner.tsx'
 import {
 	ToggleGroup,
@@ -85,7 +83,7 @@ export function ConnectionActionsDrawer({
 			<DrawerBody className={styles.actionScroll}>
 				<div className={styles.actionList}>
 					{target.kind === 'profile' ? (
-						<ButtonGroup className={styles.iconActions}>
+						<div className={styles.iconActions} data-count='4'>
 							<QuickAction
 								icon={<DuplicateIcon />}
 								title={t('profiles.actions.duplicate')}
@@ -115,9 +113,9 @@ export function ConnectionActionsDrawer({
 								title={t('profiles.actions.remove')}
 								onClick={onDelete}
 							/>
-						</ButtonGroup>
+						</div>
 					) : target.kind === 'subscription' ? (
-						<ButtonGroup className={styles.iconActions}>
+						<div className={styles.iconActions} data-count='5'>
 							<QuickAction
 								icon={<CleanActionIcon />}
 								title={t('profiles.actions.cleanup')}
@@ -149,9 +147,9 @@ export function ConnectionActionsDrawer({
 								title={t('profiles.actions.remove')}
 								onClick={onDelete}
 							/>
-						</ButtonGroup>
+						</div>
 					) : (
-						<ButtonGroup className={styles.iconActions}>
+						<div className={styles.iconActions} data-count='3'>
 							<QuickAction
 								icon={<CleanActionIcon />}
 								title={t('profiles.actions.cleanup')}
@@ -168,7 +166,7 @@ export function ConnectionActionsDrawer({
 								title={t('profiles.actions.removeAll')}
 								onClick={onDelete}
 							/>
-						</ButtonGroup>
+						</div>
 					)}
 				</div>
 			</DrawerBody>
@@ -198,15 +196,15 @@ function QuickAction({
 	destructive?: boolean
 }) {
 	return (
-		<IconAction
+		<Button
 			variant={destructive ? 'destructive' : 'outline'}
-			size='icon-lg'
 			className={styles.quickAction}
 			disabled={disabled}
 			onClick={onClick}
-			label={title}
+			aria-label={title}
 		>
 			{icon}
-		</IconAction>
+			<span>{title}</span>
+		</Button>
 	)
 }

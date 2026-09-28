@@ -26,8 +26,8 @@
 	gap: 1rem;
 	padding: 1rem;
 	border: 1px solid var(--border);
-	border-radius: var(--radius-md);
-	background: var(--card);
+	border-radius: 1.5rem;
+	background: var(--glass);
 }
 
 .logCard {

@@ -1,0 +1,61 @@
+{
+  "projectId": "9684777897827345447",
+  "title": "Minimalist VPN Client Redesign",
+  "deviceType": "MOBILE",
+  "designSystem": {
+    "name": "assets/0b05628ee6a442c89245870e36608201",
+    "displayName": "Liquid Glass iOS"
+  },
+  "Last Sync Time": "2026-09-28T10:36:00.000Z",
+  "screens": {
+    "settings": {
+      "id": "7e2009946bf44941951f39e7df5346a3",
+      "label": "Apple Liquid Glass - Settings",
+      "sourceScreen": "projects/9684777897827345447/screens/7e2009946bf44941951f39e7df5346a3",
+      "width": 780,
+      "height": 2760
+    },
+    "connections": {
+      "id": "6f1158f742504f29ab5f48918f3149f3",
+      "label": "Apple Liquid Glass - Connections",
+      "sourceScreen": "projects/9684777897827345447/screens/6f1158f742504f29ab5f48918f3149f3",
+      "width": 780,
+      "height": 1926
+    },
+    "connected": {
+      "id": "d954d2f59a62424182520306f9e37d31",
+      "label": "RahRow - Connected",
+      "sourceScreen": "projects/9684777897827345447/screens/d954d2f59a62424182520306f9e37d31",
+      "width": 780,
+      "height": 1826
+    },
+    "actions": {
+      "id": "11e7f515a1f14150a91bc86b978f44bb",
+      "label": "RahRow - Node Inspector & Actions",
+      "sourceScreen": "projects/9684777897827345447/screens/11e7f515a1f14150a91bc86b978f44bb",
+      "width": 780,
+      "height": 1768
+    },
+    "home": {
+      "id": "eb32fee4b4204f65a76e1f61aaad4866",
+      "label": "Apple Liquid Glass - Home",
+      "sourceScreen": "projects/9684777897827345447/screens/eb32fee4b4204f65a76e1f61aaad4866",
+      "width": 780,
+      "height": 1768
+    },
+    "import": {
+      "id": "1dffb84f0fe74bf799ef57a7f84bf491",
+      "label": "Add Connection",
+      "sourceScreen": "projects/9684777897827345447/screens/1dffb84f0fe74bf799ef57a7f84bf491",
+      "width": 780,
+      "height": 1768
+    },
+    "diagnostics": {
+      "id": "5089d849623b49d8bda15e7e69f070e0",
+      "label": "RahRow - Diagnostics",
+      "sourceScreen": "projects/9684777897827345447/screens/5089d849623b49d8bda15e7e69f070e0",
+      "width": 2560,
+      "height": 2048
+    }
+  }
+}
