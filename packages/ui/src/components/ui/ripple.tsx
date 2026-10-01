@@ -42,8 +42,7 @@ export const Ripple = React.memo(function Ripple({
 								borderStyle,
 								borderWidth: '1px',
 								borderColor: 'currentColor',
-								backgroundColor:
-									'color-mix(in oklch, currentColor 25%, transparent)',
+								backgroundColor: 'color-mix(in oklch, currentColor 25%, transparent)',
 								top: '50%',
 								left: '50%',
 								transform: 'translate(-50%, -50%) scale(1)',

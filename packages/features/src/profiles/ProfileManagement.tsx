@@ -341,9 +341,7 @@ export function ProfileManagement({
 					ref={productHeaderRef}
 					title={t('app.screens.profiles')}
 					badge={
-						nodeCount > 0
-							? t('profiles.nodeCount', { count: nodeCount })
-							: undefined
+						nodeCount > 0 ? t('profiles.nodeCount', { count: nodeCount }) : undefined
 					}
 					actions={
 						<>

@@ -15,10 +15,10 @@
 .iconActions {
 	@apply grid w-full grid-cols-4 gap-2;
 }
-.iconActions[data-count='3'] {
+.iconActions[data-count="3"] {
 	@apply grid-cols-3;
 }
-.iconActions[data-count='5'] {
+.iconActions[data-count="5"] {
 	@apply grid-cols-3;
 }
 .quickAction {

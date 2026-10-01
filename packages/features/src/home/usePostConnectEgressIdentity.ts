@@ -6,7 +6,10 @@ import type {
 import { useEffect, useRef, useState } from 'react'
 
 export type CurrentAddressState =
-	| { readonly status: 'available'; readonly observation: EgressIdentityObservation }
+	| {
+			readonly status: 'available'
+			readonly observation: EgressIdentityObservation
+	  }
 	| { readonly status: 'unavailable' }
 
 export type PostConnectEgressIdentityState =
@@ -78,7 +81,9 @@ export function usePostConnectEgressIdentity(input: {
 				})
 				return
 			}
-			setState(current ? { status: 'unavailable', current } : { status: 'unavailable' })
+			setState(
+				current ? { status: 'unavailable', current } : { status: 'unavailable' },
+			)
 		})
 
 		return () => controller.abort(new Error('Connection route changed'))

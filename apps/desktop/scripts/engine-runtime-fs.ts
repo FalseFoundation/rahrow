@@ -5,10 +5,6 @@ import { dirname } from 'node:path'
 import { arch, platform } from 'node:process'
 
 import { EngineError } from '@rahrow/core/errors.ts'
-import {
-	ensureEngineRuntimeArtifact,
-	type EngineRuntimeWritableFileAccess,
-} from '@rahrow/engine/runtime/ensure-engine-runtime.ts'
 import type {
 	BundledEngineId,
 	EngineRuntimePlatform,
@@ -18,6 +14,10 @@ import {
 	detectEngineRuntimePlatform,
 	loadEngineRuntimeManifest,
 } from '@rahrow/engine/runtime/engine-runtime-resolver.ts'
+import {
+	type EngineRuntimeWritableFileAccess,
+	ensureEngineRuntimeArtifact,
+} from '@rahrow/engine/runtime/ensure-engine-runtime.ts'
 
 export function sha256Hex(bytes: Uint8Array): string {
 	return createHash('sha256').update(bytes).digest('hex')
@@ -79,10 +79,7 @@ export async function makeEngineExecutable(path: string): Promise<void> {
 }
 
 export async function ensureHostEngineRuntime(engine: BundledEngineId) {
-	return ensureEngineRuntime(
-		engine,
-		detectEngineRuntimePlatform(platform, arch),
-	)
+	return ensureEngineRuntime(engine, detectEngineRuntimePlatform(platform, arch))
 }
 
 export async function ensureEngineRuntime(

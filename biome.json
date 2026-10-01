@@ -6,7 +6,7 @@
 		"useIgnoreFile": true
 	},
 	"files": {
-		"includes": ["**", "!**/.agents"],
+		"includes": ["**", "!**/.agents", "!**/.stitch"],
 		"maxSize": 10485760
 	},
 	"formatter": {

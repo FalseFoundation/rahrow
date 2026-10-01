@@ -53,8 +53,7 @@ export class MobileVpnTunnelProvider implements VpnTunnelProvider {
 			nativeTunnel: diagnostics.nativeReady,
 			// sing-box PlatformInterface.protect and libXray DialerController.protectFd
 			// both exempt upstream sockets from the VPN route (Happ/v2rayNG model).
-			socketBypass:
-				input.engineId === 'sing-box' || input.engineId === 'xray',
+			socketBypass: input.engineId === 'sing-box' || input.engineId === 'xray',
 		})
 
 		const configInput = {

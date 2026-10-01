@@ -135,7 +135,8 @@ describe('usePostConnectEgressIdentity', () => {
 		act(() => {
 			for (const entry of pending) {
 				entry.resolve({
-					ip: entry.key === 'socks5://127.0.0.1:10809' ? '203.0.113.2' : '198.51.100.1',
+					ip:
+						entry.key === 'socks5://127.0.0.1:10809' ? '203.0.113.2' : '198.51.100.1',
 					provider: 'ipify',
 				})
 			}

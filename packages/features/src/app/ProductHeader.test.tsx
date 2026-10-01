@@ -13,7 +13,9 @@ describe('ProductHeader', () => {
 			/>,
 		)
 
-		expect(screen.getByRole('heading', { level: 1, name: 'Connections' })).toBeTruthy()
+		expect(
+			screen.getByRole('heading', { level: 1, name: 'Connections' }),
+		).toBeTruthy()
 		expect(screen.getByText('Brand')).toBeTruthy()
 		expect(screen.getByRole('button', { name: 'Add connection' })).toBeTruthy()
 	})

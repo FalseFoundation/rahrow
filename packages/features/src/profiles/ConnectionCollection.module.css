@@ -1,9 +1,7 @@
 @reference "@rahrow/ui/global.css";
 
 .collection {
-	@apply relative
-	/* mt-7  */
-	min-w-0;
+	@apply relative /* mt-7 */ min-w-0;
 }
 
 .virtualCanvas {

@@ -349,5 +349,4 @@ describe('desktop platform capabilities', () => {
 			detail: 'native TUN active',
 		})
 	})
-
 })

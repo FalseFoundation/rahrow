@@ -4,8 +4,8 @@ import {
 	cpSync,
 	existsSync,
 	mkdirSync,
-	readFileSync,
 	readdirSync,
+	readFileSync,
 	rmSync,
 	writeFileSync,
 } from 'node:fs'
@@ -233,7 +233,9 @@ export function validateAndroidAbiPackaging(projectText) {
 	if (!/splits\s*\{[\s\S]*?\babi\s*\{[\s\S]*?\benable\s+true/.test(projectText))
 		throw new Error('Android must split native libraries into per-ABI APKs')
 	if (!projectText.includes('universalApk false'))
-		throw new Error('Android must not build a universal APK that embeds every ABI')
+		throw new Error(
+			'Android must not build a universal APK that embeds every ABI',
+		)
 	return true
 }
 
@@ -291,20 +293,22 @@ export function filterAndroidPreviewPlugins(plugins) {
 	return plugins.filter(({ pkg }) => pkg !== '@capacitor-community/admob')
 }
 
-export function assertApkContents(entries, manifest, packagedAbis = manifest.abis) {
+export function assertApkContents(
+	entries,
+	manifest,
+	packagedAbis = manifest.abis,
+) {
 	if (!entries.includes('assets/rahrow/native-runtime-manifest.json'))
 		throw new Error('APK lacks its native runtime provenance manifest')
 	if (manifest.firstRunExecutableDownloads !== false)
 		throw new Error('APK runtime manifest must prohibit executable downloads')
-	const requiredAbis =
-		packagedAbis ??
-		[
-			...new Set(
-				[...(manifest.engines ?? []), ...(manifest.tunnelProviders ?? [])].flatMap(
-					(component) => Object.keys(component.libraries ?? {}),
-				),
+	const requiredAbis = packagedAbis ?? [
+		...new Set(
+			[...(manifest.engines ?? []), ...(manifest.tunnelProviders ?? [])].flatMap(
+				(component) => Object.keys(component.libraries ?? {}),
 			),
-		]
+		),
+	]
 	if (!Array.isArray(requiredAbis) || requiredAbis.length === 0)
 		throw new Error('APK ABI set must be a non-empty list')
 	for (const entry of entries) {
@@ -487,7 +491,11 @@ function verifyApk(apkPath) {
 			'APK native runtime provenance is stale or does not match pins',
 		)
 	const namedAbis = packagedAbisFromApkName(absoluteApk, expected.abis ?? [])
-	assertApkContents(entries, embedded, namedAbis.length > 0 ? namedAbis : expected.abis)
+	assertApkContents(
+		entries,
+		embedded,
+		namedAbis.length > 0 ? namedAbis : expected.abis,
+	)
 	console.log(
 		`Verified self-contained Android APK: ${relative(repositoryRoot, absoluteApk)}`,
 	)
