@@ -98,8 +98,11 @@ describe('web bundle policy', () => {
 
 	it('keeps share and QR payload code in a named cache boundary', () => {
 		expect(
+			webManualChunks('/repo/packages/features/src/share/qr-image.ts'),
+		).toBeUndefined()
+		expect(
 			webManualChunks('/repo/packages/features/src/share/ShareDrawer.tsx'),
-		).toBe('share-qr')
+		).toBeUndefined()
 		expect(
 			webManualChunks('/repo/node_modules/.pnpm/qrcode@1.5.4/index.js'),
 		).toBe('share-qr')

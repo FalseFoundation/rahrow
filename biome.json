@@ -48,5 +48,20 @@
 			"indentWidth": 1,
 			"indentStyle": "tab"
 		}
-	}
+	},
+	"overrides": [
+		{
+			"includes": [
+				"packages/static/src/images/rahrow-logo-black.svg",
+				"packages/static/src/images/rahrow-logo-white.svg"
+			],
+			"linter": {
+				"rules": {
+					"a11y": {
+						"noSvgWithoutTitle": "off"
+					}
+				}
+			}
+		}
+	]
 }

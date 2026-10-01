@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/noLabelWithoutControl: This primitive receives htmlFor or nested controls from callers.
+
 'use client'
 
 import type * as React from 'react'

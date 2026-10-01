@@ -20,6 +20,7 @@
 		"dev": "turbo run dev",
 		"build": "turbo run build",
 		"test": "vitest run --passWithNoTests",
+		"typecheck": "turbo run typecheck",
 		"watch": "turbo run watch",
 		"lint": "biome check .",
 		"format": "biome format --write .",

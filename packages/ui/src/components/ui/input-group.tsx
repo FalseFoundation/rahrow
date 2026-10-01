@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/useSemanticElements: Input adornments form one labeled control, not a fieldset.
+
 import { cva, type VariantProps } from 'class-variance-authority'
 import type * as React from 'react'
 import { cn } from '../../lib/utils'
@@ -49,10 +51,11 @@ function InputGroupAddon({
 			data-slot='input-group-addon'
 			data-align={align}
 			className={cn(inputGroupAddonVariants({ align }), className)}
-			onClick={(e) => {
+			onMouseDown={(e) => {
 				if ((e.target as HTMLElement).closest('button')) {
 					return
 				}
+				e.preventDefault()
 				e.currentTarget.parentElement?.querySelector('input')?.focus()
 			}}
 			{...props}

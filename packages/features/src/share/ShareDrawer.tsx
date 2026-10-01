@@ -40,7 +40,6 @@ import {
 } from 'react'
 
 import { useAppTranslation } from '../app/app-i18n.tsx'
-import { createQrDataUrl } from './qr-image.ts'
 import styles from './ShareDrawer.module.css'
 import {
 	qrPngFilename,
@@ -174,7 +173,10 @@ function ShareDrawer({
 
 		if (!payload) return () => undefined
 
-		void createQrDataUrl(payload.qrValue ?? payload.value)
+		void import('./qr-image.ts')
+			.then(({ createQrDataUrl }) =>
+				createQrDataUrl(payload.qrValue ?? payload.value),
+			)
 			.then((dataUrl) => {
 				if (active) setQrDataUrl(dataUrl)
 			})

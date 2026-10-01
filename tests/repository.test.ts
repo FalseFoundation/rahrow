@@ -273,10 +273,10 @@ describe('workspace architecture', () => {
 		}
 	})
 
-	it('does not retain unused framework and dependency-heavy UI templates', async () => {
+	it('keeps the reusable UI template catalog without Next.js tooling', async () => {
 		const tooling = await readWorkspaceManifest('packages/tooling')
 		const ui = await readWorkspaceManifest('packages/ui')
-		const removedDependencies = [
+		const catalogDependencies = [
 			'cmdk',
 			'date-fns',
 			'embla-carousel-react',
@@ -286,7 +286,7 @@ describe('workspace architecture', () => {
 			'react-resizable-panels',
 			'recharts',
 		]
-		const removedTemplates = [
+		const catalogTemplates = [
 			'calendar',
 			'carousel',
 			'chart',
@@ -302,14 +302,14 @@ describe('workspace architecture', () => {
 		expect(await pathExists('packages/tooling/src/tsconfig/nextjs.json')).toBe(
 			false,
 		)
-		for (const dependency of removedDependencies) {
-			expect(ui.dependencies, dependency).not.toHaveProperty(dependency)
+		for (const dependency of catalogDependencies) {
+			expect(ui.dependencies, dependency).toHaveProperty(dependency)
 		}
-		for (const template of removedTemplates) {
+		for (const template of catalogTemplates) {
 			expect(
 				await pathExists(`packages/ui/src/components/ui/${template}.tsx`),
 				template,
-			).toBe(false)
+			).toBe(true)
 		}
 	})
 

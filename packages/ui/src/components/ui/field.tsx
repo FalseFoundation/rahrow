@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/useSemanticElements: A field can group one control without introducing a nested fieldset.
+
 'use client'
 
 import { cva, type VariantProps } from 'class-variance-authority'
@@ -193,7 +195,7 @@ function FieldError({
 			...new Map(errors.map((error) => [error?.message, error])).values(),
 		]
 
-		if (uniqueErrors?.length == 1) {
+		if (uniqueErrors.length === 1) {
 			return uniqueErrors[0]?.message
 		}
 

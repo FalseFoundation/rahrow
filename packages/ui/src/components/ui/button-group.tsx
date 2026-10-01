@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/useSemanticElements: This layout primitive groups arbitrary controls, not form fields.
+
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
 import { cva, type VariantProps } from 'class-variance-authority'

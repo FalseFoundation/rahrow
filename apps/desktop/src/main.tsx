@@ -1,4 +1,4 @@
-import { StrictMode } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import { App } from './app'
 import './styles.css'
@@ -8,7 +8,9 @@ const rootElement = document.getElementById('root')
 if (rootElement) {
 	createRoot(rootElement).render(
 		<StrictMode>
-			<App />
+			<Suspense fallback={null}>
+				<App />
+			</Suspense>
 		</StrictMode>,
 	)
 }

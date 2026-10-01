@@ -52,7 +52,7 @@ abstract class RahRowVpnService : VpnService() {
 
 		startForegroundNotification()
 		statusStore.write(NativeVpnStatus("connecting", profileId, engineId, tunBackendId))
-		try {
+		val started = runNativeVpnStart(start = {
 			if (tunBackendId == "hev-socks5-tunnel" && engineId !in setOf("sing-box", "xray")) {
 				throw IllegalArgumentException("HEV requires a socket-protection adapter for this engine")
 			}

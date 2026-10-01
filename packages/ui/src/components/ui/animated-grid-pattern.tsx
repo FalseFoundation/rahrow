@@ -147,7 +147,7 @@ export function AnimatedGridPattern({
 				</pattern>
 			</defs>
 			<rect width='100%' height='100%' fill={`url(#${id})`} />
-			<svg x={x} y={y} className='overflow-visible'>
+			<svg aria-hidden='true' x={x} y={y} className='overflow-visible'>
 				{squares.map(({ pos: [squareX, squareY], id, iteration }, index) => (
 					<motion.rect
 						initial={{ opacity: 0 }}

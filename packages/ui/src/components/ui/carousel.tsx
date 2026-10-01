@@ -1,3 +1,5 @@
+// biome-ignore-all lint/a11y/useSemanticElements: The WAI-ARIA carousel pattern requires region and group roles.
+
 'use client'
 
 import { ArrowLeft01Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons'

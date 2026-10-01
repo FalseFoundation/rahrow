@@ -108,8 +108,7 @@
 .telemetry div {
 	@apply flex min-w-0 flex-1 flex-col gap-1 text-start;
 }
-.telemetry span,
-.identityContent > div > span {
+.telemetry span {
 	@apply text-xs tracking-expanded text-dim;
 }
 .telemetry strong {
@@ -190,6 +189,9 @@
 }
 .identityContent small {
 	@apply mt-1 text-xs text-dim;
+}
+.identityContent > div > span {
+	@apply text-xs tracking-expanded text-dim;
 }
 .activeCopy strong,
 .identityContent strong,

@@ -125,7 +125,15 @@ export function assertWebBundleBudget(bundle: Bundle): WebBundleReport {
 	}
 
 	if (failures.length > 0) {
-		throw new Error(`Web bundle budget failed:\n${failures.join('\n')}`)
+		const initialJavaScriptBreakdown = report.initialJavaScriptFiles
+			.map((fileName) => {
+				const chunk = bundle[fileName]
+				return `${fileName}: ${isChunk(chunk) ? gzipBytes(chunk.code) : 0} gzip bytes`
+			})
+			.join('\n')
+		throw new Error(
+			`Web bundle budget failed:\n${failures.join('\n')}\nInitial JavaScript breakdown:\n${initialJavaScriptBreakdown}`,
+		)
 	}
 
 	return report
@@ -133,10 +141,7 @@ export function assertWebBundleBudget(bundle: Bundle): WebBundleReport {
 
 export function webManualChunks(id: string): string | undefined {
 	const normalized = id.replaceAll('\\', '/')
-	if (
-		normalized.includes('/packages/features/src/share/') ||
-		normalized.includes('/node_modules/.pnpm/qrcode@')
-	) {
+	if (normalized.includes('/node_modules/.pnpm/qrcode@')) {
 		return 'share-qr'
 	}
 	return undefined
