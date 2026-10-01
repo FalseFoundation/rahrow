@@ -1,0 +1,23 @@
+---
+id: 0000074-implement-ios-network-extension-vpn
+title: Implement iOS Network Extension VPN
+status: doing
+priority: urgent
+risk: high
+createdAt: 2026-08-23 19:32 UTC
+updatedAt: 2026-09-02 03:51 UTC
+labels:
+  - production-vpn
+  - apple
+dependsOn:
+  - 0000097-refactor-vpn-runtime-around-platform-owned-tunnel-providers
+  - 0000091-build-pinned-native-xray-and-sing-box-runtimes-for-android-and-apple
+parent: 0000045-ship-a-production-mobile-client-around-the-shared-ui
+directories:
+  - apps/mobile
+projects:
+  - rahrow-mobile
+  - rahrow-phase-04-native-runtime-and-capabilities
+---
+
+Development-preview implementation includes an iOS app plus embedded XrayPacketTunnel and SingBoxPacketTunnel Network Extension targets; concrete LibXray CGoInvoke and Libbox command-server/TUN adapters; dual-stack default routes and DNS enforcement; bounded lifecycle acknowledgement; validated and size-bounded engine configuration; cleanup on failure and stop; and Simulator fail-closed behavior. Xcode wiring embeds the extensions, app and packet-tunnel entitlements, pinned runtime frameworks for device builds, runtime source pins, and third-party notices. Device orchestration validates schema-v2 source, Go 1.26.7 toolchain, recipe, checksum, and XCFramework slice provenance before compilation, builds a locally signed RahRow.app, rejects external Mach-O dependencies, and installs through devicectl. The real Apple libXray XCFramework is built; sing-box and the merged checksum lock remain pending. The task remains doing until both pinned frameworks verify, a local Apple Development profile builds the device application, and the resulting tunnel is exercised on the connected iPhone. Production certificates, App Store credentials, notarization, legal approval, and public release packaging are separately tracked and do not block the development preview.
