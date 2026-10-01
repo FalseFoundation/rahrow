@@ -26,6 +26,8 @@ Good: infer that the schema/migration and backend field are prerequisites for th
 
 ## Checklist or Child Task
 
+Both forms are subtasks. Prefer checklist items for steps that share one outcome; use Taskset child tasks when a step needs independent tracking.
+
 Bad: create separately tracked tasks for tiny steps that share one outcome:
 
 - Rename the function.
@@ -63,6 +65,37 @@ pnpm taskset task create --title "Document parser id format change" --project do
 ```
 
 Do not close or abandon the current task without recording discovered follow-up work in Taskset.
+
+## Keep Status Current Through Execution
+
+In this skill, "subtask" covers both Taskset child tasks and Markdown checklist items in a parent task body.
+
+Bad: start implementation, finish three child tasks and several checklist steps, and leave the parent stuck in `todo` or `doing` with unchecked `- [ ]` items until a final cleanup pass—or mark the parent `done` while children or checklist items are still open.
+
+Good: update progress as work proceeds.
+
+```bash
+pnpm taskset task update <parent-task-id> --status doing
+pnpm taskset task update <child-task-id> --status doing
+# ... complete that child task's acceptance criteria ...
+pnpm taskset task status <child-task-id> done
+```
+
+For checklist subtasks, flip completed items from `- [ ]` to `- [x]` in the parent body as soon as each step finishes. After every tracked subtask is complete (children `done`, checklist items checked) and the parent criteria pass:
+
+```bash
+pnpm taskset task status <parent-task-id> done
+```
+
+Every completed subtask must be marked finished—child tasks via `done`, checklist items via `- [x]`. Update statuses and checklist state mid-work when progress or blockers change; do not wait until the session ends.
+
+## Capture Lasting Lessons in the Primary Skill
+
+Bad: after three failed attempts, discover that Biome must run before the focused package test, close the task with that note in its body, and leave the session's primary skill unchanged so the next agent repeats the same failure.
+
+Good: when the repository or session treats a skill as primary, fold the durable rule into that skill (or its references) as a short decision rule—for example preferred tool selection, a known failure mode and its fix, or an architecture constraint. Keep task-specific history in the task; keep reusable guidance in the skill.
+
+Update the primary skill for lessons that future work should consider: tool or command choice, bug-fix patterns, repeated failures, and architecture decisions. Skip skill edits for one-off, task-local details that will not help later sessions.
 
 ## Dependencies Versus Related Work
 
@@ -136,3 +169,81 @@ Good: retain the IDs and JSON output from successful creates, list the current t
 Bad: delete a completed task to clean up the active list, or use `--remove-dependencies` without inspecting downstream tasks.
 
 Good: mark work `done` when its acceptance criteria pass. If work is superseded or duplicated, preserve the task and express that relationship according to repository convention. Delete only when removal itself is intended and its dependency impact has been inspected.
+
+## Owner and Assignees
+
+Bad: omit ownership from every generated task, assign every task to every contributor mentioned in the prompt, or overwrite an explicitly assigned owner with the local Git identity.
+
+Good: first resolve the repository's current Git user:
+
+```bash
+git config --get user.name
+```
+
+Use that value as the default owner when creating a task. If it returns `Alex Chen` and Alex will also implement the work:
+
+```bash
+pnpm taskset task create --title "Validate task dependency cycles" --owner "Alex Chen" --assignee "Alex Chen"
+```
+
+If the prompt explicitly makes Sam accountable while Alex implements it, preserve that distinction:
+
+```bash
+pnpm taskset task create --title "Validate task dependency cycles" --owner "Sam Rivera" --assignee "Alex Chen"
+```
+
+Use multiple `--assignee` options only when each named person is genuinely expected to execute part of the task. Code ownership, package maintainership, or prior review can inform investigation, but does not by itself authorize assigning a person.
+
+When a cross-package plan is split, choose owner and assignees per resulting task rather than copying the parent task's people blindly. Do not change existing ownership while updating unrelated metadata.
+
+## Pre-Execution Ownership Check
+
+Current Git user: `Alex Chen`.
+
+### Current User Is Assigned
+
+Task metadata:
+
+```yaml
+owner: Sam Rivera
+assignees:
+  - Alex Chen
+```
+
+Good: Alex may execute the task because Alex is an explicit assignee. Keep Sam as owner unless the user requests an accountability change.
+
+Bad: stop merely because owner and assignee differ, or replace Sam with Alex automatically.
+
+### Task Belongs to Someone Else
+
+Task metadata:
+
+```yaml
+owner: Sam Rivera
+assignees:
+  - Priya Shah
+```
+
+Prompt: “Work on the next open task.”
+
+Good: inspect and report the task, then ask whether Alex should proceed or take it over before changing status, assignment, task contents, or repository code.
+
+Bad: treat the generic prompt as permission, set the task to `doing`, add Alex as an assignee, or start implementation without surfacing the ownership conflict.
+
+### Specific Execution Is Explicitly Authorized
+
+Task metadata still names Sam and Priya, but the user says: “Alex, implement `TS-...` now; do not reassign it.”
+
+Good: this explicitly authorizes execution of the identified task. Proceed while preserving its owner and assignees as directed.
+
+Bad: ask the same execution question again, or interpret authorization to execute as authorization to replace the owner.
+
+### Takeover Includes Assignment Change
+
+The user says: “Take over `TS-...` and assign it to the current Git user.”
+
+Good: preserve the existing owner unless the user also requests an owner change, add or replace assignees according to the explicit instruction and repository convention, then begin work.
+
+Bad: silently transfer ownership as well, or retain an assignee list that no longer represents who is expected to perform the task.
+
+Read-only task inspection is allowed in every scenario above. The confirmation gate applies before mutations or execution, and it does not bypass unresolved dependencies or explicit blockers.
