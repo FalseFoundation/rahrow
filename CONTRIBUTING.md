@@ -41,6 +41,6 @@ Treat imported URLs, subscription bodies, and persisted JSON as untrusted input.
 
 ## Changesets and tasks
 
-Use Changesets when a published package contract or user-visible behavior changes. Use Taskset (`.taskset/`) for work tracking. Do not mark the parent release epic done while signing is blocked. Signing stays with [0000080-keep-unsigned-artifacts-green-while-signing-stays-blocked](.taskset/tasks/0000080-keep-unsigned-artifacts-green-while-signing-stays-blocked.md).
+Use Changesets when a published package contract or user-visible behavior changes. Use Taskset (`.taskset/`) for work tracking. Do not mark the parent release epic done while signing is blocked. Signing stays with [ea8d68](.taskset/tasks/ea8d68.md).
 
 Security reports follow [SECURITY.md](SECURITY.md). Do not file a public issue for a vulnerability.
