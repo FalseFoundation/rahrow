@@ -77,7 +77,7 @@
       "source": "FalseFoundation/taskset",
       "sourceType": "github",
       "skillPath": "skills/taskset/SKILL.md",
-      "computedHash": "00e9d266c876f86e6b65d96e010041ff121496564050b168ede7e9bcf99cabf5"
+      "computedHash": "4051889ac89ca81f986dc443b29017f3ab164140d017d698e695896a930b2212"
     },
     "tdd": {
       "source": "mattpocock/skills",
