@@ -35,14 +35,14 @@
 		"update-deps": "pnpm up --latest --recursive && pnpm dedupe && pnpm audit --fix update"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "2.5.14",
+		"@biomejs/biome": "2.5.15",
 		"@changesets/cli": "^3.0.3",
 		"@rahrow/tooling": "workspace:*",
-		"@types/node": "^26.6.3",
+		"@types/node": "^26.6.4",
 		"@types/react": "^19.3.0",
-		"turbo": "2.11.5",
+		"turbo": "2.11.7",
 		"typescript": "^7.0.2",
-		"vitest": "^5.0.2"
+		"vitest": "^5.0.3"
 	},
 	"packageManager": "pnpm@11.5.2",
 	"engines": {
@@ -50,6 +50,6 @@
 		"pnpm": ">=11.2.2"
 	},
 	"dependencies": {
-		"@taskset/cli": "^4.0.0"
+		"@taskset/cli": "^6.1.0"
 	}
 }
