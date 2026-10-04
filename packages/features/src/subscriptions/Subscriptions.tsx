@@ -55,6 +55,10 @@ import { firstFormError } from '../forms/form-validation.ts'
 import { SubscriptionMetadataSummary } from './SubscriptionMetadataSummary.tsx'
 import styles from './Subscriptions.module.css'
 import { subscriptionDraftFormSchema } from './subscription-actions-model.ts'
+import {
+	isSubscriptionExpired,
+	isSubscriptionStale,
+} from './subscription-hygiene.ts'
 import { useSubscriptions } from './useSubscriptions.ts'
 
 export function Subscriptions() {
@@ -235,6 +239,8 @@ export function Subscriptions() {
 											state.failure?.subscriptionId === subscription.id
 												? state.failure
 												: null
+										const expired = isSubscriptionExpired(subscription)
+										const stale = !expired && isSubscriptionStale(subscription)
 										return (
 											<Item variant='outline' size='sm' key={subscription.id}>
 												<ItemMedia variant='icon'>
@@ -243,6 +249,16 @@ export function Subscriptions() {
 												<ItemContent className={styles.subscriptionContent}>
 													<ItemTitle className={styles.truncate}>
 														{subscription.name ?? subscription.id}
+														{expired ? (
+															<span className={styles.hygieneBadge} data-kind='expired'>
+																{t('subscriptions.expired')}
+															</span>
+														) : null}
+														{stale ? (
+															<span className={styles.hygieneBadge} data-kind='stale'>
+																{t('subscriptions.stale')}
+															</span>
+														) : null}
 													</ItemTitle>
 													<ItemDescription className={styles.subscriptionDetail}>
 														<span title={subscription.url}>{subscription.url}</span>

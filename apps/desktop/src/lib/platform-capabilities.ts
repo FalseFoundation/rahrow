@@ -33,9 +33,17 @@ export interface DesktopQrPayload {
 
 export interface DesktopAutostart extends Autostart {}
 
+export interface DesktopTraySyncInput {
+	readonly connected: boolean
+	readonly profileLabel?: string
+	readonly canConnect: boolean
+	readonly canDisconnect: boolean
+}
+
 export interface DesktopTray {
 	show(): Promise<void>
 	hide(): Promise<void>
+	sync?(input: DesktopTraySyncInput): Promise<void>
 }
 
 export interface DesktopSystemProxy extends SystemProxy {}
@@ -77,6 +85,7 @@ export interface DesktopNativePlatformCommands {
 	showTray(): Promise<void>
 	hideTray(): Promise<void>
 	statusTray(): Promise<DesktopNativeCapabilityStatus>
+	syncTray?(input: DesktopTraySyncInput): Promise<void>
 	enableSystemProxy(input: {
 		readonly host: string
 		readonly port: number
@@ -279,6 +288,10 @@ export class UnsupportedDesktopTray implements DesktopTray {
 	async hide(): Promise<void> {
 		throw unsupportedCapability('tray')
 	}
+
+	async sync(_input: DesktopTraySyncInput): Promise<void> {
+		throw unsupportedCapability('tray')
+	}
 }
 
 export class UnsupportedDesktopSystemProxy implements DesktopSystemProxy {
@@ -351,6 +364,10 @@ export class TauriDesktopTray implements DesktopTray {
 
 	async hide(): Promise<void> {
 		await this.native.hideTray()
+	}
+
+	async sync(input: DesktopTraySyncInput): Promise<void> {
+		await this.native.syncTray?.(input)
 	}
 }
 
@@ -536,6 +553,9 @@ export function createTauriDesktopNativePlatformCommands(): DesktopNativePlatfor
 		},
 		statusTray() {
 			return invoke<DesktopNativeCapabilityStatus>('rahrow_tray_status')
+		},
+		syncTray(input) {
+			return invoke('rahrow_tray_sync', { input })
 		},
 		enableSystemProxy(input) {
 			return invoke('rahrow_system_proxy_enable', { input })

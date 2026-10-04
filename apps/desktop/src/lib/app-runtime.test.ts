@@ -285,6 +285,67 @@ describe('createDesktopRuntime', () => {
 		expect(native.startedConfigs).toEqual([])
 	})
 
+	it('preflights the selected engine and VPN provider before Connect starts anything', async () => {
+		const native = new FakeNativeCommands()
+		let tunnelSupported = true
+		const runtime = createDesktopRuntime({
+			native,
+			platformNative: {
+				...fakePlatformNative,
+				async diagnostics() {
+					return {
+						capabilities: [
+							{ capability: 'xray-sidecar', supported: true, enabled: false },
+							{
+								capability: 'sing-box-sidecar',
+								supported: false,
+								enabled: false,
+								detail: 'sing-box sidecar was not found.',
+							},
+							{
+								capability: 'vpn-tunnel',
+								supported: tunnelSupported,
+								detail:
+									'VPN mode needs polkit (pkexec), which is not installed on this system.',
+							},
+						],
+					}
+				},
+			},
+			profileDocument: new MemoryDocumentStore(),
+			settingsDocument: new MemoryDocumentStore(),
+			subscriptionDocument: new MemoryDocumentStore(),
+		})
+
+		await expect(
+			runtime.connection.canConnect?.(profile, {
+				mode: 'vpn',
+				engineId: 'sing-box',
+				localPort: 12080,
+			}),
+		).rejects.toMatchObject({
+			code: 'engine_not_found',
+			message: 'sing-box sidecar was not found.',
+		})
+		await expect(
+			runtime.connection.canConnect?.(profile, {
+				mode: 'vpn',
+				engineId: 'xray',
+				localPort: 12080,
+			}),
+		).resolves.toBeUndefined()
+
+		tunnelSupported = false
+		await expect(
+			runtime.connection.canConnect?.(profile, {
+				mode: 'vpn',
+				engineId: 'xray',
+				localPort: 12080,
+			}),
+		).rejects.toThrow('not installed on this system')
+		expect(native.startedConfigs).toEqual([])
+	})
+
 	it('does not launch a sidecar when diagnostics advertise VPN support without a connected provider', async () => {
 		const native = new FakeNativeCommands()
 		const runtime = createDesktopRuntime({
@@ -360,8 +421,63 @@ describe('createDesktopRuntime', () => {
 			'stop:engine-running=true',
 		])
 		expect(native.running).toBe(false)
+		await expect(runtime.connection.status()).resolves.toEqual({
+			state: 'disconnected',
+			profile: undefined,
+			mode: undefined,
+			engineId: undefined,
+			localPort: undefined,
+			engineStatus: 'stopped',
+			profileId: undefined,
+			error: undefined,
+		})
+	})
+
+	it('clears a dead VPN latch so Home can connect again after the tunnel drops', async () => {
+		const native = new FakeNativeCommands()
+		let tunnelRunning = false
+		const runtime = createDesktopRuntime({
+			native,
+			platformNative: {
+				...fakePlatformNative,
+				async diagnostics() {
+					return {
+						capabilities: [
+							{
+								capability: 'vpn-tunnel',
+								supported: true,
+								enabled: tunnelRunning,
+							},
+						],
+					}
+				},
+				async startTunnel() {
+					tunnelRunning = true
+				},
+				async stopTunnel() {
+					tunnelRunning = false
+				},
+			},
+			profileDocument: new MemoryDocumentStore(),
+			settingsDocument: new MemoryDocumentStore(),
+			subscriptionDocument: new MemoryDocumentStore(),
+		})
+
+		await runtime.settingsStore.write({ engineId: 'xray' })
+		await runtime.connection.connect(profile, { mode: 'vpn', localPort: 12080 })
+		tunnelRunning = false
+
 		await expect(runtime.connection.status()).resolves.toMatchObject({
 			state: 'disconnected',
+			mode: undefined,
+			profileId: undefined,
+		})
+
+		tunnelRunning = false
+		await runtime.connection.connect(profile, { mode: 'vpn', localPort: 12081 })
+		await expect(runtime.connection.status()).resolves.toMatchObject({
+			state: 'connected',
+			mode: 'vpn',
 		})
 	})
 
@@ -462,6 +578,7 @@ describe('createDesktopRuntime', () => {
 		expect(proxyCalls).toEqual(['enable:127.0.0.1:12080', 'disable'])
 		await expect(runtime.connection.status()).resolves.toMatchObject({
 			state: 'disconnected',
+			profileId: undefined,
 		})
 	})
 

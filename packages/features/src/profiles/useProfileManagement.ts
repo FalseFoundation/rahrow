@@ -39,6 +39,7 @@ import {
 	pruneConnectionGroups,
 	restoredConnectionsView,
 	setConnectionGroupOpen,
+	setConnectionsHideUnreachable,
 	setConnectionsQuery,
 	setConnectionsSort,
 	setConnectionsViewport,
@@ -677,6 +678,13 @@ export function useProfileManagement({
 			updateConnectionsView((current) => setConnectionsSort(current, sort)),
 		[updateConnectionsView],
 	)
+	const setViewHideUnreachable = useCallback(
+		(hideUnreachable: boolean) =>
+			updateConnectionsView((current) =>
+				setConnectionsHideUnreachable(current, hideUnreachable),
+			),
+		[updateConnectionsView],
+	)
 	const setGroupOpen = useCallback(
 		(key: string, open: boolean) =>
 			updateConnectionsView((current) =>
@@ -736,6 +744,7 @@ export function useProfileManagement({
 			cancelSpeedTests: cancelProfileSpeedTest,
 			setConnectionsQuery: setViewQuery,
 			setConnectionsSort: setViewSort,
+			setConnectionsHideUnreachable: setViewHideUnreachable,
 			setConnectionGroupOpen: setGroupOpen,
 			pruneConnectionGroups: pruneViewGroups,
 			setConnectionsViewport: setViewport,

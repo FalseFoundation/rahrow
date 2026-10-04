@@ -49,6 +49,8 @@ function createRuntime(
 		readonly clipboardWrite?: (value: string) => Promise<void>
 		readonly snapshot?: AppRuntime['diagnostics']['snapshot']
 		readonly advertising?: AppRuntime['advertising']
+		readonly platform?: AppRuntime['platform']
+		readonly openSystemSettings?: () => Promise<void>
 	} = {},
 ): AppRuntime {
 	const logs = createLogBuffer()
@@ -63,6 +65,7 @@ function createRuntime(
 	}
 	return {
 		...(options.advertising ? { advertising: options.advertising } : {}),
+		...(options.platform ? { platform: options.platform } : {}),
 		profileStore: new JsonProfileStore(new MemoryDocumentStore()),
 		settingsStore: new JsonSettingsStore(new MemoryDocumentStore()),
 		subscriptionStore: new JsonSubscriptionStore(new MemoryDocumentStore()),
@@ -92,6 +95,18 @@ function createRuntime(
 					return value
 				},
 			},
+			...(options.openSystemSettings
+				? {
+						vpn: {
+							async connect() {},
+							async disconnect() {},
+							async status() {
+								return { supported: true, connected: false }
+							},
+							openSystemSettings: options.openSystemSettings,
+						},
+					}
+				: {}),
 		},
 		diagnostics: {
 			snapshot:
@@ -335,6 +350,15 @@ describe('Diagnostics', () => {
 		expect(write).toHaveBeenLastCalledWith(
 			'Name: xray-sidecar\nStatus: stopped\nSupported: yes\nEnabled: no\nDetail: Xray is available and stopped.',
 		)
+
+		await user.click(screen.getByRole('button', { name: 'Copy report' }))
+		expect(write).toHaveBeenLastCalledWith(
+			expect.stringContaining('RahRow diagnostics'),
+		)
+		expect(write).toHaveBeenLastCalledWith(expect.stringContaining('Local port:'))
+		expect(toast.success).toHaveBeenCalledWith(
+			'Copied Diagnostics report diagnostic details.',
+		)
 	})
 
 	it('hides copy actions when clipboard writing is unsupported', async () => {
@@ -348,6 +372,7 @@ describe('Diagnostics', () => {
 		expect(
 			screen.queryByRole('button', { name: /Copy .* diagnostic details/ }),
 		).toBeNull()
+		expect(screen.queryByRole('button', { name: 'Copy report' })).toBeNull()
 	})
 
 	it('keeps clipboard failure visible and actionable', async () => {
@@ -418,6 +443,42 @@ describe('Diagnostics', () => {
 		)
 		await waitFor(() => expect(screen.queryByRole('alert')).toBeNull())
 		expect(screen.getByText('Runtime is standing by')).toBeTruthy()
+	})
+
+	it('shows Always-on VPN and battery guidance on Android with a settings action', async () => {
+		const openSystemSettings = vi.fn().mockResolvedValue(undefined)
+		const user = userEvent.setup()
+		render(
+			<AppRuntimeProvider
+				runtime={createRuntime({
+					platform: 'android',
+					openSystemSettings,
+				})}
+			>
+				<Diagnostics />
+			</AppRuntimeProvider>,
+		)
+
+		expect(await screen.findByText('Always-on VPN')).toBeTruthy()
+		expect(screen.getByText(/Battery and sleep/)).toBeTruthy()
+		await user.click(screen.getByRole('button', { name: 'Open VPN settings' }))
+		expect(openSystemSettings).toHaveBeenCalledOnce()
+	})
+
+	it('surfaces Always-on guidance when the last error mentions it', async () => {
+		render(
+			<AppRuntimeProvider
+				runtime={createRuntime({
+					lastError:
+						'Android did not allow RahRow to start a VPN. If another VPN app has Always-on VPN enabled, turn that off in system settings.',
+				})}
+			>
+				<Diagnostics />
+			</AppRuntimeProvider>,
+		)
+
+		expect(await screen.findByText('Always-on VPN')).toBeTruthy()
+		expect(screen.queryByRole('button', { name: 'Open VPN settings' })).toBeNull()
 	})
 })
 

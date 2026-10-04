@@ -130,6 +130,24 @@ describe('SelectedEngine', () => {
 	it('rejects a second start while an engine owns the active process', async () => {
 		const xray = new RecordingEngine('xray')
 		const singBox = new RecordingEngine('sing-box')
+		const selected: EngineId = 'sing-box'
+		const engine = new SelectedEngine(
+			new EngineRegistry([xray, singBox]),
+			async () => selected,
+		)
+
+		await engine.start({ profile })
+
+		await expect(engine.start({ profile })).rejects.toMatchObject({
+			code: 'engine_already_running',
+		})
+		expect(singBox.starts).toHaveLength(1)
+		expect(xray.starts).toHaveLength(0)
+	})
+
+	it('switches from a running engine when the persisted selection changes', async () => {
+		const xray = new RecordingEngine('xray')
+		const singBox = new RecordingEngine('sing-box')
 		let selected: EngineId = 'sing-box'
 		const engine = new SelectedEngine(
 			new EngineRegistry([xray, singBox]),
@@ -139,10 +157,30 @@ describe('SelectedEngine', () => {
 		await engine.start({ profile })
 		selected = 'xray'
 
-		await expect(engine.start({ profile })).rejects.toMatchObject({
-			code: 'engine_already_running',
-		})
+		await engine.start({ profile })
+
+		expect(singBox.stops).toBe(1)
+		expect(xray.starts).toHaveLength(1)
+		expect(await engine.status()).toMatchObject({ status: 'running' })
+	})
+
+	it('clears a stopped latch so the next start can use the new selection', async () => {
+		const xray = new RecordingEngine('xray')
+		const singBox = new RecordingEngine('sing-box')
+		let selected: EngineId = 'sing-box'
+		const engine = new SelectedEngine(
+			new EngineRegistry([xray, singBox]),
+			async () => selected,
+		)
+
+		await engine.start({ profile })
+		await singBox.stop()
+		selected = 'xray'
+
+		await expect(engine.status()).resolves.toMatchObject({ status: 'stopped' })
+		await engine.start({ profile })
+
+		expect(xray.starts).toHaveLength(1)
 		expect(singBox.starts).toHaveLength(1)
-		expect(xray.starts).toHaveLength(0)
 	})
 })

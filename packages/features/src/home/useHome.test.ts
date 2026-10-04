@@ -65,6 +65,16 @@ function createRuntime(
 		subscriptionStore: new JsonSubscriptionStore(new MemoryDocumentStore()),
 		registry: defaultProtocolRegistry,
 		engine: idleEngine,
+		availableEngines: [
+			{
+				id: 'sing-box',
+				supportedProtocols: ['vless', 'vmess', 'trojan', 'hysteria2', 'tuic'],
+			},
+			{
+				id: 'xray',
+				supportedProtocols: ['vless', 'vmess', 'trojan'],
+			},
+		],
 		connection,
 		...(egressIdentity ? { egressIdentity } : {}),
 		capabilities: {
@@ -301,14 +311,151 @@ describe('useHome', () => {
 
 		expect(result.current.state.failure).toEqual({
 			operation: 'connect',
+			kind: 'unknown',
 			title: "Couldn't connect",
 			description:
 				'RahRow could not start the secure tunnel. Check Diagnostics, then try again.',
 			retryLabel: 'Try again',
+			recovery: { kind: 'retry' },
+			recoveryLabel: 'Try again',
 		})
 		expect(JSON.stringify(result.current.state.failure)).not.toContain(
 			'rahrow_vpn_start',
 		)
+	})
+
+	it('explains a local port conflict without leaking native command detail', async () => {
+		const runtime = createRuntime({
+			connect: vi
+				.fn()
+				.mockRejectedValue(
+					new Error(
+						"Local port 10808 is already in use. Stop the other local proxy, or change RahRow's local port in Settings.",
+					),
+				),
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected' }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		await runtime.profileStore.save(profile)
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+
+		await waitFor(() => expect(result.current.state.profiles).toHaveLength(1))
+		await act(async () => result.current.actions.connect())
+
+		expect(result.current.state.failure).toEqual({
+			operation: 'connect',
+			kind: 'portInUse',
+			title: "Couldn't connect",
+			description:
+				"Another app is using RahRow's local port. Close that app (for example v2rayN), or choose a different port.",
+			retryLabel: 'Try again',
+			recovery: { kind: 'settings', drawer: 'proxy' },
+			recoveryLabel: 'Change port',
+		})
+		expect(JSON.stringify(result.current.state.failure)).not.toContain('10808')
+	})
+
+	it('offers a free local port and reconnects with it in one tap', async () => {
+		const connect = vi
+			.fn()
+			.mockRejectedValueOnce(
+				new Error(
+					'Local port 10808 is already in use. Stop the other local proxy.',
+				),
+			)
+			.mockResolvedValueOnce(undefined)
+		const suggestLocalPort = vi.fn().mockResolvedValue(20808)
+		const runtime = createRuntime({
+			connect,
+			suggestLocalPort,
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected', localPort: 20808 }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		await runtime.profileStore.save(profile)
+		await runtime.settingsStore.write({
+			...(await runtime.settingsStore.read()),
+			localPort: 10808,
+			connectionMode: 'proxy',
+		})
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+
+		await waitFor(() => {
+			expect(result.current.state.localPort).toBe(10808)
+			expect(result.current.state.canConnect).toBe(true)
+		})
+		await act(async () => result.current.actions.connect())
+
+		expect(suggestLocalPort).toHaveBeenCalledWith(10808)
+		expect(result.current.state.failure).toMatchObject({
+			kind: 'portInUse',
+			recovery: { kind: 'useFreePort', port: 20808 },
+			recoveryLabel: 'Use 20808 and connect',
+		})
+		expect(result.current.state.failure?.description).toContain('20808')
+
+		await act(async () => result.current.actions.useFreePortAndConnect())
+
+		expect(connect).toHaveBeenLastCalledWith(
+			profile,
+			expect.objectContaining({ localPort: 20808 }),
+		)
+		await waitFor(() => expect(result.current.state.failure).toBeNull())
+		expect((await runtime.settingsStore.read()).localPort).toBe(20808)
+	})
+
+	it('runs the connect preflight first and does not start an engine when it fails', async () => {
+		const connect = vi.fn()
+		const canConnect = vi.fn().mockRejectedValue(
+			Object.assign(new Error('sing-box sidecar was not found.'), {
+				code: 'engine_not_found',
+			}),
+		)
+		const runtime = createRuntime({
+			connect,
+			canConnect,
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected' }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		await runtime.profileStore.save(profile)
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+
+		await waitFor(() => expect(result.current.state.profiles).toHaveLength(1))
+		await act(async () => result.current.actions.connect())
+
+		expect(canConnect).toHaveBeenCalledWith(
+			profile,
+			expect.objectContaining({ engineId: 'sing-box' }),
+		)
+		expect(connect).not.toHaveBeenCalled()
+		expect(result.current.state.failure).toMatchObject({
+			kind: 'engineMissing',
+			recovery: { kind: 'switchEngine', engineId: 'xray' },
+			recoveryLabel: 'Use Xray',
+		})
 	})
 
 	it('turns a native disconnect failure into safe recovery state', async () => {
@@ -334,10 +481,13 @@ describe('useHome', () => {
 
 		expect(result.current.state.failure).toEqual({
 			operation: 'disconnect',
+			kind: 'unknown',
 			title: "Couldn't disconnect",
 			description:
 				'RahRow could not stop the connection cleanly. Check Diagnostics before trying again.',
 			retryLabel: 'Try again',
+			recovery: { kind: 'retry' },
+			recoveryLabel: 'Try again',
 		})
 		expect(JSON.stringify(result.current.state.failure)).not.toContain(
 			'native teardown',
@@ -374,12 +524,53 @@ describe('useHome', () => {
 		expect(connect).toHaveBeenCalledWith(profile, {
 			localPort: 12080,
 			mode: 'vpn',
+			engineId: 'sing-box',
 		})
 		await expect(runtime.settingsStore.read()).resolves.toMatchObject({
 			activeProfileId: 'home-profile',
 			localPort: 12080,
 			engineId: 'sing-box',
 			connectionMode: 'vpn',
+		})
+	})
+
+	it('connects with the persisted engine selection instead of a stale runtime engine id', async () => {
+		const connect = vi.fn().mockResolvedValue(undefined)
+		const runtime = createRuntime({
+			connect,
+			async disconnect() {},
+			async status() {
+				return {
+					state: 'disconnected',
+					engineId: 'sing-box',
+				}
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+
+		await runtime.profileStore.save(profile)
+		await runtime.settingsStore.write({
+			localPort: 12080,
+			engineId: 'xray',
+		})
+
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+
+		await waitFor(() => {
+			expect(result.current.state.engineId).toBe('xray')
+		})
+
+		await result.current.actions.connect()
+
+		expect(connect).toHaveBeenCalledWith(profile, {
+			localPort: 12080,
+			mode: 'vpn',
+			engineId: 'xray',
 		})
 	})
 
@@ -409,6 +600,7 @@ describe('useHome', () => {
 		expect(connect).toHaveBeenCalledWith(profile, {
 			localPort: 10808,
 			mode: 'proxy',
+			engineId: 'sing-box',
 		})
 	})
 
@@ -450,6 +642,48 @@ describe('useHome', () => {
 				},
 			})
 		})
+	})
+
+	it('uses the persisted Connections selection when status still reports a stale disconnected profile', async () => {
+		const germany: ConnectionProfile = {
+			...profile,
+			id: 'germany',
+			metadata: { name: 'Germany' },
+		}
+		const netherlands: ConnectionProfile = {
+			...profile,
+			id: 'netherlands',
+			metadata: { name: 'Cloud Netherlands' },
+		}
+		const runtime = createRuntime({
+			async connect() {},
+			async disconnect() {},
+			async status() {
+				return {
+					state: 'disconnected',
+					mode: 'vpn',
+					profileId: germany.id,
+				}
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		await runtime.profileStore.save(germany)
+		await runtime.profileStore.save(netherlands)
+		await runtime.settingsStore.write({ activeProfileId: netherlands.id })
+
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+
+		await waitFor(() =>
+			expect(result.current.state.selectedProfileId).toBe(netherlands.id),
+		)
+		expect(result.current.state.selectedProfile?.metadata?.name).toBe(
+			'Cloud Netherlands',
+		)
 	})
 
 	it('coalesces Smart Connect completion bursts into one authoritative refresh', async () => {
@@ -586,5 +820,131 @@ describe('useHome', () => {
 		expect(result.current.state.isInitialized).toBe(true)
 		expect(result.current.state.initializationFailure).toBeNull()
 		expect(result.current.state.connectionState).toBe('connected')
+	})
+
+	it('persists the Home engine selection into the settings store', async () => {
+		const runtime = createRuntime({
+			async connect() {},
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected' }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+		await waitFor(() => expect(result.current.state.isInitialized).toBe(true))
+		expect(result.current.state.engineIds).toEqual(['sing-box', 'xray'])
+
+		await act(async () => result.current.actions.selectEngine('xray'))
+
+		expect(result.current.state.engineId).toBe('xray')
+		await expect(runtime.settingsStore.read()).resolves.toMatchObject({
+			engineId: 'xray',
+		})
+	})
+
+	it('remembers the last good connection and reconnects it after a later failure', async () => {
+		const connect = vi.fn().mockResolvedValue(undefined)
+		const runtime = createRuntime({
+			connect,
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected', localPort: 12080 }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		const otherProfile: ConnectionProfile = {
+			...profile,
+			id: 'other-profile',
+			endpoint: { host: 'other.example.com', port: 443 },
+		}
+		await runtime.profileStore.save(profile)
+		await runtime.profileStore.save(otherProfile)
+		await runtime.settingsStore.write({
+			localPort: 12080,
+			engineId: 'sing-box',
+			activeProfileId: otherProfile.id,
+		})
+
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+		await waitFor(() => expect(result.current.state.profiles).toHaveLength(2))
+		await act(async () => result.current.actions.selectProfile(profile))
+		await act(async () => result.current.actions.connect())
+
+		await expect(runtime.settingsStore.read()).resolves.toMatchObject({
+			lastGoodConnection: {
+				profileId: profile.id,
+				engineId: 'sing-box',
+				connectionMode: 'vpn',
+				localPort: 12080,
+			},
+		})
+		expect(result.current.state.lastGoodConnection?.profileId).toBe(profile.id)
+
+		await act(async () => result.current.actions.selectProfile(otherProfile))
+		await act(async () => result.current.actions.selectEngine('xray'))
+		expect(result.current.state.canReconnectLastGood).toBe(true)
+
+		connect.mockClear()
+		await act(async () => result.current.actions.reconnectLastGood())
+
+		expect(connect).toHaveBeenCalledWith(profile, {
+			localPort: 12080,
+			mode: 'vpn',
+			engineId: 'sing-box',
+		})
+		expect(result.current.state.selectedProfileId).toBe(profile.id)
+		expect(result.current.state.engineId).toBe('sing-box')
+	})
+
+	it('offers reconnect last good after an unknown connect failure', async () => {
+		const connect = vi
+			.fn()
+			.mockRejectedValueOnce(new Error('tunnel handshake timed out'))
+		const runtime = createRuntime({
+			connect,
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected' }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		await runtime.profileStore.save(profile)
+		await runtime.settingsStore.write({
+			engineId: 'xray',
+			activeProfileId: profile.id,
+			lastGoodConnection: {
+				profileId: profile.id,
+				engineId: 'sing-box',
+				connectionMode: 'vpn',
+				localPort: 10808,
+				connectedAt: '2026-01-01T00:00:00.000Z',
+			},
+		})
+
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+		await waitFor(() => expect(result.current.state.profiles).toHaveLength(1))
+		await act(async () => result.current.actions.connect())
+
+		expect(result.current.state.failure).toMatchObject({
+			kind: 'unknown',
+			recovery: { kind: 'reconnectLastGood' },
+			recoveryLabel: 'Reconnect last good',
+		})
 	})
 })

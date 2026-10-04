@@ -232,6 +232,7 @@ const connectionsViewSchema = z
 		groupOpen: z.record(z.string(), z.boolean()),
 		query: z.string().max(500),
 		sort: z.enum(['default', 'endpoint', 'name', 'protocol', 'speed-test']),
+		hideUnreachable: z.boolean().optional(),
 		scrollOffset: z.number().finite().nonnegative().max(100_000_000).optional(),
 		loadedProfileCount: z.number().int().min(1).max(100_000).optional(),
 		recoveredFromInvalid: z.literal(true).optional(),
@@ -283,6 +284,14 @@ const smartConnectScheduleSchema = z.strictObject({
 		.optional(),
 })
 
+const lastGoodConnectionSchema = z.strictObject({
+	profileId: textSchema,
+	engineId: z.enum(['xray', 'sing-box']),
+	connectionMode: z.enum(['vpn', 'proxy']),
+	localPort: z.number().int().min(1).max(65535).optional(),
+	connectedAt: z.iso.datetime(),
+})
+
 export const settingsSchema = z.strictObject({
 	activeProfileId: textSchema.optional(),
 	localPort: z.number().int().min(1).max(65535).optional(),
@@ -295,6 +304,7 @@ export const settingsSchema = z.strictObject({
 	connectionsView: connectionsViewSchema,
 	latencyResults: latencyResultsSchema.optional(),
 	smartConnect: smartConnectScheduleSchema.optional(),
+	lastGoodConnection: lastGoodConnectionSchema.optional(),
 })
 
 export function parseConnectionProfile(input: unknown) {

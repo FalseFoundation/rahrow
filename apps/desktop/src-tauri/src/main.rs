@@ -11,7 +11,7 @@ use std::{
     collections::VecDeque,
     env, fs,
     io::{BufRead, BufReader, Read},
-    net::{IpAddr, ToSocketAddrs},
+    net::{IpAddr, Ipv4Addr, SocketAddrV4, TcpListener, ToSocketAddrs},
     path::{Path, PathBuf},
     process::{Child, Command, Stdio},
     sync::{Arc, Mutex},
@@ -21,10 +21,11 @@ use std::{
 use tauri::{Manager, State};
 
 use native::{
-    autostart_status, rahrow_autostart_disable, rahrow_autostart_enable, rahrow_autostart_status,
-    rahrow_system_proxy_disable, rahrow_system_proxy_enable, rahrow_system_proxy_status,
-    rahrow_tcp_probe, rahrow_tray_hide, rahrow_tray_show, rahrow_tray_status, setup_tray,
-    system_proxy_status, tray_status,
+    autostart_status, loopback_port_occupant, rahrow_autostart_disable, rahrow_autostart_enable,
+    rahrow_autostart_status, rahrow_loopback_port_occupant, rahrow_system_proxy_disable,
+    rahrow_system_proxy_enable, rahrow_system_proxy_status, rahrow_tcp_probe, rahrow_tray_hide,
+    rahrow_tray_show, rahrow_tray_status, rahrow_tray_sync, setup_tray, system_proxy_status,
+    tray_status,
 };
 use tun::{rahrow_tun_start, rahrow_tun_stop, TunRuntimeState};
 
@@ -401,6 +402,9 @@ fn start_xray_process(
 
     let binary = xray_binary_path()?;
     terminate_orphaned_engines();
+    if let Some(port) = proxy_listen_port(config) {
+        ensure_local_port_free(port)?;
+    }
     let config_path = write_xray_config(&pin_proxy_servers(config))?;
 
     let mut command = Command::new(&binary);
@@ -426,20 +430,17 @@ fn start_xray_process(
             message: format!("Failed to start Xray binary '{}': {}", binary, error),
         }
     })?;
-    attach_engine_output(&mut child, "xray", output);
+    attach_engine_output(&mut child, "xray", Arc::clone(&output));
 
     std::thread::sleep(Duration::from_millis(250));
     match child.try_wait() {
         Ok(Some(status)) => {
             let _ = fs::remove_file(&config_path);
-
-            Err(DesktopCommandError {
-                code: "engine_start_failed",
-                message: format!(
-                    "Xray exited during startup with status {}. Binary: {}",
-                    status, binary
-                ),
-            })
+            Err(engine_startup_exit_error(
+                "Xray",
+                &status.to_string(),
+                &output,
+            ))
         }
         Ok(None) => Ok((child, config_path)),
         Err(error) => {
@@ -667,6 +668,9 @@ fn start_sing_box_process(
 
     let binary = sing_box_binary_path()?;
     terminate_orphaned_engines();
+    if let Some(port) = proxy_listen_port(config) {
+        ensure_local_port_free(port)?;
+    }
     let pinned = pin_proxy_servers(config);
     let config_path = write_sing_box_config(&pinned)?;
 
@@ -685,15 +689,16 @@ fn start_sing_box_process(
                 format!("Failed to start sing-box binary '{}': {}", binary, error),
             )
         })?;
-    attach_engine_output(&mut child, "sing-box", output);
+    attach_engine_output(&mut child, "sing-box", Arc::clone(&output));
 
     std::thread::sleep(Duration::from_millis(250));
     match child.try_wait() {
         Ok(Some(status)) => {
             let _ = fs::remove_file(&config_path);
-            Err(command_error(
-                "engine_start_failed",
-                format!("sing-box exited during startup with status {status}"),
+            Err(engine_startup_exit_error(
+                "sing-box",
+                &status.to_string(),
+                &output,
             ))
         }
         Ok(None) => Ok((child, config_path)),
@@ -703,6 +708,73 @@ fn start_sing_box_process(
             Err(command_error("engine_start_failed", error.to_string()))
         }
     }
+}
+
+fn proxy_listen_port(config: &Value) -> Option<u16> {
+    let inbounds = config.get("inbounds")?.as_array()?;
+    for inbound in inbounds {
+        let kind = inbound
+            .get("type")
+            .or_else(|| inbound.get("protocol"))
+            .and_then(Value::as_str);
+        if kind == Some("tun") {
+            continue;
+        }
+        for key in ["listen_port", "port"] {
+            if let Some(port) = inbound.get(key).and_then(Value::as_u64) {
+                if let Ok(port) = u16::try_from(port) {
+                    return Some(port);
+                }
+            }
+        }
+    }
+    None
+}
+
+fn ensure_local_port_free(port: u16) -> Result<(), DesktopCommandError> {
+    match TcpListener::bind(SocketAddrV4::new(Ipv4Addr::LOCALHOST, port)) {
+        Ok(listener) => {
+            drop(listener);
+            Ok(())
+        }
+        Err(_) => {
+            let message = match loopback_port_occupant(port) {
+                Some(app) => format!(
+                    "Local port {port} is already in use by {app}. Stop {app}, or change RahRow's local port in Settings."
+                ),
+                None => format!(
+                    "Local port {port} is already in use. Stop the other local proxy, or change RahRow's local port in Settings."
+                ),
+            };
+            Err(command_error("engine_start_failed", message))
+        }
+    }
+}
+
+fn engine_startup_exit_error(
+    engine: &str,
+    status: &str,
+    output: &EngineOutputBuffer,
+) -> DesktopCommandError {
+    // Give the stderr reader a beat to flush the fatal line.
+    thread::sleep(Duration::from_millis(50));
+    let detail = output_snapshot(output)
+        .into_iter()
+        .rev()
+        .find(|line| line.stream == "stderr" && !line.line.is_empty())
+        .map(|line| line.line);
+    command_error(
+        "engine_start_failed",
+        match detail {
+            Some(line) if line.to_ascii_lowercase().contains("address already in use") => {
+                format!(
+                    "{engine} could not bind its local port ({line}). Stop the other local proxy, or change RahRow's local port in Settings."
+                )
+            }
+            Some(line) => format!("{engine} exited during startup with status {status}. {line}"),
+            None => format!("{engine} exited during startup with status {status}"),
+        },
+    )
 }
 
 fn sing_box_binary_path() -> Result<String, DesktopCommandError> {
@@ -1358,12 +1430,14 @@ fn main() {
             rahrow_sing_box_stop,
             rahrow_sing_box_status,
             rahrow_tcp_probe,
+            rahrow_loopback_port_occupant,
             rahrow_autostart_enable,
             rahrow_autostart_disable,
             rahrow_autostart_status,
             rahrow_tray_show,
             rahrow_tray_hide,
             rahrow_tray_status,
+            rahrow_tray_sync,
             rahrow_system_proxy_enable,
             rahrow_system_proxy_disable,
             rahrow_system_proxy_status,
@@ -1380,14 +1454,44 @@ mod tests {
     use super::{
         append_engine_output, background_execution_capability, command_error, config_uses_tun,
         desktop_vpn_provider_unavailable, engine_runtime_capability, engine_sidecar_file_names_for,
-        orphaned_engine_owner, pin_proxy_servers_with,
-        hev_tunnel_backend_capability, output_snapshot, read_limited_subscription,
+        ensure_local_port_free, hev_tunnel_backend_capability, orphaned_engine_owner,
+        pin_proxy_servers_with, proxy_listen_port, output_snapshot, read_limited_subscription,
         redact_engine_output, valid_loopback_socks_url, validate_routed_http_input,
         validate_subscription_authorization, EngineOutputState, MAX_ENGINE_OUTPUT_LINES,
         MAX_SUBSCRIPTION_BYTES,
     };
     use serde_json::json;
     use std::sync::{Arc, Mutex};
+
+    #[test]
+    fn reads_proxy_listen_ports_and_rejects_occupied_ports() {
+        assert_eq!(
+            proxy_listen_port(&json!({
+                "inbounds": [{ "type": "mixed", "listen": "127.0.0.1", "listen_port": 18081 }]
+            })),
+            Some(18081)
+        );
+        assert_eq!(
+            proxy_listen_port(&json!({
+                "inbounds": [{ "protocol": "socks", "listen": "127.0.0.1", "port": 18082 }]
+            })),
+            Some(18082)
+        );
+        assert_eq!(
+            proxy_listen_port(&json!({
+                "inbounds": [{ "type": "tun" }, { "type": "mixed", "listen_port": 18083 }]
+            })),
+            Some(18083)
+        );
+
+        let listener = std::net::TcpListener::bind("127.0.0.1:18084").unwrap();
+        let error = ensure_local_port_free(18084).unwrap_err();
+        assert_eq!(error.code, "engine_start_failed");
+        assert!(error.message.contains("18084"));
+        assert!(error.message.contains("already in use"));
+        drop(listener);
+        assert!(ensure_local_port_free(18084).is_ok());
+    }
 
     #[test]
     fn sidecar_names_include_macos_arm_triple() {

@@ -77,6 +77,21 @@ describe('profile library model', () => {
 		).toEqual(['zeta', 'alpha', 'wire'])
 	})
 
+	it('can hide connections that failed a probe', () => {
+		expect(
+			filterAndSortProfiles({
+				profiles,
+				query: '',
+				sort: 'name',
+				hideUnreachable: true,
+				speedTests: {
+					alpha: { reachable: true, latencyMs: 40 },
+					wire: { reachable: false },
+				},
+			}).map(({ id }) => id),
+		).toEqual(['alpha', 'zeta'])
+	})
+
 	it('locks the virtualization threshold and destructive target names', () => {
 		const firstProfile = profiles.at(0)
 		if (!firstProfile) throw new Error('Expected a profile fixture')

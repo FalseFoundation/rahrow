@@ -95,7 +95,9 @@ abstract class RahRowVpnService : VpnService() {
 	}
 
 	override fun onRevoke() {
-		stopTunnel("error", error = "VPN permission was revoked")
+		// Android revokes the active VPN when another VPN app starts or the user
+		// turns RahRow off in system settings. Either way this is a disconnect.
+		stopTunnel("disconnected")
 		stopSelf()
 		super.onRevoke()
 	}

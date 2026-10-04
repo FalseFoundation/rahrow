@@ -9,7 +9,10 @@ import {
 	countryPresentation,
 	formatConnectionState,
 	homeDisplay,
+	isLiveConnectionState,
+	preferredSelectedProfileId,
 	profileLabel,
+	proxyLeakNotice,
 } from './home-model.ts'
 
 const profile: ConnectionProfile = {
@@ -45,6 +48,31 @@ describe('home-model', () => {
 		expect(canDisconnect('connected')).toBe(true)
 		expect(canDisconnect('connecting')).toBe(true)
 		expect(canDisconnect('disconnected')).toBe(false)
+	})
+
+	it('treats only live session states as able to override selection', () => {
+		expect(isLiveConnectionState('connected')).toBe(true)
+		expect(isLiveConnectionState('connecting')).toBe(true)
+		expect(isLiveConnectionState('disconnecting')).toBe(true)
+		expect(isLiveConnectionState('disconnected')).toBe(false)
+		expect(isLiveConnectionState('error')).toBe(false)
+	})
+
+	it('keeps the persisted Connections selection when the session is idle', () => {
+		expect(
+			preferredSelectedProfileId({
+				connectionState: 'disconnected',
+				connectionProfileId: 'stale-germany',
+				activeProfileId: 'netherlands',
+			}),
+		).toBe('netherlands')
+		expect(
+			preferredSelectedProfileId({
+				connectionState: 'connected',
+				connectionProfileId: 'live-germany',
+				activeProfileId: 'netherlands',
+			}),
+		).toBe('live-germany')
 	})
 
 	it('formats profile labels for the Home screen', () => {
@@ -135,5 +163,26 @@ describe('home-model', () => {
 				systemProxySupported: false,
 			}),
 		).toBeNull()
+	})
+
+	it('warns that proxy mode is not a kill switch', () => {
+		expect(
+			proxyLeakNotice({
+				connectionMode: 'vpn',
+				vpnSupported: false,
+			}),
+		).toBeNull()
+		expect(
+			proxyLeakNotice({
+				connectionMode: 'proxy',
+				vpnSupported: true,
+			}),
+		).toContain('not a kill switch')
+		expect(
+			proxyLeakNotice({
+				connectionMode: 'proxy',
+				vpnSupported: false,
+			}),
+		).toContain('VPN/TUN is unavailable')
 	})
 })

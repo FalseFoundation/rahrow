@@ -4,6 +4,7 @@ import {
 	createHouseAdProvider,
 } from '@rahrow/ads/house-ad-provider.ts'
 import type { ConnectionMode } from '@rahrow/core/connection/connection-mode.ts'
+import { RahrowError } from '@rahrow/core/errors.ts'
 import { createLogBuffer } from '@rahrow/core/logging/log-buffer.ts'
 import type { Logger } from '@rahrow/core/logging/logger.ts'
 import { createPinoLogger } from '@rahrow/core/logging/pino-logger.ts'
@@ -24,7 +25,10 @@ import {
 	createStringDocumentReset,
 	ResetOrchestrator,
 } from '@rahrow/core/settings/reset-orchestrator.ts'
-import type { StringDocumentStore } from '@rahrow/core/storage/json-store.ts'
+import type {
+	SettingsStore,
+	StringDocumentStore,
+} from '@rahrow/core/storage/json-store.ts'
 import {
 	JsonProfileStore,
 	JsonSettingsStore,
@@ -137,6 +141,7 @@ export function createDesktopRuntime(
 		platform,
 		tunnel,
 		async () => (await settingsStore.read()).engineId ?? 'sing-box',
+		settingsStore,
 	)
 	const smartConnect = createSmartConnectRuntime({
 		profileStore,
@@ -421,6 +426,7 @@ function createDesktopConnectionPort(
 	platform: DesktopPlatformCapabilities,
 	tunnel: VpnTunnelCoordinator,
 	selectEngine: () => Promise<'xray' | 'sing-box' | (string & {})>,
+	settingsStore?: SettingsStore,
 ): ConnectionPort {
 	let activeMode: ConnectionMode | undefined
 	let activeEngineId: 'xray' | 'sing-box' | (string & {}) | undefined
@@ -440,10 +446,55 @@ function createDesktopConnectionPort(
 			)
 		}
 	}
+	const resolveLocalPort = async (preferred?: number) => {
+		const { resolveAvailableLoopbackPort } = await import('./local-port.ts')
+		const localPort = await resolveAvailableLoopbackPort(preferred ?? 10808)
+		if (settingsStore && localPort !== (preferred ?? 10808)) {
+			const settings = await settingsStore.read()
+			await settingsStore.write({ ...settings, localPort })
+		}
+		return localPort
+	}
 
 	return {
 		async canConnect(_profile, options) {
-			if (options.mode === 'proxy') await assertProxyAvailable()
+			const engineId = options.engineId ?? (await selectEngine())
+			const { capabilities } = await platform.diagnostics.diagnostics()
+			const engine = capabilities.find(
+				(item) => item.capability === `${engineId}-sidecar`,
+			)
+			if (engine && !engine.supported) {
+				throw new RahrowError(
+					'engine_not_found',
+					engine.detail ?? `${engineId} engine is not available`,
+				)
+			}
+			if (options.mode === 'vpn') {
+				const tunnelCapability = capabilities.find(
+					(item) => item.capability === 'vpn-tunnel',
+				)
+				if (tunnelCapability && !tunnelCapability.supported) {
+					throw new Error(
+						tunnelCapability.detail ??
+							'This build has no registered OS tunnel provider.',
+					)
+				}
+			} else {
+				await assertProxyAvailable()
+			}
+			// Throws only when every nearby port is taken; connect picks the free one.
+			if (activeMode === undefined) {
+				const { resolveAvailableLoopbackPort } = await import('./local-port.ts')
+				await resolveAvailableLoopbackPort(options.localPort ?? 10808)
+			}
+		},
+		async suggestLocalPort(preferred) {
+			try {
+				const { resolveAvailableLoopbackPort } = await import('./local-port.ts')
+				return await resolveAvailableLoopbackPort(preferred)
+			} catch {
+				return null
+			}
 		},
 		async connect(profile: ConnectionProfile, options) {
 			if (options.mode === 'vpn') {
@@ -454,21 +505,22 @@ function createDesktopConnectionPort(
 					await platform.systemProxy.disable()
 				}
 				const engineId = options.engineId ?? (await selectEngine())
+				const localPort = await resolveLocalPort(options.localPort)
 				await tunnel.connect({
 					profile,
 					engineId,
-					localPort: options.localPort,
+					localPort,
 				})
 				activeMode = 'vpn'
 				activeEngineId = engineId
-				activeLocalPort = options.localPort
+				activeLocalPort = localPort
 				activeProfile = profile
 				return
 			}
 
 			await assertProxyAvailable()
 
-			const localPort = options.localPort ?? 10808
+			const localPort = await resolveLocalPort(options.localPort)
 			const result = await commands.connect({
 				profile,
 				engineId: options.engineId,
@@ -525,15 +577,31 @@ function createDesktopConnectionPort(
 		async status() {
 			if (activeMode === 'vpn') {
 				const status = await tunnel.status()
+				const live =
+					status.state === 'connected' ||
+					status.state === 'connecting' ||
+					status.state === 'disconnecting'
+				if (!live) {
+					// Tunnel or engine died / was replaced. Drop the latch so Connect works.
+					activeMode = undefined
+					activeEngineId = undefined
+					activeLocalPort = undefined
+					activeProfile = undefined
+					try {
+						await tunnel.disconnect()
+					} catch {
+						// Provider already down; ignore teardown races.
+					}
+				}
 				return {
-					state: status.state,
+					state: live ? status.state : 'disconnected',
 					profile: status.state === 'connected' ? activeProfile : undefined,
-					mode: 'vpn',
-					engineId: status.engineId ?? activeEngineId,
-					localPort: activeLocalPort,
+					mode: live ? 'vpn' : undefined,
+					engineId: live ? (status.engineId ?? activeEngineId) : undefined,
+					localPort: live ? activeLocalPort : undefined,
 					engineStatus: status.state === 'connected' ? 'running' : 'stopped',
-					profileId: status.profileId,
-					error: status.detail,
+					profileId: live ? status.profileId : undefined,
+					error: live ? status.detail : undefined,
 				}
 			}
 
@@ -546,15 +614,28 @@ function createDesktopConnectionPort(
 				}
 			}
 
+			const connection = result.data.connection
+			const liveSession =
+				connection?.state === 'connected' ||
+				connection?.state === 'connecting' ||
+				connection?.state === 'disconnecting'
+
+			if (activeMode === 'proxy' && !liveSession) {
+				activeMode = undefined
+				activeEngineId = undefined
+				activeLocalPort = undefined
+				activeProfile = undefined
+			}
+
 			return {
-				state: result.data.connection?.state ?? 'disconnected',
-				profile: result.data.connection ? activeProfile : undefined,
-				mode: activeMode,
-				engineId: activeEngineId,
-				localPort: activeLocalPort,
+				state: connection?.state ?? 'disconnected',
+				profile: liveSession ? activeProfile : undefined,
+				mode: liveSession ? activeMode : undefined,
+				engineId: liveSession ? activeEngineId : undefined,
+				localPort: liveSession ? activeLocalPort : undefined,
 				engineStatus: result.data.engine.status,
-				profileId: result.data.connection?.profile.id,
-				error: result.data.connection?.error,
+				profileId: liveSession ? connection.profile.id : undefined,
+				error: connection?.error,
 			}
 		},
 		async test(profile) {

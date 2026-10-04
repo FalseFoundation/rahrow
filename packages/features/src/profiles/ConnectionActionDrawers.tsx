@@ -23,36 +23,51 @@ import type { useProfileManagement } from './useProfileManagement.ts'
 
 export function ConnectionSortDrawer({
 	value,
+	hideUnreachable,
 	onChange,
+	onHideUnreachableChange,
 }: {
 	readonly value: SortValue
+	readonly hideUnreachable: boolean
 	readonly onChange: (value: SortValue) => void
+	readonly onHideUnreachableChange: (hideUnreachable: boolean) => void
 }) {
 	const { t } = useAppTranslation()
 	return (
-		<ToggleGroup
-			className={styles.choiceList}
-			orientation='vertical'
-			value={[value]}
-			onValueChange={(values) => {
-				const next = values.at(-1) as typeof value | undefined
-				if (next) onChange(next)
-			}}
-		>
-			<ToggleGroupItem value='default'>
-				{t('profiles.sort.default')}
-			</ToggleGroupItem>
-			<ToggleGroupItem value='name'>{t('profiles.sort.name')}</ToggleGroupItem>
-			<ToggleGroupItem value='protocol'>
-				{t('profiles.sort.protocol')}
-			</ToggleGroupItem>
-			<ToggleGroupItem value='endpoint'>
-				{t('profiles.sort.endpoint')}
-			</ToggleGroupItem>
-			<ToggleGroupItem value='speed-test'>
-				{t('profiles.sort.latency')}
-			</ToggleGroupItem>
-		</ToggleGroup>
+		<div className={styles.choiceList}>
+			<ToggleGroup
+				orientation='vertical'
+				value={[value]}
+				onValueChange={(values) => {
+					const next = values.at(-1) as typeof value | undefined
+					if (next) onChange(next)
+				}}
+			>
+				<ToggleGroupItem value='default'>
+					{t('profiles.sort.default')}
+				</ToggleGroupItem>
+				<ToggleGroupItem value='name'>{t('profiles.sort.name')}</ToggleGroupItem>
+				<ToggleGroupItem value='protocol'>
+					{t('profiles.sort.protocol')}
+				</ToggleGroupItem>
+				<ToggleGroupItem value='endpoint'>
+					{t('profiles.sort.endpoint')}
+				</ToggleGroupItem>
+				<ToggleGroupItem value='speed-test'>
+					{t('profiles.sort.latency')}
+				</ToggleGroupItem>
+			</ToggleGroup>
+			<Button
+				type='button'
+				variant={hideUnreachable ? 'default' : 'outline'}
+				className={styles.hideUnreachable}
+				onClick={() => onHideUnreachableChange(!hideUnreachable)}
+			>
+				{hideUnreachable
+					? t('profiles.sort.showUnreachable')
+					: t('profiles.sort.hideUnreachable')}
+			</Button>
+		</div>
 	)
 }
 

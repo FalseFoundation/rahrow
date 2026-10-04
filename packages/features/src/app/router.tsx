@@ -16,6 +16,7 @@ import {
 	ScreenLoadingState,
 	type ScreenLoadingVariant,
 } from './ScreenLoadingState.tsx'
+import { SETTINGS_DEEP_LINK_DRAWERS } from './user-facing-failure.ts'
 
 interface RouterContext {
 	readonly runtime: AppRuntime
@@ -67,8 +68,7 @@ const settingsRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: '/settings',
 	validateSearch: (search: Record<string, unknown>) => ({
-		drawer:
-			search.drawer === 'diagnostics' ? ('diagnostics' as const) : undefined,
+		drawer: SETTINGS_DEEP_LINK_DRAWERS.find((drawer) => drawer === search.drawer),
 	}),
 	component: lazyRouteComponent(
 		() => import('../settings/Settings.tsx'),

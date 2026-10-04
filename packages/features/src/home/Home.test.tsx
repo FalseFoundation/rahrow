@@ -5,7 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 const useHome = vi.hoisted(() => vi.fn())
 const navigate = vi.hoisted(() => vi.fn())
-const toast = vi.hoisted(() => ({ dismiss: vi.fn(), error: vi.fn() }))
+const toast = vi.hoisted(() => ({
+	dismiss: vi.fn(),
+	error: vi.fn(),
+	warning: vi.fn(),
+}))
 
 vi.mock('@tanstack/react-router', () => ({
 	useNavigate: () => navigate,
@@ -64,6 +68,7 @@ function connectedState(
 		state: {
 			profiles: [profile],
 			engineId: 'xray',
+			engineIds: ['sing-box', 'xray'] as const,
 			selectedProfileId: profile.id,
 			selectedProfile: profile,
 			connectionState: 'connected',
@@ -85,6 +90,8 @@ function connectedState(
 			latency: null,
 			message: 'Connected',
 			failure: null,
+			lastGoodConnection: null,
+			canReconnectLastGood: false,
 			initializationFailure: null,
 			pendingAction: null,
 			isPending: false,
@@ -98,11 +105,17 @@ function connectedState(
 		},
 		actions: {
 			selectProfile: vi.fn(),
+			selectEngine: vi.fn(),
 			connect: vi.fn(),
 			disconnect: vi.fn(),
 			testSelected: vi.fn(),
 			refresh: vi.fn(),
 			retryFailure: vi.fn(),
+			useFreePortAndConnect: vi.fn(),
+			switchEngineAndConnect: vi.fn(),
+			reconnectLastGood: vi.fn(),
+			openSystemVpnSettings: vi.fn(),
+			retestNetworkQuality: vi.fn(),
 		},
 	}
 }
@@ -111,6 +124,7 @@ describe('Home network identity', () => {
 	beforeEach(() => {
 		toast.dismiss.mockReset()
 		toast.error.mockReset()
+		toast.warning.mockReset()
 		useHome.mockReset()
 		navigate.mockReset()
 	})
@@ -194,6 +208,7 @@ describe('Home network identity', () => {
 	})
 
 	it('labels a failed Cloudflare check without changing connection state', () => {
+		const retestNetworkQuality = vi.fn()
 		const current = connectedState()
 		useHome.mockReturnValue({
 			...current,
@@ -208,14 +223,26 @@ describe('Home network identity', () => {
 					},
 				},
 			},
+			actions: { ...current.actions, retestNetworkQuality },
 		})
 
 		render(<Home />)
 
 		expect(screen.getByText('PROXY ACTIVE')).toBeTruthy()
 		expect(
-			screen.getByText('Cloudflare round-trip check unavailable'),
+			screen.getByText(
+				'Connected, but internet is not working through this route. Try another connection or engine.',
+			),
 		).toBeTruthy()
+		expect(toast.warning).toHaveBeenCalledWith(
+			'Connected, but no internet',
+			expect.objectContaining({
+				id: 'home-network-quality',
+			}),
+		)
+		const options = toast.warning.mock.calls.at(-1)?.[1]
+		options?.action?.onClick()
+		expect(retestNetworkQuality).toHaveBeenCalledOnce()
 	})
 
 	it('shows a safe initial-load alert with Retry instead of an empty state', async () => {
@@ -264,6 +291,9 @@ describe('Home network identity', () => {
 		expect(screen.getByText('PROXY ACTIVE')).toBeTruthy()
 		expect(screen.getByText('System proxy connected')).toBeTruthy()
 		expect(screen.getByText('System proxy is connected via VLESS')).toBeTruthy()
+		expect(
+			screen.getByText(/Proxy mode is not a kill switch/i),
+		).toBeTruthy()
 		expect(screen.queryByText(/Protected|Encrypted|secure tunnel/i)).toBeNull()
 	})
 
@@ -364,10 +394,13 @@ describe('Home network identity', () => {
 				message: 'command rahrow_vpn_start exited with status 127',
 				failure: {
 					operation: 'connect',
+					kind: 'unknown',
 					title: "Couldn't connect",
 					description:
 						'RahRow could not start the secure tunnel. Check Diagnostics, then try again.',
 					retryLabel: 'Try again',
+					recovery: { kind: 'retry' },
+					recoveryLabel: 'Try again',
 				},
 			},
 			actions: { ...current.actions, retryFailure },
@@ -392,6 +425,75 @@ describe('Home network identity', () => {
 			to: '/settings',
 			search: { drawer: 'diagnostics' },
 		})
+	})
+
+	it('sends a known connect failure to the setting that fixes it and keeps retry as the secondary action', () => {
+		const retryFailure = vi.fn()
+		const openSystemVpnSettings = vi.fn()
+		const current = connectedState()
+		const failureState = (recovery: object, recoveryLabel: string) => ({
+			...current,
+			state: {
+				...current.state,
+				connectionState: 'disconnected',
+				canConnect: true,
+				canDisconnect: false,
+				failure: {
+					operation: 'connect',
+					kind: 'portInUse',
+					title: "Couldn't connect",
+					description: "Another app is using RahRow's local port.",
+					retryLabel: 'Try again',
+					recovery,
+					recoveryLabel,
+				},
+			},
+			actions: { ...current.actions, retryFailure, openSystemVpnSettings },
+		})
+		useHome.mockReturnValue(
+			failureState({ kind: 'settings', drawer: 'proxy' }, 'Change port'),
+		)
+
+		const { rerender } = render(<Home />)
+
+		let options = toast.error.mock.calls.at(-1)?.[1]
+		expect(options?.action?.label).toBe('Change port')
+		options?.action?.onClick()
+		expect(navigate).toHaveBeenCalledWith({
+			to: '/settings',
+			search: { drawer: 'proxy' },
+		})
+		expect(options?.cancel?.label).toBe('Try again')
+		options?.cancel?.onClick()
+		expect(retryFailure).toHaveBeenCalledOnce()
+
+		useHome.mockReturnValue(
+			failureState({ kind: 'systemVpnSettings' }, 'VPN settings'),
+		)
+		rerender(<Home />)
+
+		options = toast.error.mock.calls.at(-1)?.[1]
+		options?.action?.onClick()
+		expect(openSystemVpnSettings).toHaveBeenCalledOnce()
+
+		const useFreePortAndConnect = vi.fn()
+		useHome.mockReturnValue({
+			...failureState(
+				{ kind: 'useFreePort', port: 20808 },
+				'Use 20808 and connect',
+			),
+			actions: {
+				...current.actions,
+				retryFailure,
+				openSystemVpnSettings,
+				useFreePortAndConnect,
+			},
+		})
+		rerender(<Home />)
+		options = toast.error.mock.calls.at(-1)?.[1]
+		expect(options?.action?.label).toBe('Use 20808 and connect')
+		options?.action?.onClick()
+		expect(useFreePortAndConnect).toHaveBeenCalledOnce()
 	})
 
 	it('labels a measured round trip as latency', () => {
@@ -470,5 +572,51 @@ describe('Home network identity', () => {
 				'VPN mode is unavailable. Switch to System proxy in Settings.',
 			),
 		).toBeTruthy()
+	})
+
+	it('lets the user pick an engine on Home before Connect', async () => {
+		const selectEngine = vi.fn()
+		const current = connectedState()
+		useHome.mockReturnValue({
+			...current,
+			state: {
+				...current.state,
+				connectionState: 'disconnected',
+				engineId: 'sing-box',
+				canConnect: true,
+				canDisconnect: false,
+			},
+			actions: { ...current.actions, selectEngine },
+		})
+
+		render(<Home />)
+		expect(
+			screen.getByText('Switch if Connect fails with one core.'),
+		).toBeTruthy()
+
+		await userEvent.click(screen.getByRole('button', { name: 'Xray' }))
+		expect(selectEngine).toHaveBeenCalledWith('xray')
+	})
+
+	it('offers reconnect last good when a prior success differs from the current selection', async () => {
+		const reconnectLastGood = vi.fn()
+		const current = connectedState()
+		useHome.mockReturnValue({
+			...current,
+			state: {
+				...current.state,
+				connectionState: 'disconnected',
+				canConnect: true,
+				canDisconnect: false,
+				canReconnectLastGood: true,
+			},
+			actions: { ...current.actions, reconnectLastGood },
+		})
+
+		render(<Home />)
+		await userEvent.click(
+			screen.getByRole('button', { name: 'Reconnect last good' }),
+		)
+		expect(reconnectLastGood).toHaveBeenCalledOnce()
 	})
 })

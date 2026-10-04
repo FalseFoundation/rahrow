@@ -9,7 +9,7 @@ const desktopRuntime = import('./lib/app-runtime.ts').then(
 
 export function App() {
 	const runtime = use(desktopRuntime)
-	useNativeShell(runtime.smartConnect?.schedule)
+	useNativeShell(runtime, runtime.smartConnect?.schedule)
 
 	return <AppShell runtime={runtime} />
 }

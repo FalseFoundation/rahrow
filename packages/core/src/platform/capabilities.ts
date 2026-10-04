@@ -82,6 +82,8 @@ export interface Vpn {
 	connect(input: VpnInput): Promise<void>
 	disconnect(): Promise<void>
 	status(): Promise<VpnStatus>
+	/** Opens the operating system's VPN settings, where Always-on VPN lives. */
+	openSystemSettings?(): Promise<void>
 }
 
 export interface ToggleStatus {

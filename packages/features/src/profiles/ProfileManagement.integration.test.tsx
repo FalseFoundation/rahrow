@@ -36,6 +36,7 @@ const harness = vi.hoisted(() => ({
 		setConnectionGroupOpen: vi.fn(),
 		setConnectionsQuery: vi.fn(),
 		setConnectionsSort: vi.fn(),
+		setConnectionsHideUnreachable: vi.fn(),
 		setConnectionsViewport: vi.fn(),
 		pruneConnectionGroups: vi.fn(),
 		setProfileName: vi.fn(),
@@ -83,6 +84,13 @@ vi.mock('./useProfileManagement.ts', async () => {
 					setConnectionsSort: (sort: typeof connectionsView.sort) => {
 						harness.actions.setConnectionsSort(sort)
 						setConnectionsView((current) => ({ ...current, sort }))
+					},
+					setConnectionsHideUnreachable: (hideUnreachable: boolean) => {
+						harness.actions.setConnectionsHideUnreachable(hideUnreachable)
+						setConnectionsView((current) => ({
+							...current,
+							hideUnreachable: hideUnreachable || undefined,
+						}))
 					},
 					setConnectionGroupOpen: (key: string, open: boolean) => {
 						harness.actions.setConnectionGroupOpen(key, open)

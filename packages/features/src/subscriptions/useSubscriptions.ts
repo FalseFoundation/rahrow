@@ -19,6 +19,7 @@ import {
 	deriveSubscriptionId,
 	normalizeSubscriptionUrl,
 } from './subscription-actions-model.ts'
+import { subscriptionsNeedingRefresh } from './subscription-hygiene.ts'
 import {
 	runSubscriptionRefreshQueue,
 	type SubscriptionRefreshQueueProgress,
@@ -80,6 +81,7 @@ export function useSubscriptions() {
 	const refreshControllers = useRef(new Map<string, AbortController>())
 	const refreshAllController = useRef<AbortController | null>(null)
 	const removeInFlight = useRef(new Set<string>())
+	const autoRefreshStarted = useRef(false)
 
 	useEffect(
 		() => () => {
@@ -276,6 +278,23 @@ export function useSubscriptions() {
 	const cancelRefreshAll = useCallback(() => {
 		refreshAllController.current?.abort()
 	}, [])
+
+	useEffect(() => {
+		if (!initialized || autoRefreshStarted.current) return
+		const stale = subscriptionsNeedingRefresh(subscriptionQuery.data ?? [])
+		if (stale.length === 0) return
+		autoRefreshStarted.current = true
+		void refreshAll(stale).catch((error) => {
+			logger.warn(
+				{
+					action: 'subscription.auto-refresh',
+					outcome: 'failure',
+					errorType: error instanceof Error ? error.name : typeof error,
+				},
+				'Background subscription refresh failed',
+			)
+		})
+	}, [initialized, logger, refreshAll, subscriptionQuery.data])
 
 	const saveDraft = useCallback(
 		async (replacement?: Subscription) => {

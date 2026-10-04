@@ -27,6 +27,16 @@ export interface Settings {
 	readonly connectionsView?: ConnectionsViewSettings
 	readonly latencyResults?: Readonly<Record<string, LatencyResult>>
 	readonly smartConnect?: SmartConnectScheduleState
+	/** Last successful connect; used for one-tap reconnect after failures. */
+	readonly lastGoodConnection?: LastGoodConnection
+}
+
+export interface LastGoodConnection {
+	readonly profileId: string
+	readonly engineId: EngineId
+	readonly connectionMode: ConnectionMode
+	readonly localPort?: number
+	readonly connectedAt: string
 }
 
 export interface SmartConnectScheduleState {
@@ -52,6 +62,8 @@ export interface ConnectionsViewSettings {
 	readonly groupOpen: Readonly<Record<string, boolean>>
 	readonly query: string
 	readonly sort: ConnectionsSort
+	/** After a speed probe fails, hide that connection from the library list. */
+	readonly hideUnreachable?: boolean
 	readonly scrollOffset?: number
 	readonly loadedProfileCount?: number
 	/** Present only when a malformed or obsolete persisted value was recovered. */

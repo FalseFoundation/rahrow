@@ -46,20 +46,27 @@ export function filterAndSortProfiles({
 	query,
 	sort,
 	speedTests,
+	hideUnreachable = false,
 }: {
 	readonly profiles: readonly ConnectionProfile[]
 	readonly query: string
 	readonly sort: SortValue
 	readonly speedTests: Readonly<Record<string, LatencyProbeResult | undefined>>
+	readonly hideUnreachable?: boolean
 }): ConnectionProfile[] {
 	const normalizedQuery = query.trim().toLowerCase()
-	const visible = normalizedQuery
+	let visible = normalizedQuery
 		? profiles.filter((profile) =>
 				`${profile.metadata?.name ?? ''} ${profile.protocol} ${profile.endpoint.host}`
 					.toLowerCase()
 					.includes(normalizedQuery),
 			)
 		: [...profiles]
+	if (hideUnreachable) {
+		visible = visible.filter(
+			(profile) => speedTests[profile.id]?.reachable !== false,
+		)
+	}
 
 	if (sort === 'default') return visible
 
@@ -156,12 +163,14 @@ export function deriveConnectionLibrary({
 	query,
 	sort,
 	speedTests,
+	hideUnreachable = false,
 	subscriptions,
 }: {
 	readonly profiles: readonly ConnectionProfile[]
 	readonly query: string
 	readonly sort: SortValue
 	readonly speedTests: Readonly<Record<string, LatencyProbeResult | undefined>>
+	readonly hideUnreachable?: boolean
 	readonly subscriptions: readonly Subscription[]
 }) {
 	const visibleProfiles = filterAndSortProfiles({
@@ -169,6 +178,7 @@ export function deriveConnectionLibrary({
 		query,
 		sort,
 		speedTests,
+		hideUnreachable,
 	})
 	const ownership = partitionProfilesByOwnership(visibleProfiles)
 	const allOwnership = partitionProfilesByOwnership(profiles)

@@ -88,11 +88,10 @@ export function Settings() {
 	const [backupOpen, setBackupOpen] = useState(false)
 	const [searchOpen, setSearchOpen] = useState(false)
 	const [query, setQuery] = useState('')
-	const activeSheet: Sheet =
-		search.drawer === 'diagnostics' ? 'diagnostics' : sheet
+	const activeSheet: Sheet = search.drawer ?? sheet
 	const closeSheet = () => {
 		setSheet(null)
-		if (search.drawer === 'diagnostics') {
+		if (search.drawer) {
 			void navigate({ to: '/settings', search: {}, replace: true })
 		}
 	}

@@ -32,6 +32,7 @@ export function restoredConnectionsView(
 		groupOpen: { ...value.groupOpen },
 		query: value.query,
 		sort: value.sort,
+		...(value.hideUnreachable ? { hideUnreachable: true } : {}),
 		scrollOffset: value.scrollOffset,
 		loadedProfileCount: value.loadedProfileCount,
 	}
@@ -70,6 +71,16 @@ export function setConnectionsSort(
 	sort: ConnectionsSort,
 ): ConnectionsViewSettings {
 	return view.sort === sort ? view : { ...view, sort }
+}
+
+export function setConnectionsHideUnreachable(
+	view: ConnectionsViewSettings,
+	hideUnreachable: boolean,
+): ConnectionsViewSettings {
+	if (Boolean(view.hideUnreachable) === hideUnreachable) return view
+	return hideUnreachable
+		? { ...view, hideUnreachable: true }
+		: { ...view, hideUnreachable: undefined }
 }
 
 export function setConnectionsViewport(

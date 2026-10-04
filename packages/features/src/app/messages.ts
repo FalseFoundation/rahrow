@@ -71,6 +71,36 @@ export const englishMessages = {
 			title: "Couldn't connect",
 			description:
 				'RahRow could not start the secure tunnel. Check Diagnostics, then try again.',
+			portInUse:
+				"Another app is using RahRow's local port. Close that app (for example v2rayN), or choose a different port.",
+			portInUseNamed:
+				"{{app}} is using RahRow's local port. Close {{app}}, or choose a different port.",
+			portInUseWithFree:
+				"Another app is using RahRow's local port. Use free port {{port}} and connect, or choose a different port in Settings.",
+			portInUseNamedWithFree:
+				"{{app}} is using RahRow's local port. Use free port {{port}} and connect, or close {{app}}.",
+			engineMissing:
+				"The selected engine isn't available in this build. Choose the other engine, then connect again.",
+			engineMissingWithAlternate:
+				"The selected engine isn't available in this build. Switch to {{engine}} and connect.",
+			vpnPermission:
+				"RahRow wasn't allowed to start a VPN. If another VPN app has Always-on VPN turned on, turn it off, then try again.",
+			elevation:
+				'VPN mode needs administrator approval. Approve the system prompt when you connect, or switch to Proxy mode.',
+			systemProxyBusy:
+				'Another app has set a system proxy. Turn it off, then connect again.',
+			modeUnavailable:
+				"This connection mode isn't available on this device. Choose a different mode, then connect again.",
+		},
+		actions: {
+			proxy: 'Change port',
+			engine: 'Choose engine',
+			'connection-mode': 'Choose mode',
+			diagnostics: 'Diagnostics',
+			systemVpnSettings: 'VPN settings',
+			useFreePort: 'Use {{port}} and connect',
+			switchEngine: 'Use {{engine}}',
+			reconnectLastGood: 'Reconnect last good',
 		},
 		disconnect: {
 			title: "Couldn't disconnect",
@@ -160,6 +190,13 @@ export const englishMessages = {
 			engine: 'ENGINE',
 			latency: 'LATENCY',
 		},
+		engine: {
+			label: 'Engine',
+			hint: 'Switch if Connect fails with one core.',
+			singBox: 'sing-box',
+			xray: 'Xray',
+		},
+		reconnectLastGood: 'Reconnect last good',
 		connection: {
 			active: 'Active connection',
 			selected: 'Selected connection',
@@ -188,13 +225,20 @@ export const englishMessages = {
 			downloadHint: '1 MiB sample',
 			qualityTesting: 'Testing Cloudflare latency and download…',
 			qualityDownloadUnavailable: 'Download unavailable · 1 MiB cap',
-			qualityUnavailable: 'Cloudflare round-trip check unavailable',
+			qualityUnavailable:
+				'Connected, but internet is not working through this route. Try another connection or engine.',
+			qualityUnavailableTitle: 'Connected, but no internet',
+			qualityRetest: 'Test again',
 		},
 		mode: {
 			proxy: 'PROXY MODE',
 			proxyAvailable: 'PROXY MODE AVAILABLE',
 			vpnUnavailable: 'VPN UNAVAILABLE',
 			vpn: 'VPN MODE',
+			proxyLeakNotice:
+				'Proxy mode is not a kill switch. Apps that ignore the system proxy can still leak.',
+			proxyLeakNoticeNoVpn:
+				'VPN/TUN is unavailable here, so Proxy is the fallback. It is not a kill switch — apps can bypass it.',
 		},
 		errors: {
 			loadTitle: "Couldn't load Home",
@@ -421,6 +465,8 @@ export const englishMessages = {
 			protocol: 'Protocol',
 			endpoint: 'Endpoint',
 			latency: 'Latency',
+			hideUnreachable: 'Hide failed probes',
+			showUnreachable: 'Show failed probes',
 		},
 		refresh: {
 			refreshing: 'Refreshing…',
@@ -615,6 +661,8 @@ export const englishMessages = {
 		featureAvailability: 'Feature availability',
 		runtimeHealth: 'Runtime health',
 		refresh: 'Refresh runtime health',
+		shareReport: 'Copy report',
+		shareReportName: 'Diagnostics report',
 		description: 'Engine status and available platform capabilities.',
 		advertising: 'Advertising',
 		engine: 'Engine',
@@ -651,6 +699,21 @@ export const englishMessages = {
 			copy:
 				'Could not copy {{name}} diagnostic details. Check clipboard permission, then try again.',
 		},
+		alwaysOn: {
+			title: 'Always-on VPN',
+			description:
+				'If Connect fails because another app owns Always-on VPN, turn that off, then try RahRow again.',
+			step1: 'Open Android VPN settings.',
+			step2:
+				'Turn off Always-on VPN for other apps (and Block connections without VPN if it blocks RahRow).',
+			step3: 'Return here and Connect again.',
+			openSettings: 'Open VPN settings',
+		},
+		battery: {
+			title: 'Battery and sleep',
+			description:
+				'Android may stop the tunnel after sleep to save power. If RahRow disconnects overnight, reopen the app or allow unrestricted battery use for RahRow.',
+		},
 	},
 	subscriptions: {
 		title: 'Subscriptions',
@@ -668,6 +731,8 @@ export const englishMessages = {
 		empty: 'No subscriptions',
 		emptyDescription: 'Add a remote source to keep profiles in sync.',
 		updated: 'Updated {{value}}',
+		expired: 'Expired',
+		stale: 'Needs refresh',
 		refreshNamed: 'Refresh {{name}}',
 		removeNamed: 'Remove {{name}}',
 		replaceTitle: 'Replace existing source?',
@@ -755,7 +820,8 @@ export const englishMessages = {
 			savePort: 'Save port',
 			vpnDescription: 'VPN/TUN · routes device traffic',
 			vpnUnavailable: 'VPN/TUN · unavailable in this build',
-			proxyDescription: 'System proxy fallback',
+			proxyDescription:
+				'System proxy fallback · not a kill switch; some apps can bypass it',
 			proxyUnavailable: 'System proxy fallback · unavailable',
 			lanSharing: 'LAN proxy sharing',
 			lanSharingDescription:
@@ -1019,6 +1085,36 @@ export const persianMessages = {
 		connect: {
 			title: 'اتصال برقرار نشد',
 			description: 'کانکشن راه نیفتاد. دیاگ را چک کنید و دوباره تلاش کنید.',
+			portInUse:
+				'برنامهٔ دیگری (مثل v2rayN) از پورت محلی RahRow استفاده می‌کند. آن را ببندید یا پورت دیگری انتخاب کنید.',
+			portInUseNamed:
+				'{{app}} از پورت محلی RahRow استفاده می‌کند. {{app}} را ببندید یا پورت دیگری انتخاب کنید.',
+			portInUseWithFree:
+				'برنامهٔ دیگری از پورت محلی RahRow استفاده می‌کند. با پورت آزاد {{port}} وصل شوید یا در تنظیمات پورت دیگری انتخاب کنید.',
+			portInUseNamedWithFree:
+				'{{app}} از پورت محلی RahRow استفاده می‌کند. با پورت آزاد {{port}} وصل شوید یا {{app}} را ببندید.',
+			engineMissing:
+				'هستهٔ انتخاب‌شده در این نسخه موجود نیست. هستهٔ دیگر را انتخاب کنید و دوباره وصل شوید.',
+			engineMissingWithAlternate:
+				'هستهٔ انتخاب‌شده در این نسخه موجود نیست. به {{engine}} عوض کنید و وصل شوید.',
+			vpnPermission:
+				'اجازهٔ راه‌اندازی VPN به RahRow داده نشد. اگر برنامهٔ VPN دیگری «VPN همیشه روشن» دارد، آن را خاموش کنید و دوباره تلاش کنید.',
+			elevation:
+				'حالت VPN به تأیید مدیر سیستم نیاز دارد. هنگام اتصال درخواست سیستم را تأیید کنید یا به حالت پروکسی بروید.',
+			systemProxyBusy:
+				'برنامهٔ دیگری پروکسی سیستم را فعال کرده است. آن را خاموش کنید و دوباره وصل شوید.',
+			modeUnavailable:
+				'این حالت اتصال روی این دستگاه در دسترس نیست. حالت دیگری انتخاب کنید و دوباره وصل شوید.',
+		},
+		actions: {
+			proxy: 'تغییر پورت',
+			engine: 'انتخاب هسته',
+			'connection-mode': 'انتخاب حالت',
+			diagnostics: 'دیاگ',
+			systemVpnSettings: 'تنظیمات VPN',
+			useFreePort: 'استفاده از {{port}} و اتصال',
+			switchEngine: 'استفاده از {{engine}}',
+			reconnectLastGood: 'اتصال دوباره به آخرین موفق',
 		},
 		disconnect: {
 			title: 'اتصال قطع نشد',
@@ -1107,6 +1203,13 @@ export const persianMessages = {
 			engine: 'انجین',
 			latency: 'پینگ',
 		},
+		engine: {
+			label: 'هسته',
+			hint: 'اگر با یک هسته وصل نشد، هستهٔ دیگر را امتحان کنید.',
+			singBox: 'sing-box',
+			xray: 'Xray',
+		},
+		reconnectLastGood: 'اتصال دوباره به آخرین موفق',
 		connection: {
 			active: 'کانکشن فعال',
 			selected: 'کانکشن انتخاب‌شده',
@@ -1134,13 +1237,20 @@ export const persianMessages = {
 			downloadHint: 'نمونهٔ ۱ مگابایتی',
 			qualityTesting: 'سنجش تأخیر و دانلود Cloudflare…',
 			qualityDownloadUnavailable: 'دانلود در دسترس نیست · سقف ۱ مگابایت',
-			qualityUnavailable: 'سنجش رفت‌وبرگشت Cloudflare در دسترس نیست',
+			qualityUnavailable:
+				'متصل است، اما اینترنت از این مسیر کار نمی‌کند. اتصال یا هستهٔ دیگری را امتحان کنید.',
+			qualityUnavailableTitle: 'متصل است، اما اینترنت نیست',
+			qualityRetest: 'تست دوباره',
 		},
 		mode: {
 			proxy: 'حالت پراکسی',
 			proxyAvailable: 'حالت پراکسی در دسترس است',
 			vpnUnavailable: 'VPN در دسترس نیست',
 			vpn: 'حالت VPN',
+			proxyLeakNotice:
+				'حالت پراکسی kill switch نیست. برنامه‌هایی که پراکسی سیستم را نادیده بگیرند ممکن است نشت کنند.',
+			proxyLeakNoticeNoVpn:
+				'VPN/TUN اینجا در دسترس نیست؛ پراکسی جایگزین است. kill switch نیست و برنامه‌ها می‌توانند دورش بزنند.',
 		},
 		errors: {
 			loadTitle: 'خانه بروزرسانی نشد',
@@ -1356,6 +1466,8 @@ export const persianMessages = {
 			protocol: 'پروتکل',
 			endpoint: 'آدرس',
 			latency: 'پینگ',
+			hideUnreachable: 'پنهان کردن تست‌های ناموفق',
+			showUnreachable: 'نمایش تست‌های ناموفق',
 		},
 		refresh: {
 			refreshing: 'در حال رفرش…',
@@ -1544,6 +1656,8 @@ export const persianMessages = {
 		featureAvailability: 'دسترسی‌پذیری قابلیت‌ها',
 		runtimeHealth: 'سلامت زمان اجرا',
 		refresh: 'رفرش وضعیت انجین',
+		shareReport: 'کپی گزارش',
+		shareReportName: 'گزارش دیاگ',
 		description: 'وضعیت انجین و امکاناتی که روی این دستگاه در دسترس‌اند.',
 		advertising: 'تبلیغات',
 		engine: 'انجین',
@@ -1576,6 +1690,21 @@ export const persianMessages = {
 			copy:
 				'جزئیات دیاگ {{name}} کپی نشد. مجوز کلیپ‌بورد را بررسی و دوباره تلاش کنید.',
 		},
+		alwaysOn: {
+			title: 'VPN همیشه روشن',
+			description:
+				'اگر اتصال به‌خاطر Always-on VPN برنامهٔ دیگر قطع شد، آن را خاموش کنید و دوباره RahRow را وصل کنید.',
+			step1: 'تنظیمات VPN اندروید را باز کنید.',
+			step2:
+				'Always-on VPN را برای برنامه‌های دیگر خاموش کنید (و در صورت نیاز «مسدود کردن بدون VPN» را).',
+			step3: 'برگردید و دوباره وصل شوید.',
+			openSettings: 'باز کردن تنظیمات VPN',
+		},
+		battery: {
+			title: 'باتری و خواب دستگاه',
+			description:
+				'اندروید ممکن است بعد از خواب تونل را برای صرفه‌جویی قطع کند. اگر شب قطع شد، اپ را باز کنید یا مصرف باتری RahRow را بدون محدودیت بگذارید.',
+		},
 	},
 	subscriptions: {
 		title: 'اشتراک‌ها',
@@ -1593,6 +1722,8 @@ export const persianMessages = {
 		empty: 'اشتراکی وجود ندارد',
 		emptyDescription: 'برای همگام نگه‌داشتن پروفایل‌ها یک اشتراک اضافه کنید.',
 		updated: 'آپدیت {{value}}',
+		expired: 'منقضی',
+		stale: 'نیاز به رفرش',
 		refreshNamed: 'رفرش {{name}}',
 		removeNamed: 'حذف {{name}}',
 		replaceTitle: 'اشتراک موجود جایگزین شود؟',
@@ -1681,7 +1812,8 @@ export const persianMessages = {
 			savePort: 'ذخیره پورت',
 			vpnDescription: 'VPN/TUN · هدایت ترافیک دستگاه',
 			vpnUnavailable: 'VPN/TUN · در این بیلد در دسترس نیست',
-			proxyDescription: 'جایگزین پراکسی سیستم',
+			proxyDescription:
+				'جایگزین پراکسی سیستم · kill switch نیست؛ بعضی برنامه‌ها می‌توانند دورش بزنند',
 			proxyUnavailable: 'جایگزین پراکسی سیستم · در دسترس نیست',
 			lanSharing: 'اشتراک‌گذاری پراکسی در LAN',
 			lanSharingDescription: 'نمایش پراکسی احراز هویت‌شده برای دستگاه‌های شبکه محلی',

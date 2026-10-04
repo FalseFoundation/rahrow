@@ -32,14 +32,21 @@ export class SelectedEngine implements ProxyEngine {
 	}
 
 	async start(input: EngineStartInput): Promise<void> {
+		const engine = await this.selected(input.engineId)
 		if (this.#active) {
-			throw new EngineError(
-				'engine_already_running',
-				`${this.#active.id} is already running`,
-			)
+			const activeHealth = await this.#active.status()
+			const activeRunning = activeHealth.status !== 'stopped'
+			if (this.#active.id === engine.id && activeRunning) {
+				throw new EngineError(
+					'engine_already_running',
+					`${this.#active.id} is already running`,
+				)
+			}
+			// Stale latch or engine switch: release the previous owner first.
+			if (activeRunning) await this.#active.stop()
+			this.#active = undefined
 		}
 
-		const engine = await this.selected(input.engineId)
 		await engine.start(input)
 		this.#active = engine
 	}
@@ -55,6 +62,12 @@ export class SelectedEngine implements ProxyEngine {
 	}
 
 	async restart(input: EngineStartInput): Promise<void> {
+		const engine = await this.selected(input.engineId)
+		if (this.#active && this.#active.id !== engine.id) {
+			await this.stop()
+			await this.start(input)
+			return
+		}
 		if (this.#active) {
 			await this.#active.restart(input)
 			return
@@ -64,7 +77,14 @@ export class SelectedEngine implements ProxyEngine {
 	}
 
 	async status(): Promise<EngineHealth> {
-		if (this.#active) return this.#active.status()
+		if (this.#active) {
+			const health = await this.#active.status()
+			if (health.status === 'stopped') {
+				this.#active = undefined
+			} else {
+				return health
+			}
+		}
 		const recovered = await this.findActiveEngine()
 		if (recovered) {
 			this.#active = recovered.engine

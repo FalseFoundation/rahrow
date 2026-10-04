@@ -6,6 +6,7 @@ import android.app.ActivityManager
 import android.content.Intent
 import android.net.VpnService
 import android.os.Build
+import android.provider.Settings
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -64,7 +65,10 @@ class RahRowVpnPlugin : Plugin() {
 			return
 		}
 		val current = VpnStatusStore(context).read()
-		if (current.state == "connecting" || current.state == "connected") {
+		if (
+			(current.state == "connecting" || current.state == "connected" || current.state == "disconnecting") &&
+			isVpnProcessRunning(current.engineId)
+		) {
 			call.reject("A VPN provider is already active", "connection_conflict")
 			return
 		}
@@ -103,7 +107,10 @@ class RahRowVpnPlugin : Plugin() {
 	private fun vpnPrepared(call: PluginCall, result: androidx.activity.result.ActivityResult) {
 		if (result.resultCode != Activity.RESULT_OK) {
 			pendingStartIntent = null
-			call.reject("VPN permission was denied", "unsupported_capability")
+			call.reject(
+				"Android did not allow RahRow to start a VPN. If another VPN app has Always-on VPN enabled, turn that off in system settings.",
+				"unsupported_capability",
+			)
 			return
 		}
 		maybeRequestNotificationsThenStart(call)
@@ -190,6 +197,18 @@ class RahRowVpnPlugin : Plugin() {
 	}
 
 	@PluginMethod
+	fun openVpnSettings(call: PluginCall) {
+		try {
+			val intent = Intent(Settings.ACTION_VPN_SETTINGS)
+			if (activity == null) intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+			(activity ?: context).startActivity(intent)
+			call.resolve()
+		} catch (error: Exception) {
+			call.reject(error.message ?: "VPN settings are unavailable", "unsupported_capability", error)
+		}
+	}
+
+	@PluginMethod
 	fun probe(call: PluginCall) {
 		val host = call.getString("host").orEmpty()
 		val port = call.getInt("port") ?: 0
@@ -219,6 +238,25 @@ class RahRowVpnPlugin : Plugin() {
 		val profileId = intent.getStringExtra(RahRowVpnService.EXTRA_PROFILE_ID)
 		val engineId = intent.getStringExtra(RahRowVpnService.EXTRA_ENGINE_ID)
 		val tunBackendId = intent.getStringExtra(RahRowVpnService.EXTRA_TUN_BACKEND_ID)
+		val engineConfig = intent.getStringExtra(RahRowVpnService.EXTRA_ENGINE_CONFIG)
+		val socksPort = intent.getIntExtra(RahRowVpnService.EXTRA_SOCKS_PORT, 10_808)
+		if (
+			!profileId.isNullOrBlank() &&
+			!engineId.isNullOrBlank() &&
+			!engineConfig.isNullOrBlank()
+		) {
+			runCatching {
+				LastVpnSessionStore(context).write(
+					LastVpnSession(
+						profileId = profileId,
+						engineId = engineId,
+						engineConfig = engineConfig,
+						tunBackendId = tunBackendId ?: "engine-native",
+						socksPort = socksPort,
+					),
+				)
+			}
+		}
 		statusStore.write(NativeVpnStatus("connecting", profileId, engineId, tunBackendId))
 		try {
 			if (Build.VERSION.SDK_INT >= 26) context.startForegroundService(intent) else context.startService(intent)

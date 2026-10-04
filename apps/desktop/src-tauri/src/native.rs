@@ -2,23 +2,40 @@ use crate::{
     capability_status, command_error, unsupported_capability, unsupported_status,
     DesktopCommandError, NativeCapabilityStatus, SystemProxyInput,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::{
     env, fs,
     net::{TcpStream, ToSocketAddrs},
     path::PathBuf,
     process::Command,
+    sync::Mutex,
     time::{Duration, Instant},
 };
 use tauri::{
     image::Image,
-    menu::{Menu, MenuItem},
+    menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::TrayIconBuilder,
-    AppHandle, Manager,
+    AppHandle, Emitter, Manager, Wry,
 };
 
 const AUTOSTART_LABEL: &str = "foundation.false.rahrow.desktop";
 const TRAY_ID: &str = "rahrow";
+const TRAY_EVENT: &str = "rahrow-tray";
+
+struct TrayControls {
+    status: MenuItem<Wry>,
+    connect: MenuItem<Wry>,
+    disconnect: MenuItem<Wry>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TraySyncInput {
+    pub connected: bool,
+    pub profile_label: Option<String>,
+    pub can_connect: bool,
+    pub can_disconnect: bool,
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -117,10 +134,31 @@ pub fn rahrow_system_proxy_status() -> Result<NativeCapabilityStatus, DesktopCom
 }
 
 pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
+    let status = MenuItem::with_id(app, "status", "Ready · No connection selected", false, None::<&str>)?;
+    let connect = MenuItem::with_id(app, "connect", "Connect", true, None::<&str>)?;
+    let disconnect = MenuItem::with_id(app, "disconnect", "Disconnect", false, None::<&str>)?;
+    let separator = PredefinedMenuItem::separator(app)?;
     let show = MenuItem::with_id(app, "show", "Show", true, None::<&str>)?;
     let hide = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
-    let menu = Menu::with_items(app, &[&show, &hide, &quit])?;
+    let menu = Menu::with_items(
+        app,
+        &[
+            &status,
+            &connect,
+            &disconnect,
+            &separator,
+            &show,
+            &hide,
+            &quit,
+        ],
+    )?;
+
+    app.manage(Mutex::new(TrayControls {
+        status: status.clone(),
+        connect: connect.clone(),
+        disconnect: disconnect.clone(),
+    }));
 
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.set_icon(app_icon());
@@ -128,9 +166,16 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
 
     TrayIconBuilder::with_id(TRAY_ID)
         .icon(app_icon())
+        .tooltip("RahRow")
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| match event.id().as_ref() {
+            "connect" => {
+                let _ = app.emit(TRAY_EVENT, "connect");
+            }
+            "disconnect" => {
+                let _ = app.emit(TRAY_EVENT, "disconnect");
+            }
             "show" => {
                 if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
@@ -157,6 +202,64 @@ pub fn setup_tray(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         });
     }
 
+    Ok(())
+}
+
+#[tauri::command]
+pub fn rahrow_tray_sync(
+    app: AppHandle,
+    input: TraySyncInput,
+) -> Result<(), DesktopCommandError> {
+    let tray = app
+        .tray_by_id(TRAY_ID)
+        .ok_or_else(|| unsupported_capability("tray"))?;
+    let controls = app
+        .try_state::<Mutex<TrayControls>>()
+        .ok_or_else(|| unsupported_capability("tray"))?;
+    let controls = controls
+        .lock()
+        .map_err(|_| command_error("desktop_command_failed", "Tray menu is busy.".to_string()))?;
+
+    let profile = input
+        .profile_label
+        .as_deref()
+        .filter(|value| !value.trim().is_empty())
+        .unwrap_or("No connection selected");
+    let status_text = if input.connected {
+        format!("Connected · {profile}")
+    } else {
+        format!("Ready · {profile}")
+    };
+    controls.status.set_text(status_text).map_err(|error| {
+        command_error("desktop_command_failed", format!("Tray status label: {error}"))
+    })?;
+    controls
+        .connect
+        .set_enabled(input.can_connect)
+        .map_err(|error| {
+            command_error(
+                "desktop_command_failed",
+                format!("Tray connect item: {error}"),
+            )
+        })?;
+    controls
+        .disconnect
+        .set_enabled(input.can_disconnect)
+        .map_err(|error| {
+            command_error(
+                "desktop_command_failed",
+                format!("Tray disconnect item: {error}"),
+            )
+        })?;
+
+    let tooltip = if input.connected {
+        format!("RahRow · Connected · {profile}")
+    } else {
+        format!("RahRow · Disconnected · {profile}")
+    };
+    tray.set_tooltip(Some(&tooltip)).map_err(|error| {
+        command_error("desktop_command_failed", format!("Tray tooltip: {error}"))
+    })?;
     Ok(())
 }
 
@@ -621,5 +724,193 @@ fn run_command(program: &str, args: &[&str]) -> Result<(), DesktopCommandError> 
             "desktop_command_failed",
             String::from_utf8_lossy(&output.stderr).trim().to_string(),
         ))
+    }
+}
+
+/// Best-effort friendly name for a common local proxy holding a loopback port.
+pub(crate) fn friendly_local_proxy_name(process: &str) -> Option<&'static str> {
+    let normalized = process.to_ascii_lowercase().replace('\\', "/");
+    let base = normalized
+        .rsplit('/')
+        .next()
+        .unwrap_or(normalized.as_str())
+        .trim_end_matches(".exe")
+        .trim_end_matches(".app");
+
+    if base.contains("v2rayn") || base == "v2ray-desktop" {
+        return Some("v2rayN");
+    }
+    if base.contains("clash-verge") || base.contains("clash verge") {
+        return Some("Clash Verge");
+    }
+    if base.contains("clash for windows")
+        || base.contains("clash-for-windows")
+        || base == "cfw"
+    {
+        return Some("Clash for Windows");
+    }
+    if base.contains("mihomo") || base == "clash-meta" || base.contains("clash.meta") {
+        return Some("mihomo");
+    }
+    if base == "clash" || base.starts_with("clash-") {
+        return Some("Clash");
+    }
+    if base.contains("hiddify") {
+        return Some("Hiddify");
+    }
+    if base.contains("nekoray") || base.contains("nekobox") {
+        return Some("Nekoray");
+    }
+    if base == "happ" || base.starts_with("happ-") {
+        return Some("Happ");
+    }
+    if base.contains("shadowsocks") || base == "ss-local" {
+        return Some("Shadowsocks");
+    }
+    if base.contains("hysteria") {
+        return Some("Hysteria");
+    }
+    if base == "xray" || base.starts_with("xray-") {
+        return Some("Xray");
+    }
+    if base == "sing-box" || base.starts_with("sing-box-") {
+        return Some("sing-box");
+    }
+    None
+}
+
+/// Who is listening on 127.0.0.1:`port`, when we can tell (best effort).
+pub(crate) fn loopback_port_occupant(port: u16) -> Option<&'static str> {
+    let process = raw_loopback_port_process(port)?;
+    friendly_local_proxy_name(&process)
+}
+
+fn raw_loopback_port_process(port: u16) -> Option<String> {
+    #[cfg(target_os = "linux")]
+    {
+        let output = Command::new("ss")
+            .args(["-H", "-ltnp", &format!("sport = :{port}")])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let text = String::from_utf8_lossy(&output.stdout);
+        // users:(("v2rayN",pid=123,fd=4))
+        for line in text.lines() {
+            if let Some(start) = line.find("users:((") {
+                let rest = &line[start + "users:((".len()..];
+                if let Some(end) = rest.find('"') {
+                    let name = rest[..end].trim();
+                    if !name.is_empty() {
+                        return Some(name.to_string());
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        let output = Command::new("lsof")
+            .args(["-nP", &format!("-iTCP:{port}"), "-sTCP:LISTEN"])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let text = String::from_utf8_lossy(&output.stdout);
+        for line in text.lines().skip(1) {
+            let name = line.split_whitespace().next()?.trim();
+            if !name.is_empty() {
+                return Some(name.to_string());
+            }
+        }
+        None
+    }
+
+    #[cfg(target_os = "windows")]
+    {
+        let output = Command::new("netstat")
+            .args(["-ano", "-p", "tcp"])
+            .output()
+            .ok()?;
+        if !output.status.success() {
+            return None;
+        }
+        let text = String::from_utf8_lossy(&output.stdout);
+        let needle = format!(":{port}");
+        let mut pid: Option<String> = None;
+        for line in text.lines() {
+            let lowered = line.to_ascii_lowercase();
+            if !(lowered.contains("127.0.0.1")
+                || lowered.contains("0.0.0.0")
+                || lowered.contains("[::1]")
+                || lowered.contains("[::]"))
+            {
+                continue;
+            }
+            if !line.contains(&needle) || !lowered.contains("listening") {
+                continue;
+            }
+            pid = line.split_whitespace().last().map(str::to_string);
+            break;
+        }
+        let pid = pid.filter(|value| value.chars().all(|ch| ch.is_ascii_digit()))?;
+        let task = Command::new("tasklist")
+            .args(["/FI", &format!("PID eq {pid}"), "/FO", "CSV", "/NH"])
+            .output()
+            .ok()?;
+        if !task.status.success() {
+            return None;
+        }
+        let row = String::from_utf8_lossy(&task.stdout);
+        let name = row
+            .lines()
+            .next()?
+            .trim()
+            .trim_start_matches('"')
+            .split('"')
+            .next()?
+            .trim();
+        if name.is_empty() {
+            None
+        } else {
+            Some(name.to_string())
+        }
+    }
+
+    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+    {
+        let _ = port;
+        None
+    }
+}
+
+#[tauri::command]
+pub fn rahrow_loopback_port_occupant(port: u16) -> Option<&'static str> {
+    loopback_port_occupant(port)
+}
+
+#[cfg(test)]
+mod local_proxy_name_tests {
+    use super::friendly_local_proxy_name;
+
+    #[test]
+    fn maps_common_local_proxy_process_names() {
+        assert_eq!(friendly_local_proxy_name("v2rayN"), Some("v2rayN"));
+        assert_eq!(friendly_local_proxy_name("v2rayN.exe"), Some("v2rayN"));
+        assert_eq!(
+            friendly_local_proxy_name("clash-verge-rev"),
+            Some("Clash Verge")
+        );
+        assert_eq!(
+            friendly_local_proxy_name("Clash for Windows"),
+            Some("Clash for Windows")
+        );
+        assert_eq!(friendly_local_proxy_name("mihomo"), Some("mihomo"));
+        assert_eq!(friendly_local_proxy_name("clash"), Some("Clash"));
+        assert_eq!(friendly_local_proxy_name("firefox"), None);
     }
 }

@@ -456,14 +456,15 @@ mod linux {
         Ok(path)
     }
 
-    /// pkexec refuses binaries writable by group/other. Contributor checkouts on
-    /// NTFS/exFAT (typical `/media/...` mounts) are world-writable, so fall back
-    /// to passwordless sudo when that is how this machine is administered.
+    /// pkexec refuses binaries writable by group/other. Cargo builds under
+    /// umask 002 (and NTFS/exFAT checkouts) land group-writable, so clear those
+    /// bits when we own the file, then fall back to passwordless sudo.
     fn helper_command(
         exe: &Path,
         sing_box: &str,
         config_path: &Path,
     ) -> Result<Command, String> {
+        let _ = clear_group_other_write_bits(exe);
         let mut command = if pkexec_safe(exe) {
             let mut command = Command::new(PKEXEC);
             command.arg(exe);
@@ -489,6 +490,17 @@ mod linux {
             .arg(config_path)
             .process_group(0);
         Ok(command)
+    }
+
+    fn clear_group_other_write_bits(path: &Path) -> std::io::Result<()> {
+        let metadata = fs::metadata(path)?;
+        let mode = metadata.permissions().mode();
+        if mode & 0o022 == 0 {
+            return Ok(());
+        }
+        let mut permissions = metadata.permissions();
+        permissions.set_mode(mode & !0o022);
+        fs::set_permissions(path, permissions)
     }
 
     fn pkexec_safe(path: &Path) -> bool {

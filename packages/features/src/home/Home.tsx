@@ -28,6 +28,10 @@ import { Skeleton } from '@rahrow/ui/components/ui/skeleton.tsx'
 import { toast } from '@rahrow/ui/components/ui/sonner.tsx'
 import { Spinner } from '@rahrow/ui/components/ui/spinner.tsx'
 import { Text } from '@rahrow/ui/components/ui/text.tsx'
+import {
+	ToggleGroup,
+	ToggleGroupItem,
+} from '@rahrow/ui/components/ui/toggle-group.tsx'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect } from 'react'
 import { useAppTranslation } from '../app/app-i18n.tsx'
@@ -40,6 +44,7 @@ import {
 	connectionModeLabel,
 	countryPresentation,
 	homeDisplay,
+	proxyLeakNotice,
 } from './home-model.ts'
 import { useHome } from './useHome.ts'
 
@@ -81,6 +86,10 @@ export function Home() {
 		vpnSupported: state.vpnSupported,
 		systemProxySupported: state.systemProxySupported,
 	})
+	const leakNotice = proxyLeakNotice({
+		connectionMode: state.connectionMode,
+		vpnSupported: state.vpnSupported,
+	})
 	const connectionActionLabel = connecting
 		? t('home.actions.connecting')
 		: state.canDisconnect
@@ -97,23 +106,88 @@ export function Home() {
 			toast.dismiss('home-connection-failure')
 			return
 		}
+		const { recovery } = state.failure
+		const retry = {
+			label: state.failure.retryLabel,
+			onClick: () => void actions.retryFailure(),
+		}
 		toast.error(state.failure.title, {
 			description: state.failure.description,
 			id: 'home-connection-failure',
+			action:
+				recovery.kind === 'retry'
+					? retry
+					: {
+							label: state.failure.recoveryLabel,
+							onClick: () => {
+								if (recovery.kind === 'useFreePort') {
+									void actions.useFreePortAndConnect()
+									return
+								}
+								if (recovery.kind === 'switchEngine') {
+									void actions.switchEngineAndConnect()
+									return
+								}
+								if (recovery.kind === 'reconnectLastGood') {
+									void actions.reconnectLastGood()
+									return
+								}
+								if (recovery.kind === 'systemVpnSettings') {
+									void actions.openSystemVpnSettings()
+									return
+								}
+								void navigate({
+									to: '/settings',
+									search: { drawer: recovery.drawer },
+								})
+							},
+						},
+			cancel:
+				recovery.kind === 'retry'
+					? {
+							label: t('settings.app.diagnostics'),
+							onClick: () =>
+								void navigate({
+									to: '/settings',
+									search: { drawer: 'diagnostics' },
+								}),
+						}
+					: retry,
+		})
+	}, [
+		actions.openSystemVpnSettings,
+		actions.reconnectLastGood,
+		actions.retryFailure,
+		actions.switchEngineAndConnect,
+		actions.useFreePortAndConnect,
+		navigate,
+		state.failure,
+		t,
+	])
+
+	useEffect(() => {
+		const deadRoute =
+			state.connectionState === 'connected' &&
+			state.networkQuality.status === 'complete' &&
+			!state.networkQuality.result.reachable
+		if (!deadRoute) {
+			toast.dismiss('home-network-quality')
+			return
+		}
+		toast.warning(t('home.route.qualityUnavailableTitle'), {
+			description: t('home.route.qualityUnavailable'),
+			id: 'home-network-quality',
 			action: {
-				label: state.failure.retryLabel,
-				onClick: () => void actions.retryFailure(),
-			},
-			cancel: {
-				label: t('settings.app.diagnostics'),
-				onClick: () =>
-					void navigate({
-						to: '/settings',
-						search: { drawer: 'diagnostics' },
-					}),
+				label: t('home.route.qualityRetest'),
+				onClick: () => actions.retestNetworkQuality(),
 			},
 		})
-	}, [actions.retryFailure, navigate, state.failure, t])
+	}, [
+		actions.retestNetworkQuality,
+		state.connectionState,
+		state.networkQuality,
+		t,
+	])
 
 	return (
 		<section className={styles.page} aria-label={t('app.screens.home')}>
@@ -225,6 +299,12 @@ export function Home() {
 							<span className={styles.version}>{modeLabel}</span>
 						</div>
 
+						{leakNotice ? (
+							<Text className={styles.proxyLeakNotice} role='note'>
+								{leakNotice}
+							</Text>
+						) : null}
+
 						<Card
 							variant='featured'
 							className={styles.hero}
@@ -312,12 +392,14 @@ export function Home() {
 										<span>{t('home.telemetry.protocol')}</span>
 										<strong>{protocol}</strong>
 									</div>
-									{display.showEngineStatus ? (
-										<div>
-											<span>{t('home.telemetry.engine')}</span>
-											<strong>{state.engineStatus}</strong>
-										</div>
-									) : null}
+									<div>
+										<span>{t('home.telemetry.engine')}</span>
+										<strong data-selectable>
+											{state.engineId === 'sing-box'
+												? t('home.engine.singBox')
+												: t('home.engine.xray')}
+										</strong>
+									</div>
 									{display.showLatency ? (
 										<div>
 											<span>{t('home.telemetry.latency')}</span>
@@ -339,6 +421,47 @@ export function Home() {
 								</div>
 							</CardContent>
 						</Card>
+
+						{!connected && state.engineIds.length > 1 ? (
+							<div className={styles.engineControl}>
+								<div className={styles.engineControlHeader}>
+									<span>{t('home.engine.label')}</span>
+								</div>
+								<ToggleGroup
+									className={styles.engineToggle}
+									variant='outline'
+									spacing={0}
+									value={[state.engineId]}
+									onValueChange={(values) => {
+										const next = values.at(-1)
+										if (next === 'xray' || next === 'sing-box') {
+											void actions.selectEngine(next)
+										}
+									}}
+								>
+									{state.engineIds.map((id) => (
+										<ToggleGroupItem key={id} value={id}>
+											{id === 'sing-box'
+												? t('home.engine.singBox')
+												: t('home.engine.xray')}
+										</ToggleGroupItem>
+									))}
+								</ToggleGroup>
+								<Text className={styles.engineHint}>{t('home.engine.hint')}</Text>
+							</div>
+						) : null}
+
+						{state.canReconnectLastGood ? (
+							<Button
+								variant='outline'
+								className={styles.reconnectLastGood}
+								type='button'
+								disabled={state.isPending}
+								onClick={() => void actions.reconnectLastGood()}
+							>
+								{t('home.reconnectLastGood')}
+							</Button>
+						) : null}
 
 						<Button
 							variant='surface'

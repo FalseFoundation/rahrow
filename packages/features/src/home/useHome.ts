@@ -1,5 +1,7 @@
 import { createAdActionEventId } from '@rahrow/ads/ad-gate.ts'
 import type { ConnectionProfile } from '@rahrow/core/profile/connection-profile.ts'
+import type { EngineId } from '@rahrow/core/runtime/proxy-engine.ts'
+import type { LastGoodConnection } from '@rahrow/core/storage/json-store.ts'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { recordAdAction } from '../ads/record-ad-action.ts'
 import { translate } from '../app/app-i18n.tsx'
@@ -10,6 +12,8 @@ import {
 	useAppRuntime,
 } from '../app/runtime.tsx'
 import {
+	busyLocalPortFromCause,
+	classifyConnectFailure,
 	connectionFailure,
 	type UserFacingFailure,
 } from '../app/user-facing-failure.ts'
@@ -19,6 +23,8 @@ import {
 	canDisconnect,
 	connectionModeUnavailableReason,
 	formatConnectionState,
+	isLiveConnectionState,
+	preferredSelectedProfileId,
 	profileLabel,
 } from './home-model.ts'
 import { usePostConnectEgressIdentity } from './usePostConnectEgressIdentity.ts'
@@ -35,6 +41,7 @@ export function useHome() {
 	const [localPort, setLocalPort] = useState(10808)
 	const [connectionState, setConnectionState] = useState('disconnected')
 	const [connectionMode, setConnectionMode] = useState<'vpn' | 'proxy'>('vpn')
+	const [engineId, setEngineId] = useState('sing-box')
 	const [engineStatus, setEngineStatus] = useState('unknown')
 	const [latency, setLatency] = useState<LatencySnapshot | null>(null)
 	const [vpnSupported, setVpnSupported] = useState(false)
@@ -47,6 +54,8 @@ export function useHome() {
 	} | null>(null)
 	const [message, setMessage] = useState(() => translate('home.status.ready'))
 	const [failure, setFailure] = useState<UserFacingFailure | null>(null)
+	const [lastGoodConnection, setLastGoodConnection] =
+		useState<LastGoodConnection | null>(null)
 	const [pendingAction, setPendingAction] = useState<
 		'connect' | 'disconnect' | 'test' | 'refresh' | null
 	>(null)
@@ -60,6 +69,11 @@ export function useHome() {
 		() => profiles.find((profile) => profile.id === selectedProfileId),
 		[profiles, selectedProfileId],
 	)
+	const engineIds = useMemo((): readonly EngineId[] => {
+		const fromRuntime = runtime.availableEngines?.map((engine) => engine.id)
+		if (fromRuntime && fromRuntime.length > 0) return fromRuntime
+		return ['sing-box', 'xray']
+	}, [runtime.availableEngines])
 	const connectUnavailableReason = connectionModeUnavailableReason({
 		connectionMode,
 		vpnSupported,
@@ -73,21 +87,27 @@ export function useHome() {
 		egressPath: runtime.egressPath,
 		identity: runtime.egressIdentity,
 	})
-	const networkQuality = usePostConnectNetworkQuality({
-		connectionState,
-		connectionKey: `${selectedProfileId}:${connectionMode}:${runtime.engine.id}:${localPort}`,
-		mode: connectionMode,
-		localPort,
-		egressPath: runtime.egressPath,
-		probe: runtime.networkQuality,
-	})
+	const { state: networkQuality, retest: retestNetworkQuality } =
+		usePostConnectNetworkQuality({
+			connectionState,
+			connectionKey: `${selectedProfileId}:${connectionMode}:${runtime.engine.id}:${localPort}`,
+			mode: connectionMode,
+			localPort,
+			egressPath: runtime.egressPath,
+			probe: runtime.networkQuality,
+		})
 	const smartConnect = useSmartConnect(runtime.smartConnect)
 
 	const applyConnectionSnapshot = useCallback((snapshot: ConnectionSnapshot) => {
 		setConnectionState(snapshot.state)
 		if (snapshot.mode) setConnectionMode(snapshot.mode)
 		setEngineStatus(snapshot.engineStatus ?? 'unknown')
-		if (snapshot.profileId) setSelectedProfileId(snapshot.profileId)
+		if (snapshot.profileId && isLiveConnectionState(snapshot.state)) {
+			setSelectedProfileId(snapshot.profileId)
+		}
+		if (snapshot.engineId && isLiveConnectionState(snapshot.state)) {
+			setEngineId(snapshot.engineId)
+		}
 	}, [])
 
 	const readAuthoritativeState = useCallback(async () => {
@@ -107,7 +127,11 @@ export function useHome() {
 
 			if (!isMounted.current) return
 			setProfiles(nextProfiles)
-			const activeProfileId = snapshot.profileId ?? settings.activeProfileId
+			const activeProfileId = preferredSelectedProfileId({
+				connectionState: snapshot.state,
+				connectionProfileId: snapshot.profileId,
+				activeProfileId: settings.activeProfileId,
+			})
 			setSelectedProfileId(
 				activeProfileId &&
 					nextProfiles.some((profile) => profile.id === activeProfileId)
@@ -115,6 +139,11 @@ export function useHome() {
 					: (nextProfiles[0]?.id ?? ''),
 			)
 			setLocalPort(settings.localPort ?? 10808)
+			const persistedEngineId = settings.engineId ?? 'sing-box'
+			if (!(snapshot.engineId && isLiveConnectionState(snapshot.state))) {
+				setEngineId(persistedEngineId)
+			}
+			setLastGoodConnection(settings.lastGoodConnection ?? null)
 			applyConnectionSnapshot(snapshot)
 			if (!snapshot.mode) setConnectionMode(settings.connectionMode ?? 'vpn')
 			setVpnSupported(vpn.supported !== false)
@@ -227,6 +256,26 @@ export function useHome() {
 		}
 	}, [requestBackgroundRefresh])
 
+	const resolveFreeLocalPort = useCallback(
+		async (cause: unknown, preferred: number) => {
+			if (classifyConnectFailure(cause) !== 'portInUse') return undefined
+			if (!runtime.connection.suggestLocalPort) return undefined
+			const busy = busyLocalPortFromCause(cause, preferred)
+			const suggested = await runtime.connection
+				.suggestLocalPort(busy)
+				.catch(() => null)
+			if (
+				typeof suggested !== 'number' ||
+				suggested === preferred ||
+				suggested === busy
+			) {
+				return undefined
+			}
+			return suggested
+		},
+		[runtime.connection],
+	)
+
 	const connect = useCallback(async () => {
 		if (!selectedProfile) {
 			setMessage(translate('home.errors.selectFirst'))
@@ -247,26 +296,44 @@ export function useHome() {
 				setMessage(unavailableReason)
 				return
 			}
-			await runtime.connection.connect(selectedProfile, {
-				localPort,
+			const selectedEngineId = settings.engineId ?? 'sing-box'
+			const preferredPort = settings.localPort ?? localPort
+			const connectOptions = {
+				localPort: preferredPort,
 				mode: connectionMode,
-			})
+				engineId: selectedEngineId,
+			}
+			await runtime.connection.canConnect?.(selectedProfile, connectOptions)
+			await runtime.connection.connect(selectedProfile, connectOptions)
+			const connectedPort =
+				(await runtime.connection.status()).localPort ?? preferredPort
+			const lastGood: LastGoodConnection = {
+				profileId: selectedProfile.id,
+				engineId: selectedEngineId === 'xray' ? 'xray' : 'sing-box',
+				connectionMode,
+				localPort: connectedPort,
+				connectedAt: new Date().toISOString(),
+			}
 			await runtime.settingsStore.write({
 				...settings,
 				activeProfileId: selectedProfile.id,
-				localPort,
-				engineId: settings.engineId ?? 'sing-box',
+				localPort: connectedPort,
+				engineId: selectedEngineId,
 				connectionMode,
+				lastGoodConnection: lastGood,
 			})
+			if (connectedPort !== localPort) setLocalPort(connectedPort)
+			setEngineId(selectedEngineId)
+			setLastGoodConnection(lastGood)
 			logger.info(
 				{
 					action: 'connection.connect',
 					outcome: 'success',
 					connectionMode,
-					engineId: settings.engineId ?? 'sing-box',
+					engineId: selectedEngineId,
 					protocol: selectedProfile.protocol,
 				},
-				`Connected with ${settings.engineId ?? 'sing-box'} in ${connectionMode} mode`,
+				`Connected with ${selectedEngineId} in ${connectionMode} mode`,
 			)
 			await refresh()
 			setMessage(translate('home.status.connected'))
@@ -276,21 +343,53 @@ export function useHome() {
 					action: 'connection.connect',
 					outcome: 'failure',
 					errorType: error instanceof Error ? error.name : typeof error,
+					errorMessage: error instanceof Error ? error.message : undefined,
 				},
 				'Connection attempt failed',
 			)
-			const nextFailure = connectionFailure('connect')
+			const settings = await runtime.settingsStore.read().catch(() => null)
+			const freeLocalPort = await resolveFreeLocalPort(
+				error,
+				settings?.localPort ?? localPort,
+			)
+			const currentEngine =
+				settings?.engineId === 'xray' || engineId === 'xray' ? 'xray' : 'sing-box'
+			const alternateEngineId =
+				classifyConnectFailure(error) === 'engineMissing'
+					? currentEngine === 'xray'
+						? ('sing-box' as const)
+						: ('xray' as const)
+					: undefined
+			const lastGood = settings?.lastGoodConnection
+			const canReconnectLastGood = Boolean(
+				lastGood &&
+					profiles.some((profile) => profile.id === lastGood.profileId) &&
+					(lastGood.profileId !== selectedProfileId ||
+						lastGood.engineId !== currentEngine),
+			)
+			const nextFailure = connectionFailure('connect', error, {
+				canOpenSystemVpnSettings: Boolean(
+					runtime.capabilities.vpn?.openSystemSettings,
+				),
+				freeLocalPort,
+				alternateEngineId,
+				canReconnectLastGood,
+			})
 			setFailure(nextFailure)
 			setMessage(nextFailure.title)
 		} finally {
 			setPendingAction(null)
 		}
 	}, [
+		engineId,
 		localPort,
 		logger,
+		profiles,
 		refresh,
+		resolveFreeLocalPort,
 		runtime,
 		selectedProfile,
+		selectedProfileId,
 		systemProxySupported,
 		vpnSupported,
 	])
@@ -330,6 +429,99 @@ export function useHome() {
 		}
 		if (failure?.operation === 'disconnect') await disconnect()
 	}, [connect, disconnect, failure])
+
+	const useFreePortAndConnect = useCallback(async () => {
+		if (failure?.recovery.kind !== 'useFreePort') return
+		const port = failure.recovery.port
+		setLocalPort(port)
+		const settings = await runtime.settingsStore.read()
+		await runtime.settingsStore.write({ ...settings, localPort: port })
+		await connect()
+	}, [connect, failure, runtime.settingsStore])
+
+	const switchEngineAndConnect = useCallback(async () => {
+		if (failure?.recovery.kind !== 'switchEngine') return
+		const nextEngine = failure.recovery.engineId
+		setEngineId(nextEngine)
+		const settings = await runtime.settingsStore.read()
+		await runtime.settingsStore.write({ ...settings, engineId: nextEngine })
+		await connect()
+	}, [connect, failure, runtime.settingsStore])
+
+	const reconnectLastGood = useCallback(async () => {
+		const settings = await runtime.settingsStore.read()
+		const lastGood = settings.lastGoodConnection
+		if (!lastGood) return
+		const profile = profiles.find((item) => item.id === lastGood.profileId)
+		if (!profile) return
+		setFailure(null)
+		setSelectedProfileId(profile.id)
+		setEngineId(lastGood.engineId)
+		setConnectionMode(lastGood.connectionMode)
+		if (typeof lastGood.localPort === 'number') setLocalPort(lastGood.localPort)
+		const preferredPort = lastGood.localPort ?? settings.localPort ?? localPort
+		await runtime.settingsStore.write({
+			...settings,
+			activeProfileId: lastGood.profileId,
+			engineId: lastGood.engineId,
+			connectionMode: lastGood.connectionMode,
+			localPort: preferredPort,
+		})
+		try {
+			setPendingAction('connect')
+			const connectOptions = {
+				localPort: preferredPort,
+				mode: lastGood.connectionMode,
+				engineId: lastGood.engineId,
+			}
+			await runtime.connection.canConnect?.(profile, connectOptions)
+			await runtime.connection.connect(profile, connectOptions)
+			const connectedPort =
+				(await runtime.connection.status()).localPort ?? preferredPort
+			const nextGood: LastGoodConnection = {
+				...lastGood,
+				localPort: connectedPort,
+				connectedAt: new Date().toISOString(),
+			}
+			await runtime.settingsStore.write({
+				...(await runtime.settingsStore.read()),
+				activeProfileId: profile.id,
+				localPort: connectedPort,
+				engineId: lastGood.engineId,
+				connectionMode: lastGood.connectionMode,
+				lastGoodConnection: nextGood,
+			})
+			setLocalPort(connectedPort)
+			setLastGoodConnection(nextGood)
+			await refresh()
+			setMessage(translate('home.status.connected'))
+		} catch (error) {
+			const nextFailure = connectionFailure('connect', error, {
+				canOpenSystemVpnSettings: Boolean(
+					runtime.capabilities.vpn?.openSystemSettings,
+				),
+			})
+			setFailure(nextFailure)
+			setMessage(nextFailure.title)
+		} finally {
+			setPendingAction(null)
+		}
+	}, [localPort, profiles, refresh, runtime])
+
+	const openSystemVpnSettings = useCallback(async () => {
+		try {
+			await runtime.capabilities.vpn?.openSystemSettings?.()
+		} catch (error) {
+			logger.warn(
+				{
+					action: 'vpn.open-system-settings',
+					outcome: 'failure',
+					errorType: error instanceof Error ? error.name : typeof error,
+				},
+				'Could not open system VPN settings',
+			)
+		}
+	}, [logger, runtime.capabilities.vpn])
 
 	const testSelected = useCallback(async () => {
 		if (!selectedProfile) {
@@ -380,11 +572,34 @@ export function useHome() {
 		[logger, runtime.advertising, selectedProfileId],
 	)
 
+	const selectEngine = useCallback(
+		async (nextEngineId: EngineId) => {
+			if (!engineIds.includes(nextEngineId)) return
+			if (isLiveConnectionState(connectionState)) return
+			setEngineId(nextEngineId)
+			const settings = await runtime.settingsStore.read()
+			await runtime.settingsStore.write({
+				...settings,
+				engineId: nextEngineId,
+			})
+		},
+		[connectionState, engineIds, runtime.settingsStore],
+	)
+
+	const canReconnectLastGood = Boolean(
+		lastGoodConnection &&
+			!isLiveConnectionState(connectionState) &&
+			profiles.some((profile) => profile.id === lastGoodConnection.profileId) &&
+			(lastGoodConnection.profileId !== selectedProfileId ||
+				lastGoodConnection.engineId !== engineId),
+	)
+
 	return {
 		smartConnect,
 		state: {
 			profiles,
-			engineId: runtime.engine.id,
+			engineId,
+			engineIds,
 			selectedProfileId,
 			selectedProfile,
 			connectionState,
@@ -401,6 +616,8 @@ export function useHome() {
 			latency,
 			message,
 			failure,
+			lastGoodConnection,
+			canReconnectLastGood,
 			connectUnavailableReason,
 			pendingAction,
 			isPending: pendingAction !== null,
@@ -413,11 +630,17 @@ export function useHome() {
 		},
 		actions: {
 			selectProfile,
+			selectEngine,
 			connect,
 			disconnect,
 			testSelected,
 			refresh,
 			retryFailure,
+			useFreePortAndConnect,
+			switchEngineAndConnect,
+			reconnectLastGood,
+			openSystemVpnSettings,
+			retestNetworkQuality,
 		},
 	}
 }

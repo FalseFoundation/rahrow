@@ -26,10 +26,10 @@ describe('usePostConnectNetworkQuality', () => {
 			{ initialProps: { connectionState: 'connecting' } },
 		)
 
-		expect(result.current.status).toBe('idle')
+		expect(result.current.state.status).toBe('idle')
 		rerender({ connectionState: 'connected' })
-		await waitFor(() => expect(result.current.status).toBe('complete'))
-		expect(result.current.result?.latencyMs).toBe(28)
+		await waitFor(() => expect(result.current.state.status).toBe('complete'))
+		expect(result.current.state.result?.latencyMs).toBe(28)
 		expect(test).toHaveBeenCalledWith(expect.objectContaining({ mode: 'vpn' }))
 
 		rerender({ connectionState: 'connected' })
@@ -53,7 +53,7 @@ describe('usePostConnectNetworkQuality', () => {
 			}),
 		)
 
-		await waitFor(() => expect(result.current.status).toBe('complete'))
+		await waitFor(() => expect(result.current.state.status).toBe('complete'))
 		expect(test).toHaveBeenCalledWith(
 			expect.objectContaining({
 				mode: 'proxy',
@@ -80,7 +80,7 @@ describe('usePostConnectNetworkQuality', () => {
 			}),
 		)
 
-		await waitFor(() => expect(result.current.status).toBe('complete'))
+		await waitFor(() => expect(result.current.state.status).toBe('complete'))
 		expect(test).toHaveBeenCalledWith(
 			expect.objectContaining({
 				mode: 'vpn',
@@ -94,7 +94,20 @@ describe('usePostConnectNetworkQuality', () => {
 		const probe: NetworkQualityProbe = {
 			test: vi.fn(async (options) => {
 				signal = options?.signal
-				return await new Promise<NetworkQualityResult>(() => undefined)
+				await new Promise<void>((resolve) => {
+					if (options?.signal?.aborted) {
+						resolve()
+						return
+					}
+					options?.signal?.addEventListener('abort', () => resolve(), {
+						once: true,
+					})
+				})
+				return {
+					provider: 'cloudflare' as const,
+					reachable: false,
+					error: 'network-test-unavailable',
+				}
 			}),
 		}
 		const { result, rerender } = renderHook(
@@ -106,12 +119,12 @@ describe('usePostConnectNetworkQuality', () => {
 				}),
 			{ initialProps: { connectionState: 'connected' } },
 		)
-		await waitFor(() => expect(result.current.status).toBe('testing'))
+		await waitFor(() => expect(result.current.state.status).toBe('testing'))
 
 		act(() => rerender({ connectionState: 'disconnected' }))
 
 		expect(signal?.aborted).toBe(true)
-		expect(result.current).toEqual({ status: 'idle', result: null })
+		expect(result.current.state).toEqual({ status: 'idle', result: null })
 	})
 
 	it('stays idle when no platform probe is available', () => {
@@ -122,7 +135,7 @@ describe('usePostConnectNetworkQuality', () => {
 			}),
 		)
 
-		expect(result.current).toEqual({ status: 'idle', result: null })
+		expect(result.current.state).toEqual({ status: 'idle', result: null })
 	})
 
 	it('contains an unexpected provider rejection', async () => {
@@ -139,11 +152,45 @@ describe('usePostConnectNetworkQuality', () => {
 			}),
 		)
 
-		await waitFor(() => expect(result.current.status).toBe('complete'))
-		expect(result.current.result).toEqual({
+		await waitFor(() => expect(result.current.state.status).toBe('complete'))
+		expect(result.current.state.result).toEqual({
 			provider: 'cloudflare',
 			reachable: false,
 			error: 'network-test-unavailable',
 		})
+	})
+
+	it('retests when asked after a dead route result', async () => {
+		let phase: 'dead' | 'alive' = 'dead'
+		const test = vi.fn(async () =>
+			phase === 'dead'
+				? {
+						provider: 'cloudflare' as const,
+						reachable: false,
+						error: 'network-test-unavailable',
+					}
+				: {
+						provider: 'cloudflare' as const,
+						reachable: true,
+						latencyMs: 33,
+					},
+		)
+		const probe: NetworkQualityProbe = { test }
+		const { result } = renderHook(() =>
+			usePostConnectNetworkQuality({
+				connectionState: 'connected',
+				connectionKey: 'profile-1',
+				probe,
+			}),
+		)
+
+		await waitFor(() =>
+			expect(result.current.state.result?.reachable).toBe(false),
+		)
+		phase = 'alive'
+		const callsBeforeRetest = test.mock.calls.length
+		act(() => result.current.retest())
+		await waitFor(() => expect(result.current.state.result?.reachable).toBe(true))
+		expect(test.mock.calls.length).toBeGreaterThan(callsBeforeRetest)
 	})
 })

@@ -147,6 +147,7 @@ export function ProfileManagement({
 	const shareDrawer = useShareDrawer()
 	const query = state.connectionsView.query
 	const sort = state.connectionsView.sort
+	const hideUnreachable = state.connectionsView.hideUnreachable === true
 	const [pacedQuery] = useDebouncedValue(query, { wait: 120 })
 	const [pacedSort] = useDebouncedValue(sort, {
 		wait: CONNECTION_SORT_DEBOUNCE_MS,
@@ -154,7 +155,9 @@ export function ProfileManagement({
 	const speedTestsForSort = useSelector(
 		profileSpeedTestStore,
 		(speedTestState) =>
-			pacedSort === 'speed-test' ? speedTestState.results : emptySpeedTests,
+			pacedSort === 'speed-test' || hideUnreachable
+				? speedTestState.results
+				: emptySpeedTests,
 	)
 	const library = useMemo(
 		() =>
@@ -163,9 +166,17 @@ export function ProfileManagement({
 				query: pacedQuery,
 				sort: pacedSort,
 				speedTests: speedTestsForSort,
+				hideUnreachable,
 				subscriptions,
 			}),
-		[pacedQuery, pacedSort, speedTestsForSort, state.profiles, subscriptions],
+		[
+			hideUnreachable,
+			pacedQuery,
+			pacedSort,
+			speedTestsForSort,
+			state.profiles,
+			subscriptions,
+		],
 	)
 	const workflows = useConnectionLibraryWorkflows({
 		actions,
@@ -585,9 +596,13 @@ export function ProfileManagement({
 					{workflows.drawer === 'sort' ? (
 						<ConnectionSortDrawer
 							value={sort}
+							hideUnreachable={hideUnreachable}
 							onChange={(value) => {
 								actions.setConnectionsSort(value)
 								workflows.closeDrawer()
+							}}
+							onHideUnreachableChange={(value) => {
+								actions.setConnectionsHideUnreachable(value)
 							}}
 						/>
 					) : null}

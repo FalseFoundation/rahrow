@@ -3,6 +3,7 @@ import type { AdvertisingDiagnostics } from '../ads/ad-diagnostics.ts'
 import { useAppTranslation } from '../app/app-i18n.tsx'
 import { redactDiagnosticsSnapshot } from '../app/diagnostics-snapshot.ts'
 import { type DiagnosticsSnapshot, useAppRuntime } from '../app/runtime.tsx'
+import { createDiagnosticsShareReport } from './diagnostic-details.ts'
 
 export function useDiagnostics() {
 	const { t } = useAppTranslation()
@@ -17,6 +18,12 @@ export function useDiagnostics() {
 	}>()
 	const [isCopying, setIsCopying] = useState(false)
 	const [isRefreshing, setIsRefreshing] = useState(true)
+	const [connectionContext, setConnectionContext] = useState<{
+		readonly connectionState?: string
+		readonly engineId?: string
+		readonly connectionMode?: string
+		readonly localPort?: number
+	}>({})
 	const [advertising, setAdvertising] = useState<AdvertisingDiagnostics>(() =>
 		advertisingDiagnostics(runtime),
 	)
@@ -49,8 +56,20 @@ export function useDiagnostics() {
 		setIsRefreshing(true)
 		setError(undefined)
 		try {
-			const next = await runtime.diagnostics.snapshot()
+			const [next, settings, connection] = await Promise.all([
+				runtime.diagnostics.snapshot(),
+				runtime.settingsStore.read(),
+				runtime.connection
+					.status()
+					.catch(() => ({ state: 'unavailable' as const })),
+			])
 			setSnapshot(redactDiagnosticsSnapshot(next))
+			setConnectionContext({
+				connectionState: connection.state,
+				engineId: connection.engineId ?? settings.engineId ?? runtime.engine.id,
+				connectionMode: connection.mode ?? settings.connectionMode,
+				localPort: connection.localPort ?? settings.localPort,
+			})
 		} catch {
 			setError(t('diagnostics.errors.refresh'))
 		} finally {
@@ -81,9 +100,38 @@ export function useDiagnostics() {
 		[isCopying, runtime, t],
 	)
 
+	const copyShareReport = useCallback(async () => {
+		await copy(
+			t('diagnostics.shareReportName'),
+			createDiagnosticsShareReport({
+				snapshot,
+				...connectionContext,
+				platform: runtime.platform,
+			}),
+		)
+	}, [connectionContext, copy, runtime.platform, snapshot, t])
+
+	const openSystemVpnSettings = useCallback(async () => {
+		try {
+			await runtime.capabilities.vpn?.openSystemSettings?.()
+		} catch {
+			setCopyFeedback({
+				kind: 'error',
+				message: t('diagnostics.errors.refresh'),
+			})
+		}
+	}, [runtime.capabilities.vpn, t])
+
 	useEffect(() => {
 		void refresh()
 	}, [refresh])
+
+	const lastError = snapshot.lastError ?? ''
+	const showAndroidVpnGuide =
+		runtime.platform === 'android' ||
+		/Always-on VPN|VPN permission was denied|did not allow RahRow to start a VPN/i.test(
+			lastError,
+		)
 
 	return {
 		state: {
@@ -94,8 +142,12 @@ export function useDiagnostics() {
 			isCopying,
 			isRefreshing,
 			canCopy: runtime.capabilities.clipboard.supported !== false,
+			showAndroidVpnGuide,
+			canOpenSystemVpnSettings: Boolean(
+				runtime.capabilities.vpn?.openSystemSettings,
+			),
 		},
-		actions: { refresh, copy },
+		actions: { refresh, copy, copyShareReport, openSystemVpnSettings },
 	}
 }
 

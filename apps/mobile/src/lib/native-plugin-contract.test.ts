@@ -104,7 +104,13 @@ describe('Android native plugin contract', () => {
 		expect(plugin).toContain('isVpnProcessRunning')
 		expect(plugin).toContain('fun diagnostics(')
 		expect(plugin).toContain('fun probe(')
+		expect(plugin).toContain('fun openVpnSettings(')
+		expect(plugin).toContain('Settings.ACTION_VPN_SETTINGS')
+		expect(plugin).toContain('isVpnProcessRunning(current.engineId)')
 		expect(plugin).toContain('fun networkIdentity(')
+		expect(service).toContain('override fun onRevoke()')
+		expect(service).toContain('stopTunnel("disconnected")')
+		expect(service).not.toContain('VPN permission was revoked')
 		expect(plugin).toContain(
 			'JSONArray(AndroidNetworkIdentity.snapshot(context))',
 		)

@@ -4,6 +4,7 @@ import { redactDiagnosticsSnapshot } from '../app/diagnostics-snapshot.ts'
 import {
 	capabilityDiagnosticDetail,
 	createCapabilityDiagnosticPayload,
+	createDiagnosticsShareReport,
 	createEngineDiagnosticPayload,
 } from './diagnostic-details.ts'
 
@@ -57,5 +58,34 @@ describe('diagnostic detail payloads', () => {
 		expect(snapshot.capabilities[0]?.detail).toContain('[REDACTED PRIVATE KEY]')
 		expect(JSON.stringify(snapshot)).not.toContain('engine-secret')
 		expect(JSON.stringify(snapshot)).not.toContain('private-key-material')
+	})
+
+	it('builds a sanitized one-tap share report with connection context', () => {
+		const report = createDiagnosticsShareReport({
+			snapshot: {
+				engineStatus: 'error',
+				lastError: 'password=hunter2 Local port 10808 is already in use',
+				capabilities: [
+					{ name: 'vpn', supported: true, enabled: false },
+					{ name: 'xray-sidecar', supported: false, detail: 'token=secret' },
+				],
+			},
+			platform: 'linux',
+			engineId: 'sing-box',
+			connectionState: 'disconnected',
+			connectionMode: 'proxy',
+			localPort: 20808,
+		})
+
+		expect(report).toContain('RahRow diagnostics')
+		expect(report).toContain('Platform: linux')
+		expect(report).toContain('Engine: sing-box')
+		expect(report).toContain('Mode: proxy')
+		expect(report).toContain('Local port: 20808')
+		expect(report).toContain('password=[REDACTED]')
+		expect(report).toContain('vpn:ok,disabled')
+		expect(report).toContain('xray-sidecar:missing')
+		expect(report).not.toContain('hunter2')
+		expect(report).not.toContain('token=secret')
 	})
 })

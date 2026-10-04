@@ -6,4 +6,12 @@
     <string name="custom_url_scheme">foundation.false.rahrow</string>
     <!-- Google sample ID. Replace in release configuration before enabling production ads. -->
     <string name="admob_app_id">ca-app-pub-3940256099942544~3347511713</string>
+    <string name="tile_label">RahRow</string>
+    <string name="tile_connect">Connect</string>
+    <string name="tile_connected">Connected</string>
+    <string name="tile_open_app">Open app to connect</string>
+    <string name="shortcut_connect_short">Connect</string>
+    <string name="shortcut_connect_long">Connect last session</string>
+    <string name="shortcut_disconnect_short">Disconnect</string>
+    <string name="shortcut_disconnect_long">Disconnect RahRow</string>
 </resources>

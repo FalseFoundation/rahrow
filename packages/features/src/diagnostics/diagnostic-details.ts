@@ -50,3 +50,45 @@ export function createCapabilityDiagnosticPayload(
 		`Detail: ${capabilityDiagnosticDetail(capability)}`,
 	].join('\n')
 }
+
+/** One sanitized clipboard report for support: no secrets, paths, or host config. */
+export function createDiagnosticsShareReport(input: {
+	readonly snapshot: DiagnosticsSnapshot
+	readonly connectionState?: string
+	readonly engineId?: string
+	readonly connectionMode?: string
+	readonly localPort?: number
+	readonly platform?: string
+}): string {
+	const capabilities = input.snapshot.capabilities
+		.map((capability) => {
+			const enabled =
+				capability.enabled === undefined
+					? ''
+					: capability.enabled
+						? ',enabled'
+						: ',disabled'
+			return `${capability.name}:${capability.supported ? 'ok' : 'missing'}${enabled}`
+		})
+		.join('; ')
+
+	return redactDiagnosticText(
+		[
+			'RahRow diagnostics',
+			`Platform: ${input.platform ?? 'unknown'}`,
+			`Engine: ${input.engineId ?? 'unknown'}`,
+			`Engine status: ${engineDiagnosticStatus(input.snapshot)}`,
+			`Connection: ${input.connectionState ?? 'unknown'}`,
+			`Mode: ${input.connectionMode ?? 'unknown'}`,
+			`Local port: ${
+				typeof input.localPort === 'number' ? input.localPort : 'unknown'
+			}`,
+			`Last error: ${
+				input.snapshot.lastError
+					? redactDiagnosticText(input.snapshot.lastError)
+					: 'none'
+			}`,
+			`Capabilities: ${capabilities || 'none'}`,
+		].join('\n'),
+	)
+}

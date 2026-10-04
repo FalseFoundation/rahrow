@@ -79,6 +79,8 @@ export interface ConnectionPort {
 			readonly localPort?: number
 		},
 	): Promise<void>
+	/** Next free loopback port at or after `preferred`, or null if none nearby. */
+	suggestLocalPort?(preferred: number): Promise<number | null>
 	disconnect(): Promise<void>
 	status(): Promise<ConnectionSnapshot>
 	test(profile: ConnectionProfile): Promise<LatencySnapshot>

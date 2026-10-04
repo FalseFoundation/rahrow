@@ -3,7 +3,7 @@ import type {
 	NetworkQualityProbe,
 	NetworkQualityResult,
 } from '@rahrow/core/network/cloudflare-network-quality.ts'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 export type PostConnectNetworkQualityState =
 	| { readonly status: 'idle'; readonly result: null }
@@ -22,9 +22,18 @@ export function usePostConnectNetworkQuality(input: {
 	readonly localPort?: number
 	readonly egressPath?: 'captured' | 'local-proxy'
 	readonly probe?: NetworkQualityProbe
-}): PostConnectNetworkQualityState {
+}): {
+	readonly state: PostConnectNetworkQualityState
+	readonly retest: () => void
+} {
 	const [state, setState] = useState<PostConnectNetworkQualityState>(IDLE_STATE)
+	const [retestToken, setRetestToken] = useState(0)
 	const completedKeyRef = useRef<string | null>(null)
+
+	const retest = useCallback(() => {
+		completedKeyRef.current = null
+		setRetestToken((token) => token + 1)
+	}, [])
 
 	useEffect(() => {
 		if (input.connectionState !== 'connected' || !input.probe) {
@@ -33,7 +42,8 @@ export function usePostConnectNetworkQuality(input: {
 			return
 		}
 
-		if (completedKeyRef.current === input.connectionKey) return
+		const runKey = `${input.connectionKey}:${retestToken}`
+		if (completedKeyRef.current === runKey) return
 
 		const controller = new AbortController()
 		let active = true
@@ -45,8 +55,13 @@ export function usePostConnectNetworkQuality(input: {
 				? `socks5://127.0.0.1:${input.localPort}`
 				: undefined
 		setState({ status: 'testing', result: null })
-		void input.probe
-			.test({ signal: controller.signal, mode: input.mode, proxyUrl })
+		void Promise.resolve(
+			input.probe.test({
+				signal: controller.signal,
+				mode: input.mode,
+				proxyUrl,
+			}),
+		)
 			.catch(
 				(): NetworkQualityResult => ({
 					provider: 'cloudflare',
@@ -55,8 +70,8 @@ export function usePostConnectNetworkQuality(input: {
 				}),
 			)
 			.then((result) => {
-				if (!active) return
-				completedKeyRef.current = input.connectionKey
+				if (!active || controller.signal.aborted) return
+				completedKeyRef.current = runKey
 				setState({ status: 'complete', result })
 			})
 
@@ -71,7 +86,8 @@ export function usePostConnectNetworkQuality(input: {
 		input.localPort,
 		input.mode,
 		input.probe,
+		retestToken,
 	])
 
-	return state
+	return { state, retest }
 }

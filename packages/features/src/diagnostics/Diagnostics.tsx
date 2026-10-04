@@ -3,8 +3,10 @@ import {
 	CopyIcon,
 	RefreshActionIcon,
 	ServerIcon,
+	ShieldIcon,
 } from '@rahrow/ui/components/rahrow-icons.tsx'
 import { Badge } from '@rahrow/ui/components/ui/badge.tsx'
+import { Button } from '@rahrow/ui/components/ui/button.tsx'
 import { Heading } from '@rahrow/ui/components/ui/heading.tsx'
 import { IconAction } from '@rahrow/ui/components/ui/icon-action.tsx'
 import {
@@ -76,15 +78,28 @@ export function Diagnostics() {
 							<Heading level={2} id='runtime-health-title'>
 								{t('diagnostics.runtimeHealth')}
 							</Heading>
-							<IconAction
-								variant='toolbar'
-								size='icon-sm'
-								label={t('diagnostics.refresh')}
-								disabled={state.isRefreshing}
-								onClick={() => void actions.refresh()}
-							>
-								<RefreshActionIcon />
-							</IconAction>
+							<div className={styles.sectionHeadingActions}>
+								{state.canCopy ? (
+									<IconAction
+										variant='toolbar'
+										size='icon-sm'
+										label={t('diagnostics.shareReport')}
+										disabled={state.isCopying || state.isRefreshing}
+										onClick={() => void actions.copyShareReport()}
+									>
+										<CopyIcon />
+									</IconAction>
+								) : null}
+								<IconAction
+									variant='toolbar'
+									size='icon-sm'
+									label={t('diagnostics.refresh')}
+									disabled={state.isRefreshing}
+									onClick={() => void actions.refresh()}
+								>
+									<RefreshActionIcon />
+								</IconAction>
+							</div>
 						</div>
 						<Text>{t('diagnostics.description')}</Text>
 					</div>
@@ -98,6 +113,42 @@ export function Diagnostics() {
 						<strong>{readiness.title}</strong>
 						<Text>{readiness.description}</Text>
 					</div>
+					{state.showAndroidVpnGuide ? (
+						<section
+							className={styles.androidGuide}
+							aria-labelledby='android-vpn-guide-title'
+						>
+							<div className={styles.sectionHeadingRow}>
+								<strong id='android-vpn-guide-title'>
+									<ShieldIcon data-icon='inline-start' />{' '}
+									{t('diagnostics.alwaysOn.title')}
+								</strong>
+							</div>
+							<Text>{t('diagnostics.alwaysOn.description')}</Text>
+							<ol>
+								<li>{t('diagnostics.alwaysOn.step1')}</li>
+								<li>{t('diagnostics.alwaysOn.step2')}</li>
+								<li>{t('diagnostics.alwaysOn.step3')}</li>
+							</ol>
+							{state.canOpenSystemVpnSettings ? (
+								<div className={styles.androidGuideActions}>
+									<Button
+										type='button'
+										variant='outline'
+										size='sm'
+										onClick={() => void actions.openSystemVpnSettings()}
+									>
+										{t('diagnostics.alwaysOn.openSettings')}
+									</Button>
+								</div>
+							) : null}
+							<Text className={styles.batteryNote}>
+								<strong>{t('diagnostics.battery.title')}</strong>
+								{' · '}
+								{t('diagnostics.battery.description')}
+							</Text>
+						</section>
+					) : null}
 					<ItemGroup>
 						<DiagnosticItem
 							variant='outline'

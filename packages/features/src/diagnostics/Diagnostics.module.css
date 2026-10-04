@@ -21,11 +21,29 @@
 .sectionHeadingRow {
 	@apply flex items-center justify-between gap-2;
 }
+.sectionHeadingActions {
+	@apply flex items-center gap-1;
+}
 .sectionHeading h2 {
 	@apply m-0 font-heading text-xl font-semibold;
 }
 .sectionHeading > div {
 	@apply m-0 text-sm text-muted-foreground;
+}
+.androidGuide {
+	@apply flex flex-col gap-3 rounded-2xl border border-border bg-secondary/40 p-3.5;
+}
+.androidGuide strong {
+	@apply block text-sm font-semibold;
+}
+.androidGuide ol {
+	@apply m-0 list-decimal ps-4 text-xs leading-5 text-dim;
+}
+.androidGuideActions {
+	@apply flex flex-wrap gap-2;
+}
+.batteryNote {
+	@apply text-xs leading-5 text-dim;
 }
 .readiness {
 	@apply flex min-w-0 flex-col gap-1 py-1;

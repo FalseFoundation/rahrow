@@ -26,6 +26,31 @@ export function canDisconnect(state: string): boolean {
 	return state === 'connected' || state === 'connecting'
 }
 
+/** Live session states may override the persisted selection with the connected profile. */
+export function isLiveConnectionState(state: string): boolean {
+	return (
+		state === 'connected' || state === 'connecting' || state === 'disconnecting'
+	)
+}
+
+/**
+ * Prefer the live session profile while connected; otherwise use the persisted
+ * Connections selection so a stale disconnected snapshot cannot pin Home.
+ */
+export function preferredSelectedProfileId(input: {
+	readonly connectionState: string
+	readonly connectionProfileId?: string
+	readonly activeProfileId?: string
+}): string | undefined {
+	if (
+		input.connectionProfileId &&
+		isLiveConnectionState(input.connectionState)
+	) {
+		return input.connectionProfileId
+	}
+	return input.activeProfileId
+}
+
 export function profileLabel(profile: ConnectionProfile): string {
 	return (
 		profile.metadata?.name ??
@@ -85,6 +110,17 @@ export function connectionModeUnavailableReason(input: {
 	return input.vpnSupported
 		? translate('home.errors.switchToVpn')
 		: translate('home.errors.proxyUnavailable')
+}
+
+/** Proxy mode is easy to misunderstand as full-device protection. */
+export function proxyLeakNotice(input: {
+	readonly connectionMode: 'vpn' | 'proxy'
+	readonly vpnSupported: boolean
+}): string | null {
+	if (input.connectionMode !== 'proxy') return null
+	return input.vpnSupported
+		? translate('home.mode.proxyLeakNotice')
+		: translate('home.mode.proxyLeakNoticeNoVpn')
 }
 
 export function homeDisplay(input: {

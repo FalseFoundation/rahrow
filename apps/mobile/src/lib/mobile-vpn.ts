@@ -72,10 +72,21 @@ export interface RahRowVpnPlugin {
 	status(): Promise<MobileVpnStatus>
 	diagnostics(): Promise<MobileVpnDiagnostics>
 	probe(input: MobileVpnProbeInput): Promise<MobileVpnProbeResult>
+	openVpnSettings?(): Promise<void>
 }
 
 export class CapacitorMobileVpn implements Vpn, NetworkIdentity {
-	constructor(private readonly plugin: RahRowVpnPlugin = nativeRahRowVpn) {}
+	readonly openSystemSettings?: () => Promise<void>
+
+	constructor(
+		private readonly plugin: RahRowVpnPlugin = nativeRahRowVpn,
+		options: { readonly systemVpnSettings?: boolean } = {},
+	) {
+		const openVpnSettings = plugin.openVpnSettings?.bind(plugin)
+		if (options.systemVpnSettings && openVpnSettings) {
+			this.openSystemSettings = () => mapNativeError(openVpnSettings)
+		}
+	}
 
 	async connect(input: MobileVpnConnectInput): Promise<void> {
 		if (!input.profileId) {
@@ -157,7 +168,9 @@ export function createMobileVpn(
 	plugin: RahRowVpnPlugin = nativeRahRowVpn,
 ): CapacitorMobileVpn {
 	if (platform === 'android' || platform === 'ios') {
-		return new CapacitorMobileVpn(plugin)
+		return new CapacitorMobileVpn(plugin, {
+			systemVpnSettings: platform === 'android',
+		})
 	}
 
 	return new CapacitorMobileVpn(
