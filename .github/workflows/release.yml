@@ -141,7 +141,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
-      - uses: android-actions/setup-android@v3
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
       - name: Install pinned Android NDK
         run: |
           sdkmanager --install "ndk;${ANDROID_NDK_VERSION}"

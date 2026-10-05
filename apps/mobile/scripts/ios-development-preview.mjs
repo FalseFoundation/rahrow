@@ -417,6 +417,28 @@ export function collectMissingWebAssets(distRoot) {
 	return [...missing].sort()
 }
 
+export function stabilizeCapAppSpmDependencyPaths(source) {
+	return source.replace(
+		/path:\s*"\.\.\/\.\.\/\.\.\/\.\.\/\.\.\/node_modules\/\.pnpm\/[^"]+\/node_modules\/((?:@[^"/]+\/)?[^"/]+)"/g,
+		'path: "../../../node_modules/$1"',
+	)
+}
+
+function rewriteCapAppSpmPackagePaths() {
+	const packageSwiftPath = join(
+		mobileRoot,
+		'ios',
+		'App',
+		'CapApp-SPM',
+		'Package.swift',
+	)
+	if (!existsSync(packageSwiftPath))
+		throw new Error(`CapApp-SPM Package.swift is missing: ${packageSwiftPath}`)
+	const source = readFileSync(packageSwiftPath, 'utf8')
+	const next = stabilizeCapAppSpmDependencyPaths(source)
+	if (next !== source) writeFileSync(packageSwiftPath, next)
+}
+
 function prepareWebApplication() {
 	const vite = join(mobileRoot, 'node_modules', '.bin', 'vite')
 	const capacitor = join(mobileRoot, 'node_modules', '.bin', 'capacitor')
@@ -431,6 +453,7 @@ function prepareWebApplication() {
 			`Vite output references assets that are not bundled:\n${missingAssets.join('\n')}`,
 		)
 	run(capacitor, ['copy', 'ios'], { cwd: mobileRoot })
+	rewriteCapAppSpmPackagePaths()
 }
 
 export function createXcodeBuildPlan({

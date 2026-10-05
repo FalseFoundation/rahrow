@@ -9,10 +9,25 @@ import {
 	collectMissingWebAssets,
 	createXcodeBuildPlan,
 	loadPreviewInputs,
+	stabilizeCapAppSpmDependencyPaths,
 	validatePreviewContract,
 } from './ios-development-preview.mjs'
 
 describe('iOS development preview contract', () => {
+	it('rewrites pnpm-store CapApp-SPM paths onto package symlinks', () => {
+		const source = `
+.package(name: "CapacitorCommunityAdmob", path: "../../../../../node_modules/.pnpm/@capacitor-community+admob@8.0.0/node_modules/@capacitor-community/admob"),
+.package(name: "CapacitorApp", path: "../../../../../node_modules/.pnpm/@capacitor+app@8.1.1_@capacitor+core@8.5.0/node_modules/@capacitor/app"),
+`
+		expect(stabilizeCapAppSpmDependencyPaths(source)).toContain(
+			'path: "../../../node_modules/@capacitor-community/admob"',
+		)
+		expect(stabilizeCapAppSpmDependencyPaths(source)).toContain(
+			'path: "../../../node_modules/@capacitor/app"',
+		)
+		expect(stabilizeCapAppSpmDependencyPaths(source)).not.toContain('.pnpm/')
+	})
+
 	it('keeps both pinned engines inside extensions and fails closed on Simulator', () => {
 		const { contract, pins } = loadPreviewInputs()
 		expect(validatePreviewContract(contract, pins)).toBe(true)
