@@ -341,7 +341,7 @@ public final class RahRowVpnPlugin: CAPPlugin, CAPBridgedPlugin {
 		let address: String
 	}
 
-	private static func activeInterfaceKinds(_ path: NWPath) -> Set<PhysicalInterfaceKind> {
+	private static func activeInterfaceKinds(_ path: Network.NWPath) -> Set<PhysicalInterfaceKind> {
 		var kinds = Set<PhysicalInterfaceKind>()
 		if path.usesInterfaceType(.wifi) || path.usesInterfaceType(.wiredEthernet) {
 			kinds.insert(.wifiOrEthernet)

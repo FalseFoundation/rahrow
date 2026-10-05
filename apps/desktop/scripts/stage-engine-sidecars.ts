@@ -67,6 +67,9 @@ async function main() {
 			`Staged ${engine} ${plan.version} for ${plan.platform} at ${plan.sidecarPath}`,
 		)
 	}
+
+	const { stageCliSidecar } = await import('./stage-cli-sidecar.ts')
+	stageCliSidecar()
 }
 
 function resolvePlatform() {
