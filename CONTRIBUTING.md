@@ -5,7 +5,7 @@ By participating you agree to the [Code of Conduct](CODE_OF_CONDUCT.md). Contrib
 ## Setup
 
 - Node.js 24.16 or newer
-- pnpm 11 (see `packageManager` in the root `package.json`)
+- pnpm 12 (see `packageManager` in the root `package.json`)
 - Go 1.26.3 only when rebuilding the pinned mobile Xray/libbox artifacts
 
 ```bash

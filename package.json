@@ -52,7 +52,7 @@
 	"packageManager": "pnpm@12.9.1",
 	"engines": {
 		"node": ">=24.16.0",
-		"pnpm": ">=11.2.2"
+		"pnpm": ">=12.9.1"
 	},
 	"dependencies": {
 		"@taskset/cli": "^6.1.0"
