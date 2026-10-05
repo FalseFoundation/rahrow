@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.VpnService
 import android.os.Build
+import kotlin.jvm.JvmStatic
 
 /** Shared start/stop helpers for the app UI, Quick Settings tile, and shortcuts. */
 object RahRowVpnControl {
@@ -11,11 +12,13 @@ object RahRowVpnControl {
 	const val ACTION_DISCONNECT = "foundation.false.rahrow.DISCONNECT"
 	const val ACTION_TOGGLE = "foundation.false.rahrow.TOGGLE"
 
+	@JvmStatic
 	fun isConnected(context: Context): Boolean {
 		val status = VpnStatusStore(context).read()
 		return status.state == "connected" || status.state == "connecting"
 	}
 
+	@JvmStatic
 	fun disconnect(context: Context): Boolean {
 		val statusStore = VpnStatusStore(context)
 		val current = statusStore.read()
@@ -42,6 +45,7 @@ object RahRowVpnControl {
 	 * Starts the last saved session when VPN permission is already granted.
 	 * Returns an Intent that must be started when the OS still needs consent.
 	 */
+	@JvmStatic
 	fun connectLastSessionOrPrepare(context: Context): Intent? {
 		val session = LastVpnSessionStore(context).read() ?: return openApp(context)
 		val prepare = VpnService.prepare(context)

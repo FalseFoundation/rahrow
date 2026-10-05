@@ -2,16 +2,22 @@ package foundation.falsefoundation.rahrow;
 
 import android.content.Intent;
 import android.os.Bundle;
+import androidx.core.splashscreen.SplashScreen;
 import com.getcapacitor.BridgeActivity;
 
 public class MainActivity extends BridgeActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
+		SplashScreen.installSplashScreen(this);
+		setTheme(R.style.AppTheme_NoActionBar);
 		registerPlugin(RahRowVpnPlugin.class);
 		registerPlugin(RahRowQrPlugin.class);
 		registerPlugin(RahRowSubscriptionPlugin.class);
 		registerPlugin(RahRowNetworkPlugin.class);
 		super.onCreate(savedInstanceState);
+		if (getSupportActionBar() != null) {
+			getSupportActionBar().hide();
+		}
 		handleVpnShortcut(getIntent());
 	}
 
