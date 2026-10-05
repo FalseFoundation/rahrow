@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"engine": "xray",
-	"version": "26.7.28",
+	"version": "26.9.30",
 	"availability": "bundled",
 	"binaryName": "xray",
 	"environmentVariable": "RAHROW_XRAY_BINARY",
@@ -12,9 +12,9 @@
 			"executablePath": "xray",
 			"checksum": {
 				"algorithm": "sha256",
-				"value": "9b99a351febe31b7e0c7f22deeb1577a1da0b98aaa51aec7fd17832e68cf63d6"
+				"value": "4b363bd924df5bf09f87bd445755ff8e5742b9a8a0480cda261061416c3c7dce"
 			},
-			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-macos-arm64-v8a.zip"
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.9.30/Xray-macos-arm64-v8a.zip"
 		},
 		{
 			"platform": "darwin-x64",
@@ -22,9 +22,9 @@
 			"executablePath": "xray",
 			"checksum": {
 				"algorithm": "sha256",
-				"value": "812f7d9de6d3506795eabda2f6928ba301c632c3fe6fa39c52ea8e0ed9e4e244"
+				"value": "1f366aaf21d3c3003d1556d066c4e08f9dd62d1f96555ecedde85b397df0f684"
 			},
-			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-macos-64.zip"
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.9.30/Xray-macos-64.zip"
 		},
 		{
 			"platform": "linux-arm64",
@@ -32,9 +32,9 @@
 			"executablePath": "xray",
 			"checksum": {
 				"algorithm": "sha256",
-				"value": "f5698bb218ada3b4022db26fafc39601c5f53b46b19eb76c9616325985807501"
+				"value": "9886f077f9fd8e6713b84c377c1c7db4e53b9bfa8c276a5bd12561139522b473"
 			},
-			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-linux-arm64-v8a.zip"
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.9.30/Xray-linux-arm64-v8a.zip"
 		},
 		{
 			"platform": "linux-x64",
@@ -42,9 +42,9 @@
 			"executablePath": "xray",
 			"checksum": {
 				"algorithm": "sha256",
-				"value": "8195d909f1109b8f3d99eefe401a3c451d7bf4af71f24d3815420f77e5dd2a40"
+				"value": "f851110beaff16e78d643f0ccfd9524b4a44dfd59bae3e34bb52bba378f7690e"
 			},
-			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-linux-64.zip"
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.9.30/Xray-linux-64.zip"
 		},
 		{
 			"platform": "windows-x64",
@@ -52,9 +52,9 @@
 			"executablePath": "xray.exe",
 			"checksum": {
 				"algorithm": "sha256",
-				"value": "c7172078fca4711bcd92a4774dcd1822544579c58816197575c47533317fd8d1"
+				"value": "b17a619343c11b89d8faf36278298856749b15c52277d875d32051b33dcda617"
 			},
-			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.7.28/Xray-windows-64.zip"
+			"url": "https://github.com/XTLS/Xray-core/releases/download/v26.9.30/Xray-windows-64.zip"
 		}
 	]
 }

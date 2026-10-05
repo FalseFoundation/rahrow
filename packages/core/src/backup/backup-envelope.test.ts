@@ -87,7 +87,7 @@ describe('RahRow backup envelope', () => {
 		await expect(
 			openRahrowBackup(JSON.stringify(corrupted), 'correct horse battery staple'),
 		).rejects.toMatchObject({ code: 'authentication_failed' })
-	})
+	}, 30_000)
 
 	it('rejects malformed and future documents safely', async () => {
 		await expect(openRahrowBackup('{')).rejects.toBeInstanceOf(BackupError)

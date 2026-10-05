@@ -31,7 +31,7 @@
 .choiceList {
 	@apply flex w-full flex-col items-stretch gap-2 px-4.5 pt-3 pb-6;
 }
-.choiceList > [data-slot='toggle-group'] > button,
+.choiceList > [data-slot="toggle-group"] > button,
 .choiceList > button {
 	@apply w-full justify-between;
 }

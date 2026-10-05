@@ -652,7 +652,7 @@ Use consistent, boring names. Names should reveal **layer and behavior** without
 
 ## Tooling, docs, and operating procedure
 
-Use the workspace task runner for package tasks. Keep a small script vocabulary, for example: `dev`, `build`, `test`, `watch`, `lint`, `format`, `check`, `cleanup`, `update-deps`, and package-level `typecheck`. Use `watch` for persistent TypeScript watch tasks.
+Use the workspace task runner for app and package tasks. Keep a small script vocabulary, for example: `dev`, `build`, `test`, `watch`, `lint`, `format`, `check`, `cleanup`, `update-deps`, `update-engines`, and package-level `typecheck`. Use `watch` for persistent TypeScript watch tasks. `update-deps` also refreshes pinned Xray and sing-box releases. Repo-wide Biome and root pnpm commands stay direct. Source-exported packages use a Turbo `transit` task instead of `^build`, `^typecheck`, or `^test`.
 
 Root scripts should delegate to the task runner where the task can live in packages. Package scripts own package-specific implementation.
 

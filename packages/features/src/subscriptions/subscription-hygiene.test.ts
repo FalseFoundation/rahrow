@@ -43,10 +43,7 @@ describe('subscription hygiene', () => {
 		const now = Date.parse('2026-01-02T00:00:00.000Z')
 		expect(isSubscriptionStale(base, now)).toBe(true)
 		expect(
-			isSubscriptionStale(
-				{ ...base, updatedAt: '2026-01-01T12:00:00.000Z' },
-				now,
-			),
+			isSubscriptionStale({ ...base, updatedAt: '2026-01-01T12:00:00.000Z' }, now),
 		).toBe(false)
 		expect(
 			subscriptionsNeedingRefresh(

@@ -2,6 +2,19 @@ import { readFileSync } from 'node:fs'
 
 import { describe, expect, it } from 'vitest'
 
+const xrayRuntime = JSON.parse(
+	readFileSync(
+		new URL('../../../../engines/xray/runtime.json', import.meta.url),
+		'utf8',
+	),
+) as { version: string }
+const singBoxRuntime = JSON.parse(
+	readFileSync(
+		new URL('../../../../engines/sing-box/runtime.json', import.meta.url),
+		'utf8',
+	),
+) as { version: string }
+
 const pins = JSON.parse(
 	readFileSync(
 		new URL('../../native-runtime-pins.json', import.meta.url),
@@ -20,19 +33,19 @@ describe('mobile native runtime source pins', () => {
 			},
 		})
 		expect(pins.engines.xray).toMatchObject({
-			version: '26.7.28',
-			ref: 'v26.7.28',
-			revision: '80263da83e96b2972455b0a94b13ee1a10e51391',
+			version: xrayRuntime.version,
+			ref: `v${xrayRuntime.version}`,
 			license: 'MPL-2.0',
 			androidProcess: ':vpn_xray',
 		})
+		expect(pins.engines.xray.revision).toMatch(/^[a-f0-9]{40}$/u)
 		expect(pins.engines['sing-box']).toMatchObject({
-			version: '1.13.19',
-			ref: 'v1.13.19',
-			revision: 'b5ebaa1fc0f2b94256180b95468e73ef53caa27d',
+			version: singBoxRuntime.version,
+			ref: `v${singBoxRuntime.version}`,
 			license: 'GPL-3.0-or-later',
 			androidProcess: ':vpn_sing_box',
 		})
+		expect(pins.engines['sing-box'].revision).toMatch(/^[a-f0-9]{40}$/u)
 	})
 
 	it('declares every shipped Android ABI and Apple device/simulator target', () => {

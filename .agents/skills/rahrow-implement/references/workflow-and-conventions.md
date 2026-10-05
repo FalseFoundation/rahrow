@@ -50,6 +50,7 @@ Current root script vocabulary:
 - `check`
 - `cleanup`
 - `update-deps`
+- `update-engines`
 
 Current package task vocabulary:
 
@@ -58,11 +59,21 @@ Current package task vocabulary:
 - `typecheck`
 - `test`
 - `cleanup`
-- app-specific `dev` / `build` variants where needed
+- app-specific `dev`, bundle, native, and preview tasks where needed
 
 Use `watch` for persistent TypeScript watch tasks.
 
-Root scripts should delegate with `turbo run <task>` when the task belongs to packages. Package scripts own the actual package command.
+App and package scripts delegate with `turbo run <task>`. Package scripts own the actual package command. Do not chain those tasks with `&&` or npm `pre`/`post` hooks; express order with `dependsOn`. Repo-wide Biome commands (`lint`, `format`, `check`) and root pnpm commands (`deps:up`, `deps:dedupe`, `deps:audit`, `pnpm clean`) stay direct so extra arguments such as `pnpm check --fix` reach the tool.
+
+Workspace packages export TypeScript source. `build`, `typecheck`, and `test` depend on a `transit` task so dependency source changes invalidate caches while those tasks still run in parallel. Do not use `^build`, `^typecheck`, or `^test` for that relationship.
+
+`update-deps` runs `deps:up`, then `deps:dedupe`, then `deps:audit`, then `update-engines`. `update-engines` rewrites `engines/*/runtime.json` from the newest Xray and sing-box GitHub releases, including a newer pre-release, and moves the matching mobile source pins to those tags. It does not update the HEV tunnel provider. `cleanup` uses Turbo for package `cleanup` scripts, then removes the root `.turbo` directory and runs `pnpm clean --lockfile`.
+
+Desktop `bundle` depends on `build` and `validate:engine-configs`. Validation depends on `stage:engine-sidecars`. Tauri keeps `beforeDevCommand` because it owns the dev-server process. It does not repeat the bundle prerequisites in `beforeBuildCommand`.
+
+Mobile `bundle:android` and `bundle:ios` stay self-contained. Their scripts already build the web app and stage native runtimes, so Turbo must not depend on `build` again.
+
+`pnpm check` is `biome check .`. `pnpm typecheck` is the package typecheck graph.
 
 ## Naming
 

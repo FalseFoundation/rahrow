@@ -11,8 +11,17 @@
 		}
 	},
 	"targets": {
-		"android": ["arm64-v8a", "armeabi-v7a", "x86", "x86_64"],
-		"apple": ["ios-arm64", "ios-simulator-arm64", "ios-simulator-x86_64"]
+		"android": [
+			"arm64-v8a",
+			"armeabi-v7a",
+			"x86",
+			"x86_64"
+		],
+		"apple": [
+			"ios-arm64",
+			"ios-simulator-arm64",
+			"ios-simulator-x86_64"
+		]
 	},
 	"tunnelProviders": {
 		"hev-socks5-tunnel": {
@@ -28,37 +37,60 @@
 				"third-part/lwip": "2a11c14c7a32887af25a034e82ef18b0b12076ac",
 				"third-part/yaml": "efa36117a8646d26d12b58e05bac472d7854a70d"
 			},
-			"defaults": ["android", "linux"],
-			"conditional": ["windows"],
-			"experimental": ["ios", "macos"],
-			"requiredArtifacts": ["android"],
+			"defaults": [
+				"android",
+				"linux"
+			],
+			"conditional": [
+				"windows"
+			],
+			"experimental": [
+				"ios",
+				"macos"
+			],
+			"requiredArtifacts": [
+				"android"
+			],
 			"androidArtifact": "hev-socks5-tunnel.aar",
 			"appleArtifact": "HevSocks5Tunnel.xcframework.zip",
 			"build": {
-				"android": ["ndk-build"],
-				"apple": ["./build-apple.sh"]
+				"android": [
+					"ndk-build"
+				],
+				"apple": [
+					"./build-apple.sh"
+				]
 			}
 		}
 	},
 	"engines": {
 		"xray": {
-			"version": "26.7.28",
-			"ref": "v26.7.28",
-			"revision": "80263da83e96b2972455b0a94b13ee1a10e51391",
+			"version": "26.9.30",
+			"ref": "v26.9.30",
+			"revision": "3c694b23290f9849fe52284a345ebd4343bc90cd",
 			"repository": "https://github.com/XTLS/libXray.git",
 			"license": "MPL-2.0",
 			"androidProcess": ":vpn_xray",
 			"androidArtifact": "libXray.aar",
 			"appleArtifact": "LibXray.xcframework.zip",
 			"build": {
-				"android": ["python3", "build/main.py", "android"],
-				"apple": ["python3", "build/main.py", "apple", "go"]
+				"android": [
+					"python3",
+					"build/main.py",
+					"android"
+				],
+				"apple": [
+					"python3",
+					"build/main.py",
+					"apple",
+					"go"
+				]
 			}
 		},
 		"sing-box": {
-			"version": "1.13.19",
-			"ref": "v1.13.19",
-			"revision": "b5ebaa1fc0f2b94256180b95468e73ef53caa27d",
+			"version": "1.15.0-alpha.9",
+			"ref": "v1.15.0-alpha.9",
+			"revision": "132b38e9caaba1a1959354d518e54d2d08419afe",
 			"repository": "https://github.com/SagerNet/sing-box.git",
 			"license": "GPL-3.0-or-later",
 			"androidProcess": ":vpn_sing_box",
@@ -73,7 +105,13 @@
 					"-target",
 					"android"
 				],
-				"apple": ["go", "run", "./cmd/internal/build_libbox", "-target", "apple"]
+				"apple": [
+					"go",
+					"run",
+					"./cmd/internal/build_libbox",
+					"-target",
+					"apple"
+				]
 			}
 		}
 	}

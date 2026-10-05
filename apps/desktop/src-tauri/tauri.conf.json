@@ -5,7 +5,6 @@
 	"identifier": "foundation.false.rahrow.desktop",
 	"build": {
 		"beforeDevCommand": "pnpm dev:web",
-		"beforeBuildCommand": "pnpm build:web && pnpm stage:engine-sidecars && pnpm validate:engine-configs",
 		"devUrl": "http://localhost:1420",
 		"frontendDist": "../dist"
 	},

@@ -2,7 +2,11 @@ import { useCallback, useEffect, useState } from 'react'
 import type { AdvertisingDiagnostics } from '../ads/ad-diagnostics.ts'
 import { useAppTranslation } from '../app/app-i18n.tsx'
 import { redactDiagnosticsSnapshot } from '../app/diagnostics-snapshot.ts'
-import { type DiagnosticsSnapshot, useAppRuntime } from '../app/runtime.tsx'
+import {
+	type ConnectionSnapshot,
+	type DiagnosticsSnapshot,
+	useAppRuntime,
+} from '../app/runtime.tsx'
 import { createDiagnosticsShareReport } from './diagnostic-details.ts'
 
 export function useDiagnostics() {
@@ -59,9 +63,11 @@ export function useDiagnostics() {
 			const [next, settings, connection] = await Promise.all([
 				runtime.diagnostics.snapshot(),
 				runtime.settingsStore.read(),
-				runtime.connection
-					.status()
-					.catch(() => ({ state: 'unavailable' as const })),
+				runtime.connection.status().catch(
+					(): ConnectionSnapshot => ({
+						state: 'unavailable',
+					}),
+				),
 			])
 			setSnapshot(redactDiagnosticsSnapshot(next))
 			setConnectionContext({

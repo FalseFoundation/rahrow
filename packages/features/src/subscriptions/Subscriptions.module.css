@@ -30,10 +30,10 @@
 .hygieneBadge {
 	@apply ms-2 inline-flex shrink-0 rounded-full border border-border px-1.5 py-0.5 align-middle text-[0.65rem] font-semibold tracking-wide uppercase;
 }
-.hygieneBadge[data-kind='expired'] {
+.hygieneBadge[data-kind="expired"] {
 	@apply border-destructive/40 text-destructive;
 }
-.hygieneBadge[data-kind='stale'] {
+.hygieneBadge[data-kind="stale"] {
 	@apply text-dim;
 }
 .subscriptionDetail {

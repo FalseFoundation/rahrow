@@ -22,10 +22,13 @@ vi.mock('../app/runtime.tsx', () => ({
 
 import { useSubscriptions } from './useSubscriptions.ts'
 
+const freshUpdatedAt = '2026-10-05T12:00:00.000Z'
+
 const existing: Subscription = {
 	id: 'example-com-main',
 	url: 'https://example.com/main.txt',
 	name: 'Example',
+	updatedAt: freshUpdatedAt,
 }
 
 function createSubscriptionStore(initial: readonly Subscription[] = []) {
@@ -147,6 +150,7 @@ describe('useSubscriptions', () => {
 			(_, index) => ({
 				id: `source-${index}`,
 				url: `https://example.com/${index}.txt`,
+				updatedAt: freshUpdatedAt,
 			}),
 		)
 		const store = createSubscriptionStore(subscriptions)
@@ -172,6 +176,7 @@ describe('useSubscriptions', () => {
 			(_, index) => ({
 				id: `source-${index}`,
 				url: `https://example.com/${index}.txt`,
+				updatedAt: freshUpdatedAt,
 			}),
 		)
 		const store = createSubscriptionStore(subscriptions)
@@ -199,17 +204,19 @@ describe('useSubscriptions', () => {
 		act(() => {
 			refreshPromise = result.current.actions.refreshAll(subscriptions)
 		})
-		await waitFor(() => expect(started).toHaveLength(2))
-		expect(result.current.state.subscriptions).toEqual(subscriptions)
-		expect(result.current.state.refreshQueueProgress).toMatchObject({
-			completed: 0,
-			pending: 5,
-			status: 'pending',
-		})
-
-		act(() => result.current.actions.cancelRefreshAll())
-		release?.()
-		await act(async () => refreshPromise)
+		try {
+			await waitFor(() => expect(started).toHaveLength(2))
+			expect(result.current.state.subscriptions).toEqual(subscriptions)
+			expect(result.current.state.refreshQueueProgress).toMatchObject({
+				completed: 0,
+				pending: 5,
+				status: 'pending',
+			})
+		} finally {
+			act(() => result.current.actions.cancelRefreshAll())
+			release?.()
+			await act(async () => refreshPromise)
+		}
 
 		expect(started).toEqual(['source-0', 'source-1'])
 		expect(result.current.state.refreshQueueProgress?.status).toBe('canceled')
@@ -260,6 +267,7 @@ describe('useSubscriptions', () => {
 			id: existing.id,
 			url: existing.url,
 			name: 'Replacement',
+			updatedAt: freshUpdatedAt,
 		})
 		expect(result.current.state.url).toBe('')
 		expect(result.current.state.name).toBe('')

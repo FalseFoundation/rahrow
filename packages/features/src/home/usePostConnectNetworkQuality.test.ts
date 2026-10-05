@@ -104,10 +104,10 @@ describe('usePostConnectNetworkQuality', () => {
 					})
 				})
 				return {
-					provider: 'cloudflare' as const,
+					provider: 'cloudflare',
 					reachable: false,
 					error: 'network-test-unavailable',
-				}
+				} satisfies NetworkQualityResult
 			}),
 		}
 		const { result, rerender } = renderHook(
@@ -164,16 +164,16 @@ describe('usePostConnectNetworkQuality', () => {
 		let phase: 'dead' | 'alive' = 'dead'
 		const test = vi.fn(async () =>
 			phase === 'dead'
-				? {
-						provider: 'cloudflare' as const,
+				? ({
+						provider: 'cloudflare',
 						reachable: false,
 						error: 'network-test-unavailable',
-					}
-				: {
-						provider: 'cloudflare' as const,
+					} satisfies NetworkQualityResult)
+				: ({
+						provider: 'cloudflare',
 						reachable: true,
 						latencyMs: 33,
-					},
+					} satisfies NetworkQualityResult),
 		)
 		const probe: NetworkQualityProbe = { test }
 		const { result } = renderHook(() =>

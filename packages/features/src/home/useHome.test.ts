@@ -68,7 +68,7 @@ function createRuntime(
 		availableEngines: [
 			{
 				id: 'sing-box',
-				supportedProtocols: ['vless', 'vmess', 'trojan', 'hysteria2', 'tuic'],
+				supportedProtocols: ['vless', 'vmess', 'trojan', 'hysteria2'],
 			},
 			{
 				id: 'xray',

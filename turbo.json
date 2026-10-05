@@ -1,12 +1,57 @@
 {
 	"$schema": "./node_modules/turbo/schema.json",
 	"tasks": {
+		"transit": {
+			"dependsOn": ["^transit"],
+			"description": "Cache-invalidation edge for packages that import workspace TypeScript source."
+		},
 		"build": {
-			"dependsOn": ["^build"],
-			"outputs": [".next/**", "dist/**", ".velite/**", "!.next/cache/**"]
+			"dependsOn": ["transit"],
+			"outputs": ["dist/**"]
+		},
+		"build:web": {
+			"dependsOn": ["transit"],
+			"outputs": ["dist/**"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true
+		},
+		"dev:web": {
+			"cache": false,
+			"persistent": true
+		},
+		"watch": {
+			"cache": false,
+			"persistent": true
+		},
+		"typecheck": {
+			"dependsOn": ["transit"],
+			"outputs": []
+		},
+		"test": {
+			"dependsOn": ["transit"],
+			"outputs": []
+		},
+		"//#test:repo": {
+			"cache": false,
+			"outputs": []
+		},
+		"stage:engine-sidecars": {
+			"cache": false,
+			"outputs": ["src-tauri/binaries/**"]
+		},
+		"validate:engine-configs": {
+			"dependsOn": ["stage:engine-sidecars"],
+			"cache": false,
+			"outputs": []
+		},
+		"validate:vpn-release": {
+			"cache": false,
+			"outputs": []
 		},
 		"bundle": {
-			"dependsOn": ["build"],
+			"dependsOn": ["build", "validate:engine-configs"],
 			"cache": false,
 			"outputs": ["src-tauri/target/release/bundle/**"]
 		},
@@ -15,14 +60,42 @@
 			"outputs": []
 		},
 		"bundle:android": {
-			"dependsOn": ["build"],
 			"cache": false,
 			"outputs": ["android/app/build/outputs/**"]
 		},
 		"bundle:ios": {
-			"dependsOn": ["build"],
 			"cache": false,
 			"outputs": []
+		},
+		"icons:generate": {
+			"cache": false
+		},
+		"capacitor:build": {
+			"cache": false
+		},
+		"capacitor:run": {
+			"cache": false,
+			"persistent": true
+		},
+		"capacitor:sync": {
+			"dependsOn": ["build"],
+			"cache": false
+		},
+		"capacitor:start": {
+			"cache": false,
+			"persistent": true
+		},
+		"native:verify-pins": {
+			"cache": false,
+			"outputs": []
+		},
+		"native:verify": {
+			"cache": false,
+			"outputs": []
+		},
+		"native:build": {
+			"cache": false,
+			"outputs": ["native-runtimes/**", "native-runtime-lock.json"]
 		},
 		"native:build:android": {
 			"cache": false,
@@ -32,32 +105,52 @@
 			"cache": false,
 			"outputs": ["native-runtimes/**", "native-runtime-lock.json"]
 		},
-		"native:verify": {
+		"native:build:hev:android": {
+			"cache": false,
+			"outputs": ["native-runtimes/**"]
+		},
+		"native:build:hev:apple": {
+			"cache": false,
+			"outputs": ["native-runtimes/**"]
+		},
+		"android:preview:check": {
+			"cache": false,
+			"outputs": []
+		},
+		"android:preview:stage-runtimes": {
+			"cache": false
+		},
+		"android:preview:build": {
+			"cache": false,
+			"outputs": ["android/app/build/outputs/**"]
+		},
+		"android:preview:verify": {
+			"cache": false,
+			"outputs": []
+		},
+		"ios:preview:check": {
+			"cache": false,
+			"outputs": []
+		},
+		"ios:preview:stage-runtimes": {
+			"cache": false
+		},
+		"ios:preview:simulator": {
+			"cache": false
+		},
+		"ios:preview:device": {
+			"cache": false
+		},
+		"ios:preview:install": {
+			"cache": false,
+			"persistent": true
+		},
+		"ios:preview:verify": {
 			"cache": false,
 			"outputs": []
 		},
 		"cleanup": {
-			"cache": false,
-			"persistent": false
-		},
-		"dev": {
-			"cache": false,
-			"persistent": true
-		},
-		"watch": {
-			"cache": false,
-			"persistent": true
-		},
-		"start": {
-			"persistent": true
-		},
-		"test": {
-			"dependsOn": ["^test", "@rahrow/tooling#build"],
-			"outputs": []
-		},
-		"typecheck": {
-			"dependsOn": ["^typecheck"],
-			"outputs": []
+			"cache": false
 		}
 	}
 }

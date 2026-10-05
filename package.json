@@ -19,10 +19,11 @@
 	"scripts": {
 		"dev": "turbo run dev",
 		"build": "turbo run build",
-		"test": "vitest run --passWithNoTests",
+		"test": "turbo run test test:repo",
+		"test:repo": "vitest run --passWithNoTests --project repo",
 		"typecheck": "turbo run typecheck",
 		"watch": "turbo run watch",
-		"lint": "biome check .",
+		"lint": "biome lint .",
 		"format": "biome format --write .",
 		"check": "biome check .",
 		"bundle:desktop": "turbo run bundle --filter=@rahrow/desktop",
@@ -31,8 +32,12 @@
 		"native:build:android": "turbo run native:build:android --filter=@rahrow/mobile",
 		"native:build:apple": "turbo run native:build:apple --filter=@rahrow/mobile",
 		"native:verify": "turbo run native:verify --filter=@rahrow/mobile",
-		"cleanup": "turbo run cleanup && rm -rf .turbo && pnpm clean --lockfile",
-		"update-deps": "pnpm up --latest --recursive && pnpm dedupe && pnpm audit --fix update"
+		"cleanup": "turbo run cleanup --filter=@rahrow/* && rm -rf .turbo && pnpm clean --lockfile",
+		"update-deps": "pnpm deps:up && pnpm deps:dedupe && pnpm deps:audit && pnpm update-engines && pnpm self-update",
+		"deps:up": "pnpm up --latest --recursive",
+		"deps:dedupe": "pnpm dedupe",
+		"deps:audit": "pnpm audit --fix update",
+		"update-engines": "node scripts/update-engine-releases.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.15",
@@ -44,7 +49,7 @@
 		"typescript": "^7.0.2",
 		"vitest": "^5.0.3"
 	},
-	"packageManager": "pnpm@11.5.2",
+	"packageManager": "pnpm@12.9.1",
 	"engines": {
 		"node": ">=24.16.0",
 		"pnpm": ">=11.2.2"

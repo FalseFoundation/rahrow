@@ -264,8 +264,12 @@ describe('default Xray runtime metadata', () => {
 			JSON.parse(readFileSync(manifestPath, 'utf8')),
 		)
 
-		expect(manifest.version).toBe('26.7.28')
+		expect(manifest.version.length).toBeGreaterThan(0)
 		expect(manifest.availability).toBe('bundled')
+		for (const artifact of manifest.artifacts) {
+			expect(artifact.url).toContain(`/v${manifest.version}/`)
+			expect(artifact.checksum.value).toMatch(/^[a-f0-9]{64}$/u)
+		}
 		expect(manifest.artifacts.map((artifact) => artifact.platform)).toEqual([
 			'darwin-arm64',
 			'darwin-x64',

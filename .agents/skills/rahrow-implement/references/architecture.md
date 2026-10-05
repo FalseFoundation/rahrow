@@ -301,7 +301,7 @@ Optional capabilities such as ads, additional engines, additional protocols, adv
 
 ## Tooling and Docs
 
-Use Turbo for package tasks. The current script vocabulary is `dev`, `build`, `test`, `watch`, `lint`, `format`, `check`, `cleanup`, `update-deps`, and package-level `typecheck`. Use `watch` for persistent TypeScript watch tasks.
+Use Turbo for app and package tasks. The current script vocabulary is `dev`, `build`, `test`, `watch`, `lint`, `format`, `check`, `cleanup`, `update-deps`, `update-engines`, and package-level `typecheck`. Use `watch` for persistent TypeScript watch tasks. `update-deps` also refreshes pinned Xray and sing-box releases. Repo-wide Biome and root pnpm commands stay direct. Source-exported packages use a `transit` task instead of `^build`, `^typecheck`, or `^test`.
 
 Root scripts should delegate to `turbo run <task>` where the task can live in packages. Package scripts own package-specific implementation. Use Vitest for tests.
 

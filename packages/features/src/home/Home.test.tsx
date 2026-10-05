@@ -291,9 +291,7 @@ describe('Home network identity', () => {
 		expect(screen.getByText('PROXY ACTIVE')).toBeTruthy()
 		expect(screen.getByText('System proxy connected')).toBeTruthy()
 		expect(screen.getByText('System proxy is connected via VLESS')).toBeTruthy()
-		expect(
-			screen.getByText(/Proxy mode is not a kill switch/i),
-		).toBeTruthy()
+		expect(screen.getByText(/Proxy mode is not a kill switch/i)).toBeTruthy()
 		expect(screen.queryByText(/Protected|Encrypted|secure tunnel/i)).toBeNull()
 	})
 

@@ -22,11 +22,13 @@ legible across launchers that do not support appearance-specific icons.
 
 ## Bundled engine sidecars
 
-`pnpm build` creates only the portable Vite application. `pnpm bundle` stages
-pinned Xray and sing-box binaries from
-`engines/*/runtime.json` into `src-tauri/binaries/`, then packages both with
-Tauri `bundle.externalBin`. The stage command downloads build inputs, verifies
-their SHA-256 checksums, and fails closed if either artifact is unavailable.
+`pnpm build` creates only the portable Vite application. From the repository
+root, `pnpm bundle:desktop` builds that application, stages pinned Xray and
+sing-box binaries from `engines/*/runtime.json` into `src-tauri/binaries/`,
+validates the generated engine configs, then packages both with Tauri
+`bundle.externalBin`. Turbo orders those steps. The stage command downloads
+build inputs, verifies their SHA-256 checksums, and fails closed if either
+artifact is unavailable.
 Generated archives, extracted runtimes, and staged binaries are gitignored.
 
 `pnpm dev` prepares both pinned runtimes and launches Tauri with explicit
