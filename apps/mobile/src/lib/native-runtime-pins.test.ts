@@ -26,7 +26,7 @@ describe('mobile native runtime source pins', () => {
 	it('pins exact upstream commits and keeps the two Go runtimes process-isolated', () => {
 		expect(pins.schemaVersion).toBe(2)
 		expect(pins.buildToolchains).toMatchObject({
-			go: { version: '1.26.7', downloadPolicy: 'local-only' },
+			go: { version: '1.27.1', downloadPolicy: 'local-only' },
 			androidNdk: {
 				version: '28.0.13004108',
 				downloadPolicy: 'local-only',
