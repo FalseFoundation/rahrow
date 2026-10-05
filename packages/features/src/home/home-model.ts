@@ -51,6 +51,51 @@ export function preferredSelectedProfileId(input: {
 	return input.activeProfileId
 }
 
+/**
+ * Resolve a Home selection that always exists in the current profile library.
+ * Live tunnel ids that are missing from storage must not wipe the UI into the
+ * empty state while the session is still connected.
+ *
+ * While disconnected, prefer the persisted Connections selection over a stale
+ * in-memory Home id so tab keep-alive still picks up library activations.
+ * While live, prefer the connected session profile when it is still in the
+ * library; otherwise fall back through settings / current / first profile.
+ */
+export function resolveHomeSelectedProfileId(input: {
+	readonly profiles: readonly { readonly id: string }[]
+	readonly connectionState: string
+	readonly connectionProfileId?: string
+	readonly connectionProfile?: { readonly id: string }
+	readonly activeProfileId?: string
+	readonly currentSelectedProfileId?: string
+}): string {
+	const live = isLiveConnectionState(input.connectionState)
+	const liveId = live
+		? (input.connectionProfileId ?? input.connectionProfile?.id)
+		: undefined
+	const candidates = live
+		? [
+				liveId,
+				input.activeProfileId,
+				input.currentSelectedProfileId,
+				input.profiles[0]?.id,
+			]
+		: [
+				input.activeProfileId,
+				input.currentSelectedProfileId,
+				input.profiles[0]?.id,
+			]
+	for (const candidate of candidates) {
+		if (
+			candidate &&
+			input.profiles.some((profile) => profile.id === candidate)
+		) {
+			return candidate
+		}
+	}
+	return ''
+}
+
 export function profileLabel(profile: ConnectionProfile): string {
 	return (
 		profile.metadata?.name ??
@@ -129,13 +174,14 @@ export function homeDisplay(input: {
 	readonly engineStatus: string
 	readonly latency: unknown | null
 }) {
+	const live = isLiveConnectionState(input.connectionState)
 	return {
-		showEmptyState: !input.hasProfile,
+		showEmptyState: !input.hasProfile && !live,
 		showEngineStatus:
-			input.hasProfile &&
+			(input.hasProfile || live) &&
 			input.engineStatus !== 'unknown' &&
 			input.engineStatus !== 'stopped',
 		showLatency: input.hasProfile && input.latency !== null,
-		showRoute: input.hasProfile && input.connectionState === 'connected',
+		showRoute: (input.hasProfile || live) && input.connectionState === 'connected',
 	}
 }

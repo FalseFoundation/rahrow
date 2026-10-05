@@ -12,9 +12,10 @@ import {
 import { JsonSubscriptionStore } from '@rahrow/core/storage/subscription-store.ts'
 import { httpSubscriptionFetcher } from '@rahrow/core/subscription/http-subscription-fetcher.ts'
 import { act, renderHook, waitFor } from '@testing-library/react'
-import { createElement, type ReactNode } from 'react'
+import { createElement, type ReactNode, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
+import { PrimaryTabVisibilityProvider } from '../app/primary-tab-visibility.tsx'
 import {
 	type AppRuntime,
 	AppRuntimeProvider,
@@ -683,6 +684,90 @@ describe('useHome', () => {
 		)
 		expect(result.current.state.selectedProfile?.metadata?.name).toBe(
 			'Cloud Netherlands',
+		)
+	})
+
+	it('keeps a library profile selected when a live tunnel reports an unknown profile id', async () => {
+		const runtime = createRuntime({
+			async connect() {},
+			async disconnect() {},
+			async status() {
+				return {
+					state: 'connected',
+					mode: 'vpn',
+					engineStatus: 'running',
+					profileId: 'orphan-native-id',
+				}
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		await runtime.profileStore.save(profile)
+		await runtime.settingsStore.write({ activeProfileId: profile.id })
+
+		const { result } = renderHook(() => useHome(), {
+			wrapper: ({ children }: { children: ReactNode }) =>
+				createElement(AppRuntimeProvider, { runtime, children }),
+		})
+
+		await waitFor(() =>
+			expect(result.current.state.connectionState).toBe('connected'),
+		)
+		expect(result.current.state.selectedProfileId).toBe(profile.id)
+		expect(result.current.state.selectedProfile?.id).toBe(profile.id)
+	})
+
+	it('picks up Connections selection when the Home tab becomes visible again', async () => {
+		const nextProfile: ConnectionProfile = {
+			...profile,
+			id: 'library-picked',
+			metadata: { name: 'Library picked' },
+		}
+		const runtime = createRuntime({
+			async connect() {},
+			async disconnect() {},
+			async status() {
+				return { state: 'disconnected', mode: 'vpn' }
+			},
+			async test() {
+				return { reachable: false }
+			},
+		})
+		await runtime.profileStore.save(profile)
+		await runtime.profileStore.save(nextProfile)
+		await runtime.settingsStore.write({ activeProfileId: profile.id })
+
+		let tabVisible = true
+		let rerenderTab: (() => void) | undefined
+		function Wrapper({ children }: { children: ReactNode }) {
+			const [, bump] = useState(0)
+			rerenderTab = () => bump((value) => value + 1)
+			return createElement(AppRuntimeProvider, {
+				runtime,
+				children: createElement(PrimaryTabVisibilityProvider, {
+					active: tabVisible,
+					children,
+				}),
+			})
+		}
+
+		const { result } = renderHook(() => useHome(), {
+			wrapper: Wrapper,
+		})
+
+		await waitFor(() =>
+			expect(result.current.state.selectedProfileId).toBe(profile.id),
+		)
+
+		tabVisible = false
+		act(() => rerenderTab?.())
+		await runtime.settingsStore.write({ activeProfileId: nextProfile.id })
+		tabVisible = true
+		act(() => rerenderTab?.())
+
+		await waitFor(() =>
+			expect(result.current.state.selectedProfileId).toBe(nextProfile.id),
 		)
 	})
 

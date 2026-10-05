@@ -9,6 +9,7 @@ import {
 
 import { AppShellLayout } from './AppShellLayout.tsx'
 import { useAppTranslation } from './app-i18n.tsx'
+import { APP_SCROLL_RESTORATION_ID } from './app-scroll-context.tsx'
 import { ProductHeader } from './ProductHeader.tsx'
 import styles from './router.module.css'
 import type { AppRuntime } from './runtime.tsx'
@@ -26,22 +27,21 @@ const rootRoute = createRootRouteWithContext<RouterContext>()({
 	component: AppShellLayout,
 })
 
+function PrimaryTabRoute() {
+	return null
+}
+
 const homeRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: '/',
-	component: lazyRouteComponent(() => import('../home/Home.tsx'), 'Home'),
-	pendingComponent: HomeRouteLoading,
+	component: PrimaryTabRoute,
 	errorComponent: RouteErrorFallback,
 })
 
 const profilesRoute = createRoute({
 	getParentRoute: () => rootRoute,
 	path: '/profiles',
-	component: lazyRouteComponent(
-		() => import('../profiles/Profiles.tsx'),
-		'Profiles',
-	),
-	pendingComponent: ConnectionsRouteLoading,
+	component: PrimaryTabRoute,
 	errorComponent: RouteErrorFallback,
 })
 
@@ -70,11 +70,7 @@ const settingsRoute = createRoute({
 	validateSearch: (search: Record<string, unknown>) => ({
 		drawer: SETTINGS_DEEP_LINK_DRAWERS.find((drawer) => drawer === search.drawer),
 	}),
-	component: lazyRouteComponent(
-		() => import('../settings/Settings.tsx'),
-		'Settings',
-	),
-	pendingComponent: SettingsRouteLoading,
+	component: PrimaryTabRoute,
 	errorComponent: RouteErrorFallback,
 })
 
@@ -91,6 +87,11 @@ export function createAppRouter(runtime: AppRuntime) {
 		routeTree,
 		history: createHashHistory(),
 		context: { runtime },
+		scrollRestoration: true,
+		getScrollRestorationKey: (location) => location.pathname,
+		scrollToTopSelectors: [
+			`[data-scroll-restoration-id="${APP_SCROLL_RESTORATION_ID}"]`,
+		],
 	})
 }
 
@@ -108,20 +109,12 @@ export function RouteLoadingFallback({
 	)
 }
 
-function HomeRouteLoading() {
-	return <RouteLoadingFallback variant='home' />
-}
-
 function ConnectionsRouteLoading() {
 	return <RouteLoadingFallback variant='connections' />
 }
 
 function SubscriptionsRouteLoading() {
 	return <RouteLoadingFallback variant='subscriptions' />
-}
-
-function SettingsRouteLoading() {
-	return <RouteLoadingFallback variant='settings' />
 }
 
 export function RouteErrorFallback({

@@ -1,6 +1,7 @@
 import type { ReactNode, Ref } from 'react'
 import { createPortal } from 'react-dom'
 import { useAppHeaderTarget } from './AppHeaderSlot.tsx'
+import { usePrimaryTabVisible } from './primary-tab-visibility.tsx'
 import styles from './ProductHeader.module.css'
 
 export function ProductHeader({
@@ -19,6 +20,9 @@ export function ProductHeader({
 	readonly ref?: Ref<HTMLElement>
 }) {
 	const target = useAppHeaderTarget()
+	const tabVisible = usePrimaryTabVisible()
+	if (!tabVisible) return null
+
 	const header = (
 		<header ref={ref} className={styles.header} data-app-header>
 			<div className={styles.identity}>

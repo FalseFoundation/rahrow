@@ -5,6 +5,9 @@ import {
 	useContext,
 } from 'react'
 
+/** Stable id for TanStack Router element scroll restoration on the app viewport. */
+export const APP_SCROLL_RESTORATION_ID = 'app-scroll'
+
 const AppScrollContext = createContext<RefObject<HTMLDivElement | null> | null>(
 	null,
 )

@@ -481,7 +481,7 @@ function createMobileConnectionPort(
 					engineId: status.engineId ?? activeEngineId,
 					localPort: activeLocalPort,
 					engineStatus: status.state === 'connected' ? 'running' : 'stopped',
-					profileId: status.profileId,
+					profileId: status.profileId ?? activeProfile?.id,
 					error: status.detail,
 				}
 			} catch {

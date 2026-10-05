@@ -45,7 +45,7 @@ import {
 } from '@rahrow/ui/components/ui/radio-group.tsx'
 import { toast } from '@rahrow/ui/components/ui/sonner.tsx'
 import { Switch } from '@rahrow/ui/components/ui/switch.tsx'
-import { useNavigate, useSearch } from '@tanstack/react-router'
+import { useNavigate, useRouterState } from '@tanstack/react-router'
 import { useEffect, useState } from 'react'
 import { useAppTranslation } from '../app/app-i18n.tsx'
 import { SUPPORTED_APP_LOCALES } from '../app/app-locale.ts'
@@ -53,6 +53,7 @@ import { ProductHeader } from '../app/ProductHeader.tsx'
 import { ProductSearch } from '../app/ProductSearch.tsx'
 import { useAppRuntime } from '../app/runtime.tsx'
 import { ScreenLoadingState } from '../app/ScreenLoadingState.tsx'
+import { SETTINGS_DEEP_LINK_DRAWERS } from '../app/user-facing-failure.ts'
 import { BackupDrawer } from '../backup/BackupDrawer.tsx'
 import { Diagnostics } from '../diagnostics/Diagnostics.tsx'
 import { AboutRahRow } from './AboutRahRow.tsx'
@@ -80,7 +81,16 @@ export function Settings() {
 	const runtime = useAppRuntime()
 	const { state, actions } = useSettings()
 	const navigate = useNavigate()
-	const search = useSearch({ from: '/settings' })
+	const search = useRouterState({
+		select: (state) => ({
+			drawer:
+				state.location.pathname === '/settings'
+					? SETTINGS_DEEP_LINK_DRAWERS.find(
+							(drawer) => drawer === state.location.search.drawer,
+						)
+					: undefined,
+		}),
+	})
 	const { setTheme: applyTheme } = useTheme()
 	const [sheet, setSheet] = useState<Sheet>(null)
 	const [resetOpen, setResetOpen] = useState(false)

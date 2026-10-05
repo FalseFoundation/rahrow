@@ -188,7 +188,7 @@ export function useProfileManagement({
 	)
 
 	const reloadProfiles = useCallback(async () => {
-		setIsLoading(true)
+		if (!initializedRef.current) setIsLoading(true)
 		try {
 			const next = await profileStore.list()
 			let settings: Awaited<ReturnType<SettingsStore['read']>> | undefined
@@ -227,11 +227,11 @@ export function useProfileManagement({
 				}
 			}
 			setSelectedId((current) => {
+				if (current && next.some((profile) => profile.id === current))
+					return current
 				const persisted = settings?.activeProfileId
 				if (persisted && next.some((profile) => profile.id === persisted))
 					return persisted
-				if (current && next.some((profile) => profile.id === current))
-					return current
 				return next[0]?.id ?? ''
 			})
 			initializedRef.current = true

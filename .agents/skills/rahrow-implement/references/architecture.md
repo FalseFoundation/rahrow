@@ -281,6 +281,8 @@ Core screens/features:
 
 Home prioritizes current connection, connection state, Connect/Disconnect, current profile, latency, and quick profile selection.
 
+Never drive Home selection from a live connection `profileId` unless that id exists in the current profile library. Fall back through settings `activeProfileId`, the current selection, then the first library profile. Do not show the no-library empty state while the session is connecting/connected/disconnecting.
+
 Profile management should support add, edit, duplicate, delete, import, export, share, QR, and test.
 
 Import should support URL, clipboard, QR, shared URL, subscription, and manual input.

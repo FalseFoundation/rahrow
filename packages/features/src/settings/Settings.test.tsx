@@ -35,7 +35,16 @@ const runtime = vi.hoisted(() => ({
 
 vi.mock('@tanstack/react-router', () => ({
 	useNavigate: () => navigate,
-	useSearch: () => search,
+	useRouterState: ({
+		select,
+	}: {
+		select: (state: {
+			location: { pathname: string; search: { drawer?: string } }
+		}) => unknown
+	}) =>
+		select({
+			location: { pathname: '/settings', search },
+		}),
 }))
 vi.mock('@rahrow/ui/components/theme-provider.tsx', () => ({
 	useTheme: () => ({ setTheme: applyTheme }),

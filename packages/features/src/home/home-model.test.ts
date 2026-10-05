@@ -13,6 +13,7 @@ import {
 	preferredSelectedProfileId,
 	profileLabel,
 	proxyLeakNotice,
+	resolveHomeSelectedProfileId,
 } from './home-model.ts'
 
 const profile: ConnectionProfile = {
@@ -85,6 +86,46 @@ describe('home-model', () => {
 		).toBe('vless example.com:443')
 	})
 
+	it('never resolves a live snapshot profile id that is missing from the library', () => {
+		expect(
+			resolveHomeSelectedProfileId({
+				profiles: [{ id: 'home-profile' }],
+				connectionState: 'connected',
+				connectionProfileId: 'orphan-from-tunnel',
+				activeProfileId: 'home-profile',
+			}),
+		).toBe('home-profile')
+		expect(
+			resolveHomeSelectedProfileId({
+				profiles: [{ id: 'only-profile' }],
+				connectionState: 'connected',
+				connectionProfileId: 'orphan-from-tunnel',
+			}),
+		).toBe('only-profile')
+	})
+
+	it('prefers persisted Connections selection over a stale Home id while idle', () => {
+		expect(
+			resolveHomeSelectedProfileId({
+				profiles: [{ id: 'old-home' }, { id: 'new-from-library' }],
+				connectionState: 'disconnected',
+				activeProfileId: 'new-from-library',
+				currentSelectedProfileId: 'old-home',
+			}),
+		).toBe('new-from-library')
+	})
+
+	it('prefers the live snapshot profile object when its id is in the library', () => {
+		expect(
+			resolveHomeSelectedProfileId({
+				profiles: [{ id: 'live-profile' }, { id: 'other' }],
+				connectionState: 'connected',
+				connectionProfile: { id: 'live-profile' },
+				activeProfileId: 'other',
+			}),
+		).toBe('live-profile')
+	})
+
 	it('only presents connection details when they carry useful information', () => {
 		expect(
 			homeDisplay({
@@ -98,6 +139,20 @@ describe('home-model', () => {
 			showEngineStatus: false,
 			showLatency: false,
 			showRoute: false,
+		})
+
+		expect(
+			homeDisplay({
+				hasProfile: false,
+				connectionState: 'connected',
+				engineStatus: 'running',
+				latency: null,
+			}),
+		).toEqual({
+			showEmptyState: false,
+			showEngineStatus: true,
+			showLatency: false,
+			showRoute: true,
 		})
 
 		expect(

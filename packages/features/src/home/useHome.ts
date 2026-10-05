@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { recordAdAction } from '../ads/record-ad-action.ts'
 import { translate } from '../app/app-i18n.tsx'
 import { presentLatency } from '../app/latency-presentation.ts'
+import { usePrimaryTabVisible } from '../app/primary-tab-visibility.tsx'
 import {
 	type ConnectionSnapshot,
 	type LatencySnapshot,
@@ -24,8 +25,8 @@ import {
 	connectionModeUnavailableReason,
 	formatConnectionState,
 	isLiveConnectionState,
-	preferredSelectedProfileId,
 	profileLabel,
+	resolveHomeSelectedProfileId,
 } from './home-model.ts'
 import { usePostConnectEgressIdentity } from './usePostConnectEgressIdentity.ts'
 import { usePostConnectNetworkQuality } from './usePostConnectNetworkQuality.ts'
@@ -60,6 +61,8 @@ export function useHome() {
 		'connect' | 'disconnect' | 'test' | 'refresh' | null
 	>(null)
 	const isMounted = useRef(true)
+	const profilesRef = useRef(profiles)
+	profilesRef.current = profiles
 	const synchronization = useRef<Promise<void> | null>(null)
 	const synchronizationQueued = useRef(false)
 	const backgroundRefreshScheduled = useRef(false)
@@ -102,8 +105,16 @@ export function useHome() {
 		setConnectionState(snapshot.state)
 		if (snapshot.mode) setConnectionMode(snapshot.mode)
 		setEngineStatus(snapshot.engineStatus ?? 'unknown')
-		if (snapshot.profileId && isLiveConnectionState(snapshot.state)) {
-			setSelectedProfileId(snapshot.profileId)
+		if (isLiveConnectionState(snapshot.state)) {
+			setSelectedProfileId((current) =>
+				resolveHomeSelectedProfileId({
+					profiles: profilesRef.current,
+					connectionState: snapshot.state,
+					connectionProfileId: snapshot.profileId,
+					connectionProfile: snapshot.profile,
+					currentSelectedProfileId: current,
+				}),
+			)
 		}
 		if (snapshot.engineId && isLiveConnectionState(snapshot.state)) {
 			setEngineId(snapshot.engineId)
@@ -127,16 +138,16 @@ export function useHome() {
 
 			if (!isMounted.current) return
 			setProfiles(nextProfiles)
-			const activeProfileId = preferredSelectedProfileId({
-				connectionState: snapshot.state,
-				connectionProfileId: snapshot.profileId,
-				activeProfileId: settings.activeProfileId,
-			})
-			setSelectedProfileId(
-				activeProfileId &&
-					nextProfiles.some((profile) => profile.id === activeProfileId)
-					? activeProfileId
-					: (nextProfiles[0]?.id ?? ''),
+			profilesRef.current = nextProfiles
+			setSelectedProfileId((current) =>
+				resolveHomeSelectedProfileId({
+					profiles: nextProfiles,
+					connectionState: snapshot.state,
+					connectionProfileId: snapshot.profileId,
+					connectionProfile: snapshot.profile,
+					activeProfileId: settings.activeProfileId,
+					currentSelectedProfileId: current,
+				}),
 			)
 			setLocalPort(settings.localPort ?? 10808)
 			const persistedEngineId = settings.engineId ?? 'sing-box'
@@ -212,6 +223,14 @@ export function useHome() {
 	useEffect(() => {
 		void refresh()
 	}, [refresh])
+
+	const tabVisible = usePrimaryTabVisible()
+	const tabWasVisibleRef = useRef(tabVisible)
+	useEffect(() => {
+		const becameVisible = tabVisible && !tabWasVisibleRef.current
+		tabWasVisibleRef.current = tabVisible
+		if (becameVisible) void synchronize()
+	}, [synchronize, tabVisible])
 
 	useEffect(() => {
 		let unsubscribeConnection: (() => void) | undefined
@@ -556,9 +575,31 @@ export function useHome() {
 		(profile: ConnectionProfile) => {
 			const previousProfileId = selectedProfileId
 			setSelectedProfileId(profile.id)
-			void runtime.advertising?.gate
-				.recordProfileSelection(previousProfileId, profile.id)
-				.catch((error) => {
+			void (async () => {
+				try {
+					const settings = await runtime.settingsStore.read()
+					if (settings.activeProfileId !== profile.id) {
+						await runtime.settingsStore.write({
+							...settings,
+							activeProfileId: profile.id,
+						})
+					}
+				} catch (error) {
+					logger.warn(
+						{
+							action: 'home.selection.persist',
+							outcome: 'failure',
+							errorType: error instanceof Error ? error.name : typeof error,
+						},
+						'Selected profile could not be persisted',
+					)
+				}
+				try {
+					await runtime.advertising?.gate.recordProfileSelection(
+						previousProfileId,
+						profile.id,
+					)
+				} catch (error) {
 					logger.warn(
 						{
 							action: 'advertising.profile-gate.record',
@@ -567,9 +608,10 @@ export function useHome() {
 						},
 						'Profile selection changed, but the advertising gate could not be recorded',
 					)
-				})
+				}
+			})()
 		},
-		[logger, runtime.advertising, selectedProfileId],
+		[logger, runtime.advertising, runtime.settingsStore, selectedProfileId],
 	)
 
 	const selectEngine = useCallback(

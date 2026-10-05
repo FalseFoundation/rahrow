@@ -600,7 +600,9 @@ function createDesktopConnectionPort(
 					engineId: live ? (status.engineId ?? activeEngineId) : undefined,
 					localPort: live ? activeLocalPort : undefined,
 					engineStatus: status.state === 'connected' ? 'running' : 'stopped',
-					profileId: live ? status.profileId : undefined,
+					profileId: live
+						? (status.profileId ?? activeProfile?.id)
+						: undefined,
 					error: live ? status.detail : undefined,
 				}
 			}

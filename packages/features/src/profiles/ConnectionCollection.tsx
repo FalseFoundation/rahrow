@@ -19,6 +19,7 @@ import {
 import { createPortal } from 'react-dom'
 import { useAppScrollViewport } from '../app/app-scroll-context.tsx'
 import type { LatencyProbeResult } from '../app/latency-presentation.ts'
+import { usePrimaryTabVisible } from '../app/primary-tab-visibility.tsx'
 import styles from './ConnectionCollection.module.css'
 import {
 	ConnectionGroup,
@@ -155,6 +156,7 @@ function VirtualConnectionCollection({
 	largestOpenGroup,
 }: ConnectionCollectionProps & { readonly largestOpenGroup: number }) {
 	const appScrollViewport = useAppScrollViewport()
+	const tabVisible = usePrimaryTabVisible()
 	const appScrollElement = appScrollViewport.current
 	const listRef = useRef<HTMLDivElement>(null)
 	const floatingFrameRef = useRef<{
@@ -355,7 +357,8 @@ function VirtualConnectionCollection({
 		scrollMargin + virtualizer.getTotalSize(),
 	)
 	const floatingHeaderVisible = Boolean(
-		floatingFrame &&
+		tabVisible &&
+			floatingFrame &&
 			activeStickyItem &&
 			floatingGroup &&
 			shouldFloatConnectionHeader(
