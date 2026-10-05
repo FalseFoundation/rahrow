@@ -11,17 +11,8 @@
 		}
 	},
 	"targets": {
-		"android": [
-			"arm64-v8a",
-			"armeabi-v7a",
-			"x86",
-			"x86_64"
-		],
-		"apple": [
-			"ios-arm64",
-			"ios-simulator-arm64",
-			"ios-simulator-x86_64"
-		]
+		"android": ["arm64-v8a", "armeabi-v7a", "x86", "x86_64"],
+		"apple": ["ios-arm64", "ios-simulator-arm64", "ios-simulator-x86_64"]
 	},
 	"tunnelProviders": {
 		"hev-socks5-tunnel": {
@@ -37,29 +28,15 @@
 				"third-part/lwip": "2a11c14c7a32887af25a034e82ef18b0b12076ac",
 				"third-part/yaml": "efa36117a8646d26d12b58e05bac472d7854a70d"
 			},
-			"defaults": [
-				"android",
-				"linux"
-			],
-			"conditional": [
-				"windows"
-			],
-			"experimental": [
-				"ios",
-				"macos"
-			],
-			"requiredArtifacts": [
-				"android"
-			],
+			"defaults": ["android", "linux"],
+			"conditional": ["windows"],
+			"experimental": ["ios", "macos"],
+			"requiredArtifacts": ["android"],
 			"androidArtifact": "hev-socks5-tunnel.aar",
 			"appleArtifact": "HevSocks5Tunnel.xcframework.zip",
 			"build": {
-				"android": [
-					"ndk-build"
-				],
-				"apple": [
-					"./build-apple.sh"
-				]
+				"android": ["ndk-build"],
+				"apple": ["./build-apple.sh"]
 			}
 		}
 	},
@@ -74,17 +51,8 @@
 			"androidArtifact": "libXray.aar",
 			"appleArtifact": "LibXray.xcframework.zip",
 			"build": {
-				"android": [
-					"python3",
-					"build/main.py",
-					"android"
-				],
-				"apple": [
-					"python3",
-					"build/main.py",
-					"apple",
-					"go"
-				]
+				"android": ["python3", "build/main.py", "android"],
+				"apple": ["python3", "build/main.py", "apple", "go"]
 			}
 		},
 		"sing-box": {
@@ -105,13 +73,7 @@
 					"-target",
 					"android"
 				],
-				"apple": [
-					"go",
-					"run",
-					"./cmd/internal/build_libbox",
-					"-target",
-					"apple"
-				]
+				"apple": ["go", "run", "./cmd/internal/build_libbox", "-target", "apple"]
 			}
 		}
 	}

@@ -37,7 +37,9 @@
 		"deps:up": "pnpm up --latest --recursive",
 		"deps:dedupe": "pnpm dedupe",
 		"deps:audit": "pnpm audit --fix update",
-		"update-engines": "node scripts/update-engine-releases.mjs"
+		"update-engines": "node scripts/update-engine-releases.mjs",
+		"version-packages": "changeset version && node scripts/sync-app-versions.mjs",
+		"tag-release": "node scripts/tag-product-release.mjs"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.15",

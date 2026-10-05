@@ -37,6 +37,8 @@ Use Changesets for changes that affect package consumers:
 
 Do not add a changeset for purely internal docs, tests, local refactors, or app-only work unless it changes a published package contract.
 
+`@rahrow/desktop`, `@rahrow/mobile`, and `@rahrow/cli` are a Changesets `fixed` group. Product version bumps run `pnpm version-packages` (changeset version + native version sync), then `pnpm tag-release` creates `vX.Y.Z` when the product version advances. Tag pushes build unsigned GitHub Release assets. Production signing stays blocked under Taskset `ea8d68`.
+
 ## Scripts and Turbo
 
 Current root script vocabulary:

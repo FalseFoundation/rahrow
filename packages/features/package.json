@@ -1,7 +1,7 @@
 {
 	"name": "@rahrow/features",
 	"private": true,
-	"version": "0.0.0",
+	"version": "0.1.0",
 	"description": "Shared app-facing React feature behavior for RahRow clients.",
 	"type": "module",
 	"sideEffects": [

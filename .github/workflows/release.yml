@@ -1,31 +1,64 @@
 name: Release
 
 on:
+  push:
+    tags: ['v*']
   workflow_dispatch:
     inputs:
       version:
-        description: Release version or candidate label
+        description: Release version without leading v (for example 0.1.0)
         required: true
         type: string
 
+permissions:
+  contents: write
+
+env:
+  NODE_VERSION: 24.16.0
+  GO_VERSION: 1.27.1
+  ANDROID_NDK_VERSION: 28.0.13004108
+
 jobs:
+  resolve-version:
+    runs-on: ubuntu-24.04
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            raw="${{ inputs.version }}"
+          else
+            raw="${{ github.ref_name }}"
+          fi
+          raw="${raw#v}"
+          if ! [[ "$raw" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-].*)?$ ]]; then
+            echo "Invalid release version: $raw" >&2
+            exit 1
+          fi
+          echo "version=$raw" >> "$GITHUB_OUTPUT"
+          echo "tag=v$raw" >> "$GITHUB_OUTPUT"
+
   validate:
+    needs: resolve-version
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24.16.0
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec turbo run native:verify-pins --filter=@rahrow/mobile
       - run: pnpm check
+      - run: pnpm exec vitest run --project repo tests/product-release.test.ts
       - name: Validate unsigned VPN release evidence
         run: pnpm exec turbo run validate:vpn-release --filter=@rahrow/desktop -- --channel unsigned
 
   desktop-installers:
-    needs: validate
+    needs: [resolve-version, validate]
     strategy:
       fail-fast: false
       matrix:
@@ -44,7 +77,7 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 24.16.0
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
       - uses: dtolnay/rust-toolchain@stable
       - name: Install Linux desktop dependencies
@@ -54,16 +87,167 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
       - run: pnpm install --frozen-lockfile
       - run: pnpm bundle:desktop
+      - name: Stage desktop release assets
+        shell: bash
+        run: |
+          mkdir -p release-assets
+          version="${{ needs.resolve-version.outputs.version }}"
+          artifact="${{ matrix.artifact }}"
+          bundle="apps/desktop/src-tauri/target/release/bundle"
+          shopt -s nullglob
+          for path in \
+            "$bundle"/dmg/*.dmg \
+            "$bundle"/macos/*.app \
+            "$bundle"/nsis/*.exe \
+            "$bundle"/msi/*.msi \
+            "$bundle"/deb/*.deb \
+            "$bundle"/rpm/*.rpm \
+            "$bundle"/appimage/*.AppImage
+          do
+            base="$(basename "$path")"
+            if [[ "$path" == *.app ]]; then
+              ditto -c -k --sequesterRsrc --keepParent "$path" "release-assets/RahRow-${version}-${artifact}-unsigned.app.zip"
+            else
+              cp "$path" "release-assets/RahRow-${version}-${artifact}-unsigned-${base}"
+            fi
+          done
+          cp apps/desktop/src-tauri/vpn-release-evidence.json \
+            "release-assets/RahRow-${version}-${artifact}-vpn-release-evidence.json"
+          if [ -z "$(ls -A release-assets)" ]; then
+            echo "No desktop bundle outputs found under $bundle" >&2
+            find apps/desktop/src-tauri/target/release -maxdepth 4 -type f | head -n 200 >&2
+            exit 1
+          fi
       - uses: actions/upload-artifact@v4
         with:
-          name: rahrow-desktop-unsigned-${{ matrix.artifact }}-${{ inputs.version }}
-          path: |
-            apps/desktop/src-tauri/target/release/bundle/**
-            apps/desktop/src-tauri/vpn-release-evidence.json
+          name: rahrow-desktop-unsigned-${{ matrix.artifact }}-${{ needs.resolve-version.outputs.version }}
+          path: release-assets/**
           if-no-files-found: error
 
-  unsigned-release-gate:
-    needs: [desktop-installers]
+  android-apk:
+    needs: [resolve-version, validate]
     runs-on: ubuntu-24.04
     steps:
-      - run: echo "Unsigned development artifacts passed repository checks. Production publishing remains disabled."
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: android-actions/setup-android@v3
+      - name: Install pinned Android NDK
+        run: |
+          sdkmanager --install "ndk;${ANDROID_NDK_VERSION}"
+          echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=${ANDROID_HOME}" >> "$GITHUB_ENV"
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm native:build:android
+      - run: pnpm exec turbo run native:build:hev:android --filter=@rahrow/mobile
+      - run: pnpm bundle:android
+      - name: Stage Android release assets
+        run: |
+          mkdir -p release-assets
+          version="${{ needs.resolve-version.outputs.version }}"
+          apk_dir="apps/mobile/android/app/build/outputs/apk/debug"
+          mapfile -t apks < <(find "$apk_dir" -name '*.apk' ! -name '*androidTest*' | sort)
+          if [ "${#apks[@]}" -eq 0 ]; then
+            echo "No Android APK produced" >&2
+            exit 1
+          fi
+          primary=""
+          for apk in "${apks[@]}"; do
+            base="$(basename "$apk")"
+            cp "$apk" "release-assets/RahRow-${version}-android-unsigned-${base}"
+            case "$base" in
+              *arm64-v8a*) primary="$apk" ;;
+            esac
+          done
+          if [ -z "$primary" ]; then
+            primary="${apks[0]}"
+          fi
+          cp "$primary" "release-assets/RahRow-${version}-android-unsigned.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rahrow-android-unsigned-${{ needs.resolve-version.outputs.version }}
+          path: release-assets/**
+          if-no-files-found: error
+
+  ios-simulator:
+    needs: [resolve-version, validate]
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Build unsigned iOS Simulator preview
+        run: pnpm exec turbo run ios:preview:simulator --filter=@rahrow/mobile
+      - name: Stage iOS release assets
+        run: |
+          mkdir -p release-assets
+          version="${{ needs.resolve-version.outputs.version }}"
+          app=".artifacts/ios-simulator/RahRow.app"
+          if [ ! -d "$app" ]; then
+            echo "iOS Simulator app missing at $app" >&2
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$app" \
+            "release-assets/RahRow-${version}-ios-simulator-unsigned.app.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rahrow-ios-simulator-unsigned-${{ needs.resolve-version.outputs.version }}
+          path: release-assets/**
+          if-no-files-found: error
+
+  github-release:
+    needs:
+      - resolve-version
+      - desktop-installers
+      - android-apk
+      - ios-simulator
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: collected-artifacts
+      - name: Flatten release assets
+        run: |
+          mkdir -p release-assets
+          find collected-artifacts -type f -exec cp {} release-assets/ \;
+          ls -la release-assets
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.resolve-version.outputs.tag }}
+          name: RahRow ${{ needs.resolve-version.outputs.version }} (unsigned)
+          prerelease: true
+          generate_release_notes: true
+          body: |
+            Unsigned development artifacts for RahRow `${{ needs.resolve-version.outputs.version }}`.
+
+            These builds preserve the single-application layout for testing. They are **not** production-signed, notarized, or store-ready. Production signing remains blocked.
+
+            ### Desktop
+            - macOS: `.dmg` and `.app.zip`
+            - Windows: NSIS `.exe` / `.msi` when produced by Tauri
+            - Linux: `.deb`, `.rpm`, and `.AppImage` when produced by Tauri
+
+            ### Mobile
+            - Android: debug/unsigned `.apk`
+            - iOS: Simulator preview `.app.zip` (fail-closed VPN; not an App Store IPA)
+
+            Built by the Release workflow from tag `${{ needs.resolve-version.outputs.tag }}`.
+          files: release-assets/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
