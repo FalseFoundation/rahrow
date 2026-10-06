@@ -13,9 +13,12 @@ import android.os.CancellationSignal
 import android.os.ParcelFileDescriptor
 import android.os.Process
 import android.system.OsConstants
-import android.util.Base64
 import android.util.Log
 import androidx.annotation.RequiresApi
+import io.nekohasekai.libbox.AutoRedirectHandler
+import io.nekohasekai.libbox.AutoRedirectSession
+import io.nekohasekai.libbox.BridgeOptions
+import io.nekohasekai.libbox.BridgeSession
 import io.nekohasekai.libbox.ConnectionOwner
 import io.nekohasekai.libbox.ExchangeContext
 import io.nekohasekai.libbox.Func
@@ -23,8 +26,11 @@ import io.nekohasekai.libbox.InterfaceUpdateListener
 import io.nekohasekai.libbox.Libbox
 import io.nekohasekai.libbox.LocalDNSTransport
 import io.nekohasekai.libbox.NetworkInterfaceIterator
+import io.nekohasekai.libbox.NeighborUpdateListener
 import io.nekohasekai.libbox.Notification
 import io.nekohasekai.libbox.PlatformInterface
+import io.nekohasekai.libbox.PlatformUser
+import io.nekohasekai.libbox.ShellSession
 import io.nekohasekai.libbox.StringIterator
 import io.nekohasekai.libbox.TunOptions
 import io.nekohasekai.libbox.WIFIState
@@ -34,7 +40,6 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.InterfaceAddress
 import java.net.NetworkInterface
-import java.security.KeyStore
 import java.util.Collections
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.CountDownLatch
@@ -59,6 +64,34 @@ internal class SingBoxPlatformInterface(private val service: VpnService) : Platf
 	override fun localDNSTransport(): LocalDNSTransport = AndroidLocalDns(connectivity)
 	override fun readWIFIState(): WIFIState? = null
 	override fun sendNotification(notification: Notification) = Unit
+	override fun cancelNotification(identifier: String, typeID: Int) = Unit
+	override fun registerMyInterface(name: String) = Unit
+	override fun tailscaleHostname() = ""
+
+	override fun usePlatformAutoRedirect() = false
+	override fun createAutoRedirect(options: ByteArray, handler: AutoRedirectHandler): AutoRedirectSession =
+		error("Platform auto-redirect is unavailable on Android")
+
+	override fun usePlatformBridge() = false
+	override fun createBridge(options: BridgeOptions): BridgeSession =
+		error("Platform bridge is unavailable on Android")
+
+	override fun usePlatformShell() = false
+	override fun checkPlatformShell() = error("Platform shell is unavailable on Android")
+	override fun lookupSFTPServer(): String = error("Platform SFTP is unavailable on Android")
+	override fun lookupUser(username: String): PlatformUser = error("Platform users are unavailable on Android")
+	override fun readSystemSSHHostKey(): String = error("Platform SSH host keys are unavailable on Android")
+	override fun openShellSession(
+		user: PlatformUser,
+		command: String,
+		environ: StringIterator,
+		term: String,
+		rows: Int,
+		cols: Int,
+	): ShellSession = error("Platform shell is unavailable on Android")
+
+	override fun startNeighborMonitor(listener: NeighborUpdateListener) = Unit
+	override fun closeNeighborMonitor(listener: NeighborUpdateListener) = Unit
 
 	override fun openTun(options: TunOptions): Int {
 		if (VpnService.prepare(service) != null) error("Android VPN permission is missing")
@@ -72,7 +105,11 @@ internal class SingBoxPlatformInterface(private val service: VpnService) : Platf
 		addAddresses(builder, options.inet4Address)
 		addAddresses(builder, options.inet6Address)
 		if (options.autoRoute) {
-			options.dnsServerAddress.value.takeIf { it.isNotBlank() }?.let(builder::addDnsServer)
+			val dnsServers = options.dnsServerAddress
+			while (dnsServers.hasNext()) {
+				val address = dnsServers.next()
+				if (address.isNotBlank()) builder.addDnsServer(address)
+			}
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
 				addRoutes(builder, options.inet4RouteAddress)
 				addRoutes(builder, options.inet6RouteAddress)
@@ -184,16 +221,6 @@ internal class SingBoxPlatformInterface(private val service: VpnService) : Platf
 		val name = connectivity.getLinkProperties(network)?.interfaceName ?: return
 		val index = runCatching { NetworkInterface.getByName(name)?.index ?: -1 }.getOrDefault(-1)
 		listener.updateDefaultInterface(name, index, false, false)
-	}
-
-	override fun systemCertificates(): StringIterator {
-		val keyStore = KeyStore.getInstance("AndroidCAStore").apply { load(null) }
-		val certificates = Collections.list(keyStore.aliases()).mapNotNull { alias ->
-			keyStore.getCertificate(alias)?.encoded?.let { encoded ->
-				"-----BEGIN CERTIFICATE-----\n${Base64.encodeToString(encoded, Base64.NO_WRAP)}\n-----END CERTIFICATE-----"
-			}
-		}
-		return StringArray(certificates.iterator())
 	}
 
 	private fun addAddresses(builder: VpnService.Builder, iterator: io.nekohasekai.libbox.RoutePrefixIterator) {

@@ -109,13 +109,19 @@ Apply these TanStack data and performance rules:
 - **[Virtual](https://tanstack.com/virtual/latest):** Keep the scroll surface, semantic markup, focus behavior, and visual
   states owned by RahRow UI. Render only visible rows plus intentional overscan,
   use stable domain keys, and measure dynamic rows rather than assuming fixed
-  heights. Choose an element or window virtualizer to match the product's real
-  scroll owner; do not add a nested scroll area merely to simplify
-  virtualization. Use a custom range extractor for sticky group rows. For
-  prepends, streaming content, or route restoration, preserve a stable anchor
-  and restore a validated snapshot with its scroll offset and compatible
-  measurement cache. Large local collections should progressively expose pages
-  as the user nears the end without putting every record in the React tree.
+  heights. For uniformly sized connection rows, prefer stable `estimateSize`
+  values (encode known padding in the estimate) instead of `measureElement`;
+  zero-height measurements expand the visible range to the full loaded window
+  and can livelock React when combined with progressive paging. Cap extracted
+  index ranges and page only when the scroll viewport has a real height. Choose
+  an element or window virtualizer to match the product's real scroll owner; do
+  not add a nested scroll area merely to simplify virtualization. Use a custom
+  range extractor for sticky group rows. For prepends, streaming content, or
+  route restoration, preserve a stable anchor and restore a validated snapshot
+  with its scroll offset and compatible measurement cache. Large local
+  collections should progressively expose pages as the user nears the end
+  without putting every record in the React tree. Cover large-list regressions
+  with Vitest against the real virtualizer, not only mocks.
 - **[Pacer](https://tanstack.com/pacer/latest):** Select the pacing primitive from the work contract: debounce work
   that may wait for quiet, throttle high-frequency work that still needs regular
   progress, rate-limit externally constrained operations, queue work that needs

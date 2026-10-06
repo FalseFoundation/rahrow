@@ -83,6 +83,8 @@ private class SingBoxNativeEngineProvider(private val service: VpnService) : Nat
 			setupLibbox(service)
 			Libbox.checkConfig(engineConfig)
 			val server = CommandServer(object : CommandServerHandler {
+				override fun connectSSHAgent() = -1
+				override fun triggerNativeCrash() = Unit
 				override fun getSystemProxyStatus() = SystemProxyStatus().apply {
 					available = false
 					enabled = false

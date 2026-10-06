@@ -1,10 +1,15 @@
 import { describe, expect, it } from 'vitest'
 import {
+	capConnectionVirtualIndexes,
 	connectionGroupEnd,
+	estimateConnectionRowSize,
+	FIRST_PROFILE_PADDING,
 	flattenConnectionGroups,
 	nextLoadedProfileCount,
+	PROFILE_ROW_ESTIMATE,
 	profileIndexById,
 	shouldFloatConnectionHeader,
+	shouldPageConnectionProfiles,
 } from './profile-list-virtual-model.ts'
 
 describe('profile list virtual model', () => {
@@ -81,5 +86,72 @@ describe('profile list virtual model', () => {
 		expect(shouldFloatConnectionHeader(true, 178, 250, 900, 72)).toBe(false)
 		expect(shouldFloatConnectionHeader(true, 828, 250, 900, 72)).toBe(false)
 		expect(shouldFloatConnectionHeader(false, 179, 250, 900, 72)).toBe(false)
+	})
+
+	it('estimates first profile padding without dynamic measurement', () => {
+		expect(
+			estimateConnectionRowSize({
+				kind: 'profile',
+				key: 'profile:group:a',
+				groupKey: 'group',
+				profile: { id: 'a' },
+				position: 1,
+				setSize: 10,
+				index: 1,
+			}),
+		).toBe(PROFILE_ROW_ESTIMATE + FIRST_PROFILE_PADDING)
+		expect(
+			estimateConnectionRowSize({
+				kind: 'profile',
+				key: 'profile:group:b',
+				groupKey: 'group',
+				profile: { id: 'b' },
+				position: 2,
+				setSize: 10,
+				index: 2,
+			}),
+		).toBe(PROFILE_ROW_ESTIMATE)
+	})
+
+	it('caps an unbounded virtual range while preserving sticky headers', () => {
+		expect(capConnectionVirtualIndexes([0, 250, 251, 252, 253, 254])).toEqual([
+			0, 250, 251, 252, 253, 254,
+		])
+		const dense = Array.from({ length: 80 }, (_, index) => index)
+		expect(capConnectionVirtualIndexes([0, 400, ...dense.map((i) => i + 401)])).toEqual([
+			0,
+			400,
+			...Array.from({ length: 30 }, (_, index) => index + 401),
+		])
+	})
+
+	it('pages only with a usable viewport near the loaded tail', () => {
+		expect(
+			shouldPageConnectionProfiles({
+				loadedProfileCount: 250,
+				totalProfiles: 1_750,
+				lastVirtualIndex: 248,
+				rowCount: 251,
+				viewportHeight: 640,
+			}),
+		).toBe(true)
+		expect(
+			shouldPageConnectionProfiles({
+				loadedProfileCount: 250,
+				totalProfiles: 1_750,
+				lastVirtualIndex: 248,
+				rowCount: 251,
+				viewportHeight: 0,
+			}),
+		).toBe(false)
+		expect(
+			shouldPageConnectionProfiles({
+				loadedProfileCount: 250,
+				totalProfiles: 1_750,
+				lastVirtualIndex: 12,
+				rowCount: 251,
+				viewportHeight: 640,
+			}),
+		).toBe(false)
 	})
 })

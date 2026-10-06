@@ -78,3 +78,4 @@ yarn-error.log*
 **/src-tauri/binaries/xray-*
 # **/src-tauri/icons
 # **/src-tauri/capabilities
+**/.vitest/json/output.json

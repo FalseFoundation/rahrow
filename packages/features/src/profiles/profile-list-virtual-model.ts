@@ -1,7 +1,11 @@
 export const PROFILE_ROW_ESTIMATE = 60
+/** Matches `.virtualProfile[data-first-profile]` padding-block-start (`spacing * 2.25`). */
+export const FIRST_PROFILE_PADDING = 9
 export const CONNECTION_GROUP_ESTIMATE = 78
 export const CONNECTION_GROUP_GAP = 28
 export const CONNECTION_PROFILE_PAGE_SIZE = 250
+/** Hard cap so an unbounded scroll rect cannot mount the full subscription. */
+export const CONNECTION_VIRTUAL_RANGE_CAP = 32
 
 export interface ConnectionVirtualGroup<
 	TProfile extends { readonly id: string },
@@ -33,6 +37,62 @@ export type ConnectionVirtualRow<TProfile extends { readonly id: string }> =
 			readonly setSize: number
 			readonly index: number
 	  }
+
+export function estimateConnectionRowSize<
+	TProfile extends { readonly id: string },
+>(row: ConnectionVirtualRow<TProfile> | undefined): number {
+	if (row?.kind === 'group') return CONNECTION_GROUP_ESTIMATE
+	if (row?.kind === 'gap') return CONNECTION_GROUP_GAP
+	if (row?.kind === 'profile' && row.position === 1) {
+		return PROFILE_ROW_ESTIMATE + FIRST_PROFILE_PADDING
+	}
+	return PROFILE_ROW_ESTIMATE
+}
+
+/**
+ * Keeps sticky/sparse indexes, then caps the contiguous scroll window so a
+ * broken scroll owner (height ≈ content height) cannot mount thousands of rows.
+ */
+export function capConnectionVirtualIndexes(
+	indexes: readonly number[],
+	maxSpan = CONNECTION_VIRTUAL_RANGE_CAP,
+): number[] {
+	const span = Math.max(1, Math.floor(maxSpan))
+	if (indexes.length <= span) return [...indexes]
+
+	const sorted = [...new Set(indexes)].sort((left, right) => left - right)
+	let runStart = 0
+	let bestStart = 0
+	let bestLength = 1
+	for (let index = 1; index <= sorted.length; index += 1) {
+		const endsRun =
+			index === sorted.length || sorted[index] !== sorted[index - 1]! + 1
+		if (!endsRun) continue
+		const length = index - runStart
+		if (length >= bestLength) {
+			bestStart = runStart
+			bestLength = length
+		}
+		runStart = index
+	}
+
+	const sticky = sorted.slice(0, bestStart)
+	const runBudget = Math.max(1, span - sticky.length)
+	return [...sticky, ...sorted.slice(bestStart, bestStart + runBudget)]
+}
+
+export function shouldPageConnectionProfiles(input: {
+	readonly loadedProfileCount: number
+	readonly totalProfiles: number
+	readonly lastVirtualIndex: number
+	readonly rowCount: number
+	readonly viewportHeight: number
+}): boolean {
+	if (input.loadedProfileCount >= input.totalProfiles) return false
+	if (input.viewportHeight < 32) return false
+	if (input.lastVirtualIndex < 0 || input.rowCount <= 0) return false
+	return input.lastVirtualIndex >= input.rowCount - 4
+}
 
 export function flattenConnectionGroups<
 	TProfile extends { readonly id: string },

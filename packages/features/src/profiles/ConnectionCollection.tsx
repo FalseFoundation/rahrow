@@ -36,14 +36,14 @@ import {
 } from './connections-viewport-store.ts'
 import { shouldVirtualizeProfileList } from './profile-library-model.ts'
 import {
-	CONNECTION_GROUP_ESTIMATE,
-	CONNECTION_GROUP_GAP,
 	CONNECTION_PROFILE_PAGE_SIZE,
+	capConnectionVirtualIndexes,
 	connectionGroupEnd,
+	estimateConnectionRowSize,
 	flattenConnectionGroups,
 	nextLoadedProfileCount,
-	PROFILE_ROW_ESTIMATE,
 	shouldFloatConnectionHeader,
+	shouldPageConnectionProfiles,
 } from './profile-list-virtual-model.ts'
 
 export interface ConnectionCollectionGroup {
@@ -224,14 +224,14 @@ function VirtualConnectionCollection({
 			const followingIndex = stickyIndexes.find(
 				(index) => nextIndex !== undefined && index > nextIndex,
 			)
-			return [
+			return capConnectionVirtualIndexes([
 				...new Set([
 					activeStickyIndexRef.current,
 					...(nextIndex === undefined ? [] : [nextIndex]),
 					...(followingIndex === undefined ? [] : [followingIndex]),
 					...defaultRangeExtractor(range),
 				]),
-			].sort((left, right) => left - right)
+			])
 		},
 		[stickyIndexes],
 	)
@@ -239,15 +239,9 @@ function VirtualConnectionCollection({
 		count: rows.length,
 		getScrollElement: () => appScrollViewport.current,
 		getItemKey,
-		estimateSize: (index) =>
-			rows[index]?.kind === 'group'
-				? CONNECTION_GROUP_ESTIMATE
-				: rows[index]?.kind === 'gap'
-					? CONNECTION_GROUP_GAP
-					: PROFILE_ROW_ESTIMATE,
-		initialMeasurementsCache: restoredSnapshot
-			? [...restoredSnapshot.measurements]
-			: undefined,
+		// Fixed estimates only: measuring absolute rows as 0 (WebView/jsdom pre-layout)
+		// expands the range to the full subscription and livelocks React updates.
+		estimateSize: (index) => estimateConnectionRowSize(rows[index]),
 		initialOffset: () => restoredSnapshot?.scrollOffset ?? persistedScrollOffset,
 		overscan: 6,
 		rangeExtractor,
@@ -371,13 +365,24 @@ function VirtualConnectionCollection({
 	)
 
 	useEffect(() => {
+		const viewportHeight =
+			appScrollViewport.current?.clientHeight ??
+			appScrollViewport.current?.offsetHeight ??
+			0
 		if (
-			loadedProfileCount < largestOpenGroup &&
-			lastVirtualIndex >= rows.length - 4
+			!shouldPageConnectionProfiles({
+				loadedProfileCount,
+				totalProfiles: largestOpenGroup,
+				lastVirtualIndex,
+				rowCount: rows.length,
+				viewportHeight,
+			})
 		) {
-			loadNextPage()
+			return
 		}
+		loadNextPage()
 	}, [
+		appScrollViewport,
 		lastVirtualIndex,
 		loadNextPage,
 		loadedProfileCount,
@@ -444,7 +449,10 @@ function VirtualConnectionCollection({
 									role='presentation'
 									aria-hidden='true'
 									className={styles.virtualGap}
-									style={{ ...rowStyle, height: CONNECTION_GROUP_GAP }}
+									style={{
+										...rowStyle,
+										height: estimateConnectionRowSize(row),
+									}}
 								/>
 							)
 						}
@@ -456,9 +464,11 @@ function VirtualConnectionCollection({
 								<li
 									key={row.key}
 									data-index={virtualRow.index}
-									ref={virtualizer.measureElement}
 									className={styles.virtualGroup}
-									style={rowStyle}
+									style={{
+										...rowStyle,
+										minHeight: estimateConnectionRowSize(row),
+									}}
 								>
 									<ConnectionGroupHeader
 										open={group.open}
@@ -486,12 +496,14 @@ function VirtualConnectionCollection({
 							<li
 								key={row.key}
 								data-index={virtualRow.index}
-								ref={virtualizer.measureElement}
 								className={styles.virtualProfile}
 								data-first-profile={row.position === 1 || undefined}
 								aria-posinset={row.position}
 								aria-setsize={row.setSize}
-								style={rowStyle}
+								style={{
+									...rowStyle,
+									minHeight: estimateConnectionRowSize(row),
+								}}
 							>
 								<ConnectionProfileRow
 									profile={row.profile}
