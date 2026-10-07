@@ -3,13 +3,18 @@ id: 8c9114
 title: Implement portable routing policy editor with native capability gates
 status: todo
 priority: high
+owner: junkieshuffle
 risk: high
 createdAt: 2026-08-30 18:32 UTC
-updatedAt: 2026-09-02 03:52 UTC
+updatedAt: 2026-10-07 08:33 UTC
 labels:
   - routing
   - native
   - settings
+related:
+  - 7a283a
+  - 91489e
+  - "866e12"
 parent: "542944"
 directories:
   - packages/core
@@ -17,8 +22,11 @@ directories:
   - packages/features
   - apps/desktop
   - apps/mobile
+  - engines
 projects:
   - rahrow
+  - rahrow-engine
+  - rahrow-uiux
   - rahrow-phase-05-integration-and-hardening
 ---
 
@@ -88,3 +96,34 @@ Screenshot-verification clarifications
 - The reference top-right overflow icon has no visible contracted behavior. Omit it until RahRow has named actions; do not invent an icon-only menu.
 - Truncated rule titles/summaries retain the complete value through an accessible name/details view and keyboard/touch access.
 - Use the shared full-width nested-page shell with unified header, bottom-left back affordance, safe areas, and no persistent root tabs or connect bar.
+
+## Delivery plan
+
+This parent is delivered through independently tracked child outcomes:
+
+- 08926e — qualify, license, pin, bundle, update, and roll back GeoSite/GeoIP assets.
+- ec4859 — define the portable policy and compile it for Xray and sing-box.
+- dab831 — build the shared desktop/mobile editor and Geo Assets experience.
+- 032ce0 — prove installed-artifact routing, lifecycle cleanup, and leak behavior.
+
+The order is based on concrete inputs: the compiler needs the asset contract, the UI needs the portable/compiler contract, and installed-artifact verification needs both implementation surfaces. DNS work remains related rather than duplicated.
+
+## SagerNet adoption constraints
+
+- Consume sing-geosite and sing-geoip as versioned data inputs, never as RahRow domain types.
+- Bundle a verified offline baseline; optional updates are data-only and must be bounded, checksummed, atomic, and recoverable.
+- Keep SRS and Xray-specific representations inside engine adapters.
+- Complete provenance, license, notice, and artifact inventory work before advertising bundled presets.
+
+## Changeset
+
+- Expected packages: @rahrow/core (minor), @rahrow/engine (minor), @rahrow/features (minor), @rahrow/desktop (minor), @rahrow/mobile (minor), and @rahrow/cli (minor if CLI routing control or behavior changes).
+- Release-note intent: RahRow gains portable ordered routing policies backed by verified geographic and domain assets across supported engines.
+- Use one coherent changeset unless implementation produces independently shippable asset and editor capabilities; reconcile the fixed application group and internal-dependent bumps before completion.
+
+## References
+
+- https://github.com/SagerNet/sing-geosite
+- https://github.com/SagerNet/sing-geoip
+- https://github.com/SagerNet/sing-box/blob/testing/docs/manual/proxy/client.md
+- docs/research/engine-licensing-store-distribution.md
